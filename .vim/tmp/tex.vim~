@@ -1,0 +1,84 @@
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" added by macvim-skim sync plugin
+
+" ,ls to forward search
+map ,ls :w<CR>:silent !/Applications/Skim.app/Contents/SharedSupport/displayline -r <C-r>=line('.')<CR> %<.pdf %<CR><CR>
+if !exists("g:macvim_skim_app_path")
+    let g:macvim_skim_app_path='/Applications/Skim.app'
+endif
+
+" Activate skim
+nnoremap <buffer> <localleader>v
+    \ :w<CR>
+    \ :silent !<C-r>=g:macvim_skim_app_path<CR>/Contents/SharedSupport/displayline
+    \ -r <C-r>=line(".")<CR>
+    \ %<.pdf %<CR><CR>
+
+nnoremap <buffer> <localleader>p
+    \ :w<CR>
+    \ :silent !pdflatex -synctex=1 --interaction=nonstopmode %:p <CR>
+    \ :silent !<C-r>=g:macvim_skim_app_path<CR>/Contents/SharedSupport/displayline
+    \ -r <C-r>=line(".")<CR>
+    \ %<.pdf %<CR><CR>
+
+nnoremap <buffer> <localleader>m
+    \ :w<CR>
+    \ !make <CR>
+    \ :silent !<C-r>=g:macvim_skim_app_path<CR>/Contents/SharedSupport/displayline
+    \ -r <C-r>=line(".")<CR>
+    \ %<.pdf %<CR><CR>
+" " Reactivate Vim
+nnoremap <buffer> <localleader>r
+    \ :w<CR>
+    \ :silent !<C-r>=g:macvim_skim_app_path<CR>/Contents/SharedSupport/displayline
+    \ -r <C-r>=line(".")<CR>
+    \ %<.pdf %<CR>
+    \ :silent !osascript -e "tell application \"MacVim\" to activate" <CR><CR>
+
+nnoremap <buffer> <localleader>t
+    \ :w<CR>
+    \ :silent !pdflatex -synctex=1 --interaction=nonstopmode %:p <CR>
+    \ :silent !<C-r>=g:macvim_skim_app_path<CR>/Contents/SharedSupport/displayline
+    \ -r <C-r>=line(".")<CR>
+    \ %<.pdf %<CR>
+    \ :silent !osascript -e "tell application \"MacVim\" to activate" <CR><CR>
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" COMPILING
+
+" thanks https://bbs.archlinux.org/viewtopic.php?id=107164
+" Function to save, check if already compiling and compile if not
+function! CompileTexInBackground()
+    let x = system("ps ax | grep makeTex | wc -l > ~/hi")
+    update " save
+    " go to right directory
+    lcd %:p:h
+    " save the file if need be and it's possible
+    if filewritable(bufname("%"))
+        silent update
+    endif
+    " see how many kkltx processes there are
+    " note that there are always 3 when the checking itself happens
+    " so we need there to be no more than that
+    let numrunning = system("ps ax | grep makeTex | wc -l")
+    if numrunning < 4
+         exec "silent !makeTex " . expand("%") . " &"
+    endif
+endfunction
+
+" compiling
+
+" mm to compile -> overrides make
+":nmap <buffer> mm :update <CR> :! pdflatex % <CR> <CR>
+
+" mm to compile in background
+:nmap <buffer> <silent> mm :update <CR> :call CompileTexInBackground() <CR>
+
+" compile in the background every few secs
+autocmd CursorHold <buffer> :update | call CompileTexInBackground()
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

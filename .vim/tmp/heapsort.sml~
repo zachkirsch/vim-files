@@ -1,0 +1,26 @@
+functor HeapsortFn (Heap : HEAP) :> sig
+    type element
+    val sort : element list -> element list
+                                    end
+(* :> ahhh *)
+    where type element = Heap.element
+  = struct
+    type element = Heap.element
+
+    fun sort (l) = 
+            let
+      (* function to add everything into a heap (list -> heap) *)
+              fun toHeap([]) = Heap.empty
+                | toHeap(x::xs) = Heap.insert(x, toHeap(xs))
+
+      (* function to removeMin from heap until empty (heap -> list) *)
+              fun fromHeap(h) = 
+                    let
+                      val (min, heap) = Heap.removeMin(h)
+                    in
+                        min :: fromHeap(heap) handle EmptyHeap => [] 
+                    end
+            in
+                fromHeap(toHeap(l))
+            end
+end

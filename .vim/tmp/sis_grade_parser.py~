@@ -1,0 +1,41 @@
+
+import mechanize
+from bs4 import BeautifulSoup
+import urllib2
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import cookielib
+import time
+
+url1 = "https://sis.tufts.edu/"
+url2 = "https://sis.uit.tufts.edu/psp/paprd/EMPLOYEE/EMPL/h/?tab=DEFAULT&tm=20160513-164408#1"
+
+## Initialize and load the web page
+driver = webdriver.PhantomJS()
+driver.get(url1)
+time.sleep(3)
+
+## Fill out forms and login to site
+username = driver.find_element_by_name('userid')
+password = driver.find_element_by_name('pwd')
+username.send_keys('ZKIRSC01')
+password.send_keys('Airplan3!!')
+password.send_keys(Keys.RETURN)
+
+time.sleep(3)
+
+driver.get(url2)
+
+time.sleep(3)
+
+elem = driver.find_element_by_id('tfp_grades_lft_arrow')
+elem.click()
+time.sleep(3)
+
+elem = driver.find_element_by_class_name('tfp_grades_tbl')
+elem_hash = str(elem)
+
+f = open('workfile', 'w')
+f.write(elem_hash)
+
+driver.quit()

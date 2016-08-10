@@ -1,0 +1,113 @@
+vim -o <files>: open files in horizontal split
+vim -O <files>: open files in vertical split
+
+Ctrl-W =        equalize all splits
+
+Ctrl-W r        rotate splits
+
+ZZ:     same as :x and :wq
+
+zt:     move current line to top of screen
+
+zz:     move current line to center of screen
+
+"+y:    copy current selection to system clipboard
+
+):      jump forward one sentence
+
+(:      jump backward one sentence
+
+}:      jump forward one paragraph
+
+}:      jump backward one paragraph
+
+[{:     jump to the beginning of a C code block
+
+]}:     jump to the end of a C code block
+
+[[:     jump to the previous '{' in the first column
+
+]]:     jump to the next '{' in the first column
+
+[]:     jump to the previous '}' in the first column
+
+[(:     jump to the beginning of a parenthesis
+
+]):     ump to the end of a parenthesis
+
+Ctrl+f: jump forward one page
+
+Ctrl+b: jump backward one page
+
+daw:    delete word around cursor
+
+caw:    delete word around cursor and put into Insert mode
+
+C:      delete from here to end of line (i.e. D) and go into insert mode
+
+cc:     erase current line and put into insert mode at start of line
+
+ci<punct>:      to replace text between characters matching punct
+                Example: when inside a string, `ci"` will replace text inside
+                quotes and change into Insert Mode
+
+%:      moves cursor between matching quotes/braces/parentheses
+        with matchit plugin, also switches between html opening/closing tags
+
+gcc:    toggle comment (with commentary plugin)
+        In Visual Mode: `gc`
+
+gq:     Break selected text at textwidth (usually 80 columns)
+
+gv:     Re-select previous selection
+
+g Ctrl-G:       Count the number of lines selected
+
+f<key>: move cursor forward until the next <key>, with the cursor on the
+        matching character. "f is for find"
+
+F<key>: move cursor backward until the last <key>, with the cursor on the
+        matching character. "f is for find"
+
+t<key>: move cursor forward until the next <key>, with the cursor right before
+        matching character. "t is for 'til"
+
+T<key>: move cursor backward until the last <key>, with the cursor right after
+        matching character. "t is for 'til"
+
+;     : after using F or T, finds the next match
+
+,     : after using F or T, finds the previous match
+
+*     : searches for the word under the cursor (forward direction)
+
+#     : searches for the word under the cursor (backward direction)
+
+n     : after searching, will find the next match
+
+N     : after searching, will find the previous match
+
+a     : enter insert mode to the left of the cursor
+
+ctrl-o  : while in Insert mode, enters Normal mode for one command
+
+mk    : mark position k (can use a-z)
+
+'k    : move to position k
+
+'K    : move to position k that could be in another file
+
+d'k   : delete until position k
+
+vim-table-mode: \tm to enter table mode
+                Create table row like: | Col 1 | Col 2 |
+                Create separator row:  ||
+
+:Tabularize /=  aligns equal signs in nearby area (via tabular plugin)
+                (substitute = for anything)
+
+vim-markdown: https://github.com/plasticboy/vim-markdown
+
+vim-surround: https://github.com/tpope/vim-surround
+
+macvim-sync: https://github.com/keflavich/macvim-skim

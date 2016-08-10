@@ -1,0 +1,313 @@
+\documentclass[11pt]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{fullpage}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes.multipart,chains,arrows}
+
+\renewcommand{\theenumi}{\roman{enumi}}
+\usepackage{color}
+\definecolor{Purple}{rgb}{.9,0,.9}
+\newcommand{\solution}[1]{\textcolor{Purple}{\\Solution: #1}}  %Solution
+\newcommand{\C}[1]{\ensuremath{\mathord{\rm #1}}}
+\newcommand{\pair}[1]{\ensuremath{\mathopen{\langle}#1\mathclose{\rangle}}}
+\newcommand{\lng}[1]{\ensuremath{\mathopen{|}#1\mathclose{|}}}
+\newcommand{\card}[1]{\ensuremath{\mathopen{|\!|}#1\mathclose{|\!|}}}
+\newcommand{\manyone}{\ensuremath{\leq_m^p}}
+\newcommand{\pmli}{\ensuremath{\leq_{m,\mathord{\rm li}}^p}}
+\newcommand{\ponem}{\ensuremath{\mathrel{\leq_m^{p/1}}}}
+\newcommand{\ponett}{\ensuremath{\mathrel{\leq_{1-\mathord{\rm tt}}^{p/1}}}}
+\newcommand{\ptt}{\ensuremath{\mathrel{\leq_{\mathord{\rm tt}}^p}}}
+\newcommand{\pktt}{\ensuremath{\mathrel{\leq_{k-\mathord{\rm tt}}^p}}}
+\newcommand{\pttk}[1]{\ensuremath{\mathrel}{\leq_{#1-\mathord{\rm
+        tt}}^p}}
+\newcommand{\pmhat}{\ensuremath{\mathrel{\leq_{\hat{m}}^p}}}
+\newcommand{\pmhatli}{\ensuremath{\mathrel{\leq_{\hat{m}\mathord{\rm
+          ,l.i.}}^p}}}
+\newcommand{\pmhathonest}{\ensuremath{\mathrel{\leq_{\hat{m},\mathord{\rm honest}}^p}}}
+\newcommand{\PNP}{\C{P}^{\C{NP}}}
+\newcommand{\pT}{\ensuremath{\mathrel{\leq_T^p}}}
+\newenvironment{proof}{\vspace*{1em}\noindent{\bf Proof.}}{\hfill$\Box$}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\usepackage{{mathtools}}
+\usepackage{parskip}
+\newcommand{\sub}[1]{\subsubsection*{#1}} 
+\setlength{\parindent}{0cm}
+
+% margins
+\usepackage[top=3cm, bottom=4cm, left=2cm, right=2cm,headsep=16pt]{geometry}
+
+%% HEADER/FOOTER %%
+\usepackage{fancyhdr}
+%\usepackage[headsep=8pt]{geometry}  %% adjust here
+
+\setlength{\headheight}{15.2pt}
+\pagestyle{fancy}
+
+% lines in header & footer area
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancyhead[L]{\textsc{Tufts University Comp 170}}
+\fancyhead[C]{\textsc{Homework 2}}
+\fancyhead[R]{\textsc{Zach Kirsch}}
+%% END HEADER/FOOTER %%
+
+\begin{document}
+
+
+\subsection*{Problem 1}
+
+A universal Turing machine is one that simulates another Turning machine given its definition. This is not unusual, we use compilers every day, and we have all probably compiled a C program using a compiler written in C. Assume we have a Turing machine $M$ which is given as input a triple $\pair{T, x, n}$. $T$ is a Turing machine, $x$ is an valid input to $T$, and $n$ is an integer. Write a high level description of $M$ which decides the following language: 
+$$ L = \{\pair{T, x, n} \mid T \mbox{ is a turing machine and } T \mbox { accepts } x \mbox{ within } n \mbox{ steps}\}$$
+
+\subsubsection*{Solution}
+
+$M$ on input $\pair{T, x, n}$:
+
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+   \item Repeat the following process $n$ times:
+   \begin{enumerate}
+     \item Run a step a $T$ using input $x$.
+     \item If $T$ accepts, accept.
+     \item If $T$ rejects, reject.
+   \end{enumerate}
+   \item Reject because $T$ did not accept $x$ in $n$ steps.
+\end{enumerate}
+
+\clearpage
+
+\subsection*{Problem 2}
+
+
+\subsubsection*{Part A}
+\noindent Consider the problem $$A = \{\pair{M, w} | M  \mbox{ moves left at some point during its computation on } w\}$$
+
+\noindent Show that $A$ is decidable.
+
+\paragraph*{Proof Idea} We will show that $A$ is decidable by constructing a machine $M_A$ that decides $A$.
+
+Because any Turing machine $M$ takes a finite input, $M$ will either go left while reading its input ($M_A$ accepts), halt after continuously moving right ($M_A$ rejects), or reach a blank (the end of input). At this point, $M$ must move left ($M_A$ accepts), halt ($M_A$ rejects), or continue reading blanks as it moves right. We will create a finite linked list of transitions that will occur as the machine reads blank input to track $M$'s behavior. If any link on the linked list is a transition that moves left, then $M$ will move left at some point while reading blank input, and $M_A$ accepts. Otherwise, $M$ will halt after only right moves, or continually move right infinitely. In either case, $M_A$ rejects.
+
+\bigskip
+
+\paragraph{Construction of $\boldsymbol{M_A}$}
+We define a machine $M_A$ that takes an input $\pair{M, w}$. We run $M$ on $w$. If $M$ moves left while reading $w$, $M_A$ accepts because $\pair{M, w}$ is clearly in $A$. If $M$ continually moves right on its input $w$ until it halts, $M_A$ rejects because $\pair{M, w}$ is clearly not in $A$. Otherwise, $M$ will continually moved right until it reaches a blank (end of input). Any Turing machine that continually goes right will reach the end of its input because it is a finite input. Therefore, we know that if neither of the first two cases are true, the third will be.
+
+At this point, $M$  and has reached a blank (end of input). Let $q_x$ be the state that $M$ is in at this point in time. If $M$ is set to halt after reaching a blank, then $M_A$ rejects because $M_A$ never moved left. Otherwise, because this is the end of its input, $M$ will only read blanks in the future, or go left. It is possible that the machine will move right on blank input indefinitely.
+
+Let $\delta'$ be the subset of transitions of $\delta$ that act on blank input $B$. As long as $M$ is moving right on blank input, these are the only transitions that can be invoked.
+\begin{align*}
+& \begin{rcases}
+<q_x,B> \enspace &\to \enspace <q_y,B,\{R,L\}>\\
+<q_y,B> \enspace &\to \enspace <q_z,B,\{R,L\}>\\
+&\vdots\\
+<q_n,B> \enspace &\to \enspace <q_k,B,\{R,L\}> 
+\end{rcases}
+\quad
+\begin{array}{lrr}
+\text{$\delta'$} 
+\end{array}
+\end{align*}
+
+\clearpage
+
+We make a linked list to determine the behavior of $M$ on blank input. While generally a graph is used to represent possible outcomes of a Turing machine, a linked list is sufficient because there are not multiple options for input. As long as the machine is moving right, the only possible input will be a blank. We start with $q_x$, and we make a link from $q_x$ to $q_y$ because $q_x$ transitions to $q_y$ when a blank is read. Similarly, we make a link from $q_y$ to $q_z$ because $q_y$ transitions to $q_z$ when a blank is read. We continually do this for every transition in $\delta'$ until:
+\begin{enumerate}
+	 \item a transition would cause the machine to move left. $M_A$ then accepts.
+	 \item a transition causes the machine to enter a halting state. $M_A$ then rejects.
+	 \item our linked list contains a cycle, meaning that there will be an infinite loop of right movements. We then reject.
+\end{enumerate} 
+
+Because $Q$ is a finite set, eventually condition three will be met, which means that $M_A$ will always halt.
+
+\begin{center}
+\begin{tikzpicture}[->,>=stealth',auto,node distance=2cm,
+  thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
+
+  \node[main node] (1) {$q_z$};
+  \node[main node] (2) [right of=1] {$q_y$};
+  \node[main node] (3) [right of=2] {...};
+  \node[main node] (4) [right of=3] {$q_k$};
+
+  \path[every node/.style={font=\sffamily\small}]
+    (1) edge node [right] {} (2)
+    (2) edge node [right] {} (3)
+    (3) edge node [right] {} (4)
+    (4) edge[bend right] node [left] {} (2);
+\end{tikzpicture}
+\qquad % <----------------- SPACE BETWEEN PICTURES
+\begin{tikzpicture}[->,>=stealth',auto,node distance=2cm,
+  thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
+
+  \node[main node] (1) {$q_z$};
+  \node[main node] (2) [right of=1] {$q_y$};
+  \node[main node] (3) [right of=2] {...};
+  \node[main node] (4) [right of=3] {$q_k$};
+
+  \path[every node/.style={font=\sffamily\small}]
+    (1) edge node [right] {} (2)
+    (2) edge node [right] {} (3)
+    (3) edge node [right] {} (4)
+    (4) edge[loop] node   {} (4);
+\end{tikzpicture}
+\end{center}
+
+\vfill
+
+\textbf{Claim: $\boldsymbol{M_A}$ decides $\boldsymbol{A}$}
+
+\begin{proof}
+In the trivial cases that $M$ moves left while reading its input $w$, $M_A$ will recognize this while running $M$ on $w$ and accept. Similarly, in the case that $M$ halts while reading $w$ after only moving right, $M_A$ will recognize this while running $M$ on $w$ and reject.
+
+At this point, $M$ will have reached the end of $w$. If $M$ is set to halt at the end of input, then $M_A$ rejects because $M$ never moved left before halting.
+
+If $M_A$ has not yet halted, then $M$ is at the end of input $w$ and in some state $q_x$. That is, $M$ is in the configuration $C = s_0 s_1 s_j \,\, q_x \,\, B B B B B \ldots$ It is clear that $M$ will never read a non-blank symbol before $M$ moves left (if ever).
+
+We then make a simple graph --- a linked list --- to track how $M$ will respond to blank input (as described above). If $M$ moves left while it is reading blank input, $M_A$ recognizes this and accepts. If $M$ halts while it has only moved right, $M_A$ recognizes this and rejects. If $M$ continually moves right and enters an infinite loop by entering a previously visited state, then $M_A$ will recognize this and reject (as $M$ will never move left). In this linked list, a cycle is when a state transitions to a previously-seen state when a blank is read. A transition of the following form is a cycle in the linked list, albeit a trivial one: $<q_z,B> \enspace \to \enspace <q_z,x,R>$. When a cycle is created, the machine will go right infinitely because the machine will continue reading blanks and continue changing states in a loop, as demonstrated by the cycle. Because there are a finite number of states, there are a finite number of transitions in $\delta'$, and thus this linked list is finite. Therefore, this linked list must have a cycle because every transition on the list must direct to another transition in $\delta'$ (there is no "end of list"). Therefore, in every case, $M_A$ decides $A$, and thus $A$ is decidable.
+\end{proof}
+
+\clearpage
+
+\subsubsection*{Part B}
+
+\noindent Consider the problem $$B = \{\pair{M, w} | M  \mbox{ moves left at least 4 times during its computation on } w\}$$
+
+\noindent \textbf{Is $\boldsymbol{B}$ decidable? Why or why not?}
+
+Yes, $B$ is decidable, because $A$ is decidable. There is no functional difference in decidability between a $A$ and $B$.
+
+Let $M_B$ be the machine that decides $B$. $M_B$ can run $M_A$ as a subroutine. $M_A$ can feed $\pair{M, w}$ into $M_A$. If $M_A$ rejects, $M_B$ rejects because $M$ did not move left. Otherwise, $M$ is in configuration $C_1 = s_0 s_1 \ldots  s_{(j-1)} \,\, q_x \,\, s_{j} s_{(j+1)} \ldots s_k$. $M_B$ can run $M_A$ as a subroutine again, except specifying the starting configuration as $C_1$ (resuming $M$ from where it last turned left). If $M_A$ rejects, $M_B$ rejects because $M$ did not move left a second time. Otherwise, $M$ \textit{did} move left a second time. This process can continue indefinitely to decide if $M$ makes $n$ left moves. Therefore, $B$ is decidable.
+
+\vfill
+
+\textbf{Claim: $\boldsymbol{M_B}$ decides $\boldsymbol{B}$}
+
+\begin{proof}
+There are fives cases.
+
+\textbf{Case 1: $\boldsymbol{M}$ does not move left on input $\boldsymbol{w}$.} In this case, $M_A$ rejects on input $\pair{M, w}$ immediately and thus $M_B$ rejects.
+
+\textbf{Case 2: $\boldsymbol{M}$ moves left once on input $\boldsymbol{w}$.} In this case, $M_A$ first accepts on input $\pair{M, w}$ because $M$ moved left on its input $w$. $M$ is paused in configuration $C_1$. When $M_A$ is run again on input $\pair{M, w}$ (with $M$ in configuration $C_1$), $M_A$ rejects because $M$ does not move left a second time; once $M$ is in configuration $C_1$ it will no longer move left. Thus, because $M_A$ rejected on its second call, $M_B$ rejects.
+
+\textbf{Case 3: $\boldsymbol{M}$ moves left twice on input $\boldsymbol{w}$.} This is similar to case 2. After $M$ moves left a second time, it will be in configuration $C_2$. When $M_A$ is run again on input $\pair{M, w}$ (with $M$ in configuration $C_2$), $M_A$ rejects because $M$ does not move left a third time; once $M$ is in configuration $C_2$ it will no longer move left. Thus, because $M_A$ rejected on its third call, $M_B$ rejects.
+
+\textbf{Case 4: $\boldsymbol{M}$ moves left thrice on input $\boldsymbol{w}$.} This is similar to cases 2 and 3. After $M$ moves left a third time, it will be in configuration $C_3$. When $M_A$ is run again on input $\pair{M, w}$ (with $M$ in configuration $C_3$), $M_A$ rejects because $M$ does not move left a fourth time; once $M$ is in configuration $C_3$ it will no longer move left. Thus, because $M_A$ rejected on its fourth call, $M_B$ rejects.
+
+\textbf{Case 5: $\boldsymbol{M}$ moves left at least four times during its computation on $\boldsymbol{w}$.} In this case, cases 1-4 are not correct, and $M$ successfully moved left four times. Because $M_A$ accepted on its fourth call, $M_B$ accepts.
+
+$M_B$ accepts on its input $\pair{M, w}$ when $M$ moves left at least four times on input $w$ and rejects in all other cases. Therefore, $M_B$ is a decider for $B$ and thus $B$ is decidable.
+\end{proof}
+
+\clearpage
+
+\subsection*{Problem 3}
+
+A language, $L_1$ can be concatenated with another language, $L_2$ (denoted $L_1 \circ L_2$) as follows:
+
+$$s \in L_1 \circ L_2 \leftrightarrow s = s_1 \circ s_2 \mbox{  for some } s_1 \in L_1 \mbox{ and some } s_2 \in L_2$$
+
+\noindent We can repeat this construction to create $L_1 \circ L_2 \circ L_3$
+
+\noindent Prove that if $L_1$ and $L_2$ are decidable then $L_1 \circ L_2 \circ \overline{L_1}$ is decidable. $(\overline{L_1} \mbox { is the compliment of } L_1$.)
+
+\textbf{Proof Idea}
+We first show that $\overline{L_1}$ is decidable. Then, we show that we can split any input $s$ into three parts $s_1$, $s_2$, and $s_3$, such that $s = s_1 \circ s_2 \circ s_3$. If $s_1 \in L_1$ and $s_12 \in L_2$ and $s_3 \in \overline{L_1}$, then $s \in (L_1 \circ L_2 \circ \overline{L_1})$. Otherwise, $s \notin (L_1 \circ L_2 \circ \overline{L_1})$.
+
+\begin{proof}
+If $L_1$ is decidable, then $\overline{L_1}$ is also decidable. Because $L_1$ is decidable, there is a machine $M_{L_1}$ that decides it. On an input $s$, a machine can decide $\overline{L_1}$ by running $M_{L_1}$ on input $s$. If it accepts, then $s \in L_1$ and thus $s \notin \overline{L_1}$. If it rejects, then $s \notin L_1$ and thus $s \in \overline{L_1}$.
+
+Because $L_1$, $L_2$, and $\overline{L_1}$ are decidable, a Turing machine $M$ can determine whether an input $s$ belongs to any of these languages.
+
+Let $M$ be a machine that takes an input $s$. There are a finite number of ways to split a finite input into three parts. For each possibility, $M$ splits $s$ into three parts $s_1$, $s_2$, and $s_3$, such that $s = s_1 \circ s_2 \circ s_3$. If $s_1 \in L_1$ and $s_2 \in L_2$ and $s_3 \in \overline{L_1}$, then $M$ accepts. Otherwise, $M$ tries another possible ($s_1$, $s_2$, $s_3$). If there are no further possibilities, then $M$ rejects.
+
+There are two cases: $s \in (L_1 \circ L_2 \circ \overline{L_1})$ and $s \notin (L_1 \circ L_2 \circ \overline{L_1})$.
+
+\textbf{Case 1: $\boldsymbol{s \in (L_1 \circ L_2 \circ \overline{L_1})}$} Because $s \in (L_1 \circ L_2 \circ \overline{L_1})$, s can be split into 3 parts $s_1$, $s_2$, and $s_3$, such that $s = s_1 \circ s_2 \circ s_3$ and $s_1 \in L_1$ and $s_2 \in L_2$ and $s_3 \in \overline{L_1}$. Because $M$ considers all possible ways to split $s$ into three parts, eventually $M$ will discover the splitting ($s_1, s_2, s_3)$. Because $s_1 \in L_1$ and $s_12 \in L_2$ and $s_3 \in \overline{L_1}$, $M$ accepts.
+
+\textbf{Case 2: $\boldsymbol{s \notin (L_1 \circ L_2 \circ \overline{L_1})}$} Because $s \notin (L_1 \circ L_2 \circ \overline{L_1})$, for every $s_1$, $s_2$, and $s_3$ such that $s = s_1 \circ s_2 \circ s_3$, $s_1 \notin L_1 \lor s_2 \in L_2 \lor s_3 \in \overline{L_1}$. $M$ considers all possible ways to split $s$ into three parts, but $M$ will never discover a splitting ($s_1, s_2, s_3)$ such that $s_1 \in L_1$ and $s_12 \in L_2$ and $s_3 \in \overline{L_1}$. Therefore, $M$ rejects.
+
+$M$ accepts in the case that its input $s \in (L_1 \circ L_2 \circ \overline{L_1})$ and rejects in the only other case that $s \notin (L_1 \circ L_2 \circ \overline{L_1})$. Therefore, $M$ is a decider for $L_1 \circ L_2 \circ \overline{L_1}$ and thus $L_1 \circ L_2 \circ \overline{L_1}$ is decidable.
+\end{proof}
+
+\pagebreak
+
+\clearpage
+
+\subsection*{Problem 4}
+\subsubsection*{Part A}
+Prove that the collection of decidable languages is closed under set difference.
+
+\textbf{Proof Idea} The goal of this proof is to show that if a language $A$ is decidable, and a language $B$ is decidable, then the set difference $A-B$ (the set of elements in $A$ and not in $B$) is also decidable. Because $A$ and $B$ are decidable, there are machines $M_A$ and $M_B$ that decide them. $M_A$ accepts if its input is in $A$ and rejects if it is not. $M_B$ accepts if its input is in $B$ and rejects if it is not. Therefore, we can construct a machine $M_{A-B}$ that decides if an input is in the set difference $A-B$. If an input is accepted by $M_A$ and rejected by $M_B$, then it is in $A$ and not in $B$, and thus is in the set difference of $A-B$.
+
+\sub{Construction of $\boldsymbol{M_{A-B}}$}
+
+Let $A$ and $B$ be any two decidable languages, and let $M_A$ and $M_B$ decide each language respectively.
+
+$M_{A-B}$ takes an input $w$. $M_{A-B}$ runs $w$ on $M_A$. If $M_A$ rejects then $M_{A-B}$ rejects. Otherwise, $M_{A-B}$ runs $w$ on $M_B$. If $M_B$ accepts then $M_{A-B}$ rejects. Otherwise, $M_{A-B}$ has not halted, and $M_{A-B}$ accepts.
+
+\sub{Claim: $\boldsymbol{M_{A-B}}$ decides $\boldsymbol{A-B}$}
+\begin{proof}
+There are four cases for an input $w$.
+
+\textbf{Case 1: $\boldsymbol{w \in A}$ and $\boldsymbol{w \in B}$:} $w \in B \implies w \notin M_{A-B}$. Because $w \in B$, $M_B$ accepts and thus $M_{A-B}$ rejects.
+
+\textbf{Case 2: $\boldsymbol{w \notin A}$ and $\boldsymbol{w \notin B}$:} $w \notin A \implies w \notin M_{A-B}$. Because $w \notin A$, $M_A$ rejects and thus $M_{A-B}$ rejects.
+
+\textbf{Case 3: $\boldsymbol{w \notin A}$ and $\boldsymbol{w \in B}$:} $w \notin A \implies w \notin M_{A-B}$. Because $w \notin A$, $M_A$ rejects and thus $M_{A-B}$ rejects.
+
+\textbf{Case 4: $\boldsymbol{w \in A}$ and $\boldsymbol{w \notin B}$:} $w \in A \land w \notin B \implies w \in M_{A-B}$. Because $w \in A$, $M_A$ accepts. Because $w \notin B$, $M_B$ rejects. Thus, $M_{A-B}$ accepts.
+
+$M_{A-B}$ accepts in the case that its input $w$ is in the set difference $A-B$. $M_{A-B}$ rejects in all other cases. Therefore, $M_{A-B}$ is a decider for $A-B$ and thus $A-B$ is decidable. Because $A$ and $B$ are any two generic decidable languages, $M_{A-B}$ is functional for any two decidable languages and therefore, the collection of decidable languages is closed under set difference.
+\end{proof}
+
+\clearpage
+
+\subsubsection*{Part B}
+Is the same true for computably enumerable (Turing-recognizable) languages?
+\vspace{3mm}
+
+\textbf{No.} Let $A$ and $B$ be recognizable languages. Then the set difference $A-B$ is the set of languages that are in $A$ and not in $B$. To prove an input $w$ is in the set difference, it must be proven that $w \in A$ and $w \notin B$. However, because $B$ is recognizable, it may not be decidable. If $B$ is not decidable, it is impossible to prove that $w \notin B$, and therefore, it is impossible to show that $w \in A-B$.
+
+\clearpage
+
+\subsection*{Problem 5}
+
+Consider the language, L, defined below:
+
+\vspace{4mm}
+
+$L = \{ \pair{M,x} \mid M \mbox{ halts on input } x \mbox{ and during the computation it enters at least 10 different non-halting}$ 
+  \hphantom{xxxxxxxxxx} $\mbox{ states at least once.} \}$
+
+\vspace{4mm}
+
+Prove that L is undecidable.
+
+\subsubsection*{Proof Idea}
+We reduce this problem by showing that the existence of a machine, $M_L$, that decides $L$ would enable us to decide HALT, which is known to be undecidable. By prepending ten dummy transitions at the beginning of $x$, we can force the second condition of $L$ to be true and thus isolate the first condition. Therefore, $M_L$'s halting state signifies whether $M$ halts on input $x$.
+
+\begin{proof}
+
+\textbf{Proof by contradiction.} We assume, for the sake of contradiction, that $L$ is decidable and $M_L$ decides $L$.
+
+Let $M_{HALT}$ be a machine that takes an input $\pair{M,x}$. $M_{HALT}$ creates $x_2$, a copy of $x$ that first enters 9 different dummy non-halting states and moves left, and then enters its original starting state to proceed as it would have started absent the modification. A Turing machine that turns left initially remains at the start of the tape, so the starting configuration of $x$ is identical to the configuration of $x_2$ after 10 moves. Then, $M_{HALT}$ runs $M_L$ on input $\pair{M,x_2}$. If $M_L$ accepts, $M_{HALT}$ accepts. If $M_L$ rejects, $M_{HALT}$ rejects. These are the only cases as $M_L$ is a decider.
+
+With any $\pair{M,x}$, $M$ on halts on $x$ or it does not halt on $x$.
+
+\textbf{Case 1: $\boldsymbol{M}$ halts on input $\boldsymbol{x}$.} If $M$ halts on $x$ it will halt on $x_2$ because our modification does not change the end behavior; it only adds ten dummy states at the start. Additionally, it is certain that $x_2$ will enter 10 different non-halting states because of its modification. Therefore, $M_L$ will accept on input $\pair{M,x_2}$ and $M_{HALT}$ accepts.
+
+\textbf{Case 2: $\boldsymbol{M}$ does not halt on $\boldsymbol{x}$.} If $M$ does not halt on $x$ it will not halt on $x_2$ because our modification does not change the end behavior; it only adds ten dummy states at the start. Therefore, $M_L$ will reject on input $\pair{M,x_2}$ and $M_{HALT}$ rejects.
+
+$M_{HALT}$ accepts in the case that $M$ halts on $x$ and rejects in the only other case that $M$ does not halt on $x$. Therefore, $M_{HALT}$ is a decider for HALT. This is a contradiction, as HALT is undecidable. Therefore, $M_L$ cannot exist and $L$ is not decidable.
+\end{proof}
+
+\end{document}
+
+

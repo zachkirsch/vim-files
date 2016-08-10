@@ -1,0 +1,31 @@
+
+
+struct
+        type error   = { severity : int, msg : string }
+        type summary = { severity : int, msg : string }
+
+        val nothing = NONE
+        fun <+> (NONE, s) = s
+         |  <+> (s, NONE) = s
+         |  <+> (s1 as SOME {severity = n1, msg = n2},
+                 s2 as SOME {severity = n1, msg = n2}) = if n1 > n2
+                                                         then s1
+                                                         else s2
+
+       val oneError = SOME
+end
+
+
+struct
+
+        type error = string
+
+        val nothing = NONE
+
+        fun <+> (NONE, s) = s
+         |  <+> (s, NONE) = s
+         |  <+> (SOME s1, SOME s2) = s2 @ s2
+
+        val oneError = SOME
+
+end

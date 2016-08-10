@@ -1,0 +1,190 @@
+# terminal prompt
+export PS1="\h:\W $ "
+
+# colors
+export LSCOLORS=GxFxCxDxBxegedabagaced
+
+# alias ls='ls -Fh'
+alias ls='ls -GFh'
+
+function vimt() {
+        USER=zkirsc01
+        SERVER=homework.cs.tufts.edu
+        remote_prefix="scp://${USER}@${SERVER}//"
+        remote_home="/h/zkirsc01"
+        vim="vim -p"
+
+        if [ "$#" -lt 1 ]; then
+                echo
+                echo "This will open files that are located on the Tufts server"
+                echo "Files are opened in vim, each in its own tab"
+                echo
+                echo "Usage:    vimt <filepaths on Tufts server>"
+                echo "Example:  vimt ~/.cshrc ~/Desktop/hi.txt"
+                echo
+                return
+        fi
+
+        FILES=()
+        for file in "$@" ; do
+            # Because ~ is converted automatically to $HOME by bash, replace
+            # back with remote home
+            file="${file//$HOME/$remote_home}"
+
+            FILES=("${FILES[@]}" "$remote_prefix$file")
+        done
+
+        $vim "${FILES[@]}"
+
+}
+
+function comp() {
+        dir="$(sh ~/.bin/comp.sh $@)"
+        if [ -d "$dir" ]
+        then
+                cd "$(sh ~/.bin/comp.sh $@)"
+        else
+                echo "No match: COMP $@"
+        fi
+}
+alias dev="cd ~/Documents/Developer"
+alias vbi="cd ~/Documents/Jobs/Debate/Victory/VBI\ 2015"
+alias ewb="cd ~/Documents/Developer/ewb"
+alias dr="cd ~/Documents/Debate/DebateRanker/"
+alias publish="./publish.sh"
+
+alias clean='/bin/rm -r *.dSYM 2> /dev/null;make clean 2> /dev/null'
+
+alias over80='~/.bin/len/len -ncpra -m 81'
+alias over30='~/.bin/over30/over30.sh'
+
+#alias subl='sublime'
+
+alias gs='git status '
+alias ga='git add '
+alias gb='git branch '
+alias gc='git commit'
+alias gd='git diff'
+alias go='git checkout '
+alias gk='gitk --all&'
+alias gx='gitx --all'
+alias find_git='find ~/Dropbox -d -name .git -print'
+
+### Added by the Heroku Toolbelt
+export PATH="$PATH:/usr/local/heroku/bin:"
+
+### Added by Homebrew
+export PATH=$PATH:/usr/local/bin:/usr/local/sbin
+
+### Java
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.7.0_45.jdk/Contents/Home
+
+# Setting PATH for Python 3.4
+# The orginal version is saved in .bash_profile.pysave
+PATH="${PATH}:/Library/Frameworks/Python.framework/Versions/3.4/bin"
+export PATH
+
+# add my bin to path
+PATH="${PATH}:/Users/Zach/.bin"
+export PATH
+
+# Wesley's len thing
+PATH="${PATH}:/Users/Zach/.bin/len"
+export PATH
+alias len='~/.bin/len/len'
+
+# bind history search to up and down arrows
+if [[ $- == *i* ]]
+then
+    bind '"\e[A": history-search-backward'
+    bind '"\e[B": history-search-forward'
+    bind '"\e[C": forward-char'
+    bind '"\e[D": backward-char'
+fi
+
+# Java
+export JAVA_HOME=$(/usr/libexec/java_home)
+
+# Setting PATH for Python 2.7
+# The orginal version is saved in .bash_profile.pysave
+PATH="${PATH}:/Library/Frameworks/Python.framework/Versions/2.7/bin"
+export PATH
+
+# vim symlink
+alias vimhelp="less ~/.bin/vim_help.txt"
+
+# Avoid duplicates
+export HISTCONTROL=ignoredups:erasedups
+# When the shell exits, append to the history file instead of overwriting it
+shopt -s histappend
+
+# After each command, append to the history file and reread it
+# export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
+
+# no .DS_Store/.git in bash autocomplete
+export FIGNORE=$FIGNORE:DS_Store:.git
+
+extract () {
+   if [ -f $1 ] ; then
+       case $1 in
+           *.tar.bz2)   tar xvjf $1    ;;
+           *.tar.gz)    tar xvzf $1    ;;
+           *.bz2)       bunzip2 $1     ;;
+           *.rar)       unrar x $1       ;;
+           *.gz)        gunzip $1      ;;
+           *.tar)       tar xvf $1     ;;
+           *.tbz2)      tar xvjf $1    ;;
+           *.tgz)       tar xvzf $1    ;;
+           *.zip)       unzip $1       ;;
+           *.Z)         uncompress $1  ;;
+           *.7z)        7z x $1        ;;
+           *)           echo "don't know how to extract '$1'..." ;;
+       esac
+   else
+       echo "'$1' is not a valid file!"
+   fi
+}
+
+# highlight a word in a file
+highlight () {
+    grep --color -E "$1|$" "${@:1}"
+}
+
+# MacPorts Installer addition on 2016-03-08_at_15:32:13: adding an appropriate PATH variable for use with MacPorts.
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+# Finished adapting your PATH environment variable for use with MacPorts.
+
+# get weather and strip out last two lines
+function weather() {
+        CITY="Boston"
+        if [[ "$#" -gt 0 ]]; then
+                CITY="$1"
+        fi
+        clear
+        curl -s "http://wttr.in/$CITY" | tail -r | tail -n +3 | tail -r
+}
+
+# skim
+alias skim='open -a /Applications/Skim.app'
+
+# forcing not to use rm
+alias trash="rmtrash"
+alias del="rmtrash"       # del / trash are shorter than rmtrash
+alias rm="echo Use 'del', or the full path i.e. '/bin/rm'"
+
+alias grep="grep --color=auto"
+
+# rvm
+source ~/.profile
+
+# ignore Gemfile warnings
+rvm rvmrc warning ignore allGemfiles
+
+# Load RVM into a shell session *as a function*
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+# bash completion
+if [ -f $(brew --prefix)/etc/bash_completion  ]; then
+    . $(brew --prefix)/etc/bash_completion
+fi
+

@@ -1,0 +1,34 @@
+#!/usr/bin/python
+
+LISTINGS = [("dir1\ndir2\n dir3\n  file2.jpeg\n file1.jpeg\nhello.gif",47),
+            ("",0)]
+
+def parse(line):
+    filename = line.lstrip(' ')
+    indent = len(line) - len(filename)
+    return (indent, filename)
+
+def is_image(filename):
+    extensions = (".png", ".gif", ".jpeg")
+    return filename.endswith(extensions)
+
+def sum_image_filepaths(listing):
+    lines = listing.split("\n")
+    total = 0
+    lengths = {}
+    for line in lines:
+        (indent, filename) = parse(line)
+        lengths[indent] = len(filename)
+        if is_image(filename):
+            slashes = indent + 1
+            total += reduce(lambda x,y: lengths[y] + x,
+                            xrange(indent+1),
+                            slashes)
+    return total
+
+if __name__ == "__main__":
+    for (listing, expected) in LISTINGS:
+        result = sum_image_filepaths(listing)
+        if result != expected:
+            print "Error: Calculated", result, "but expected", expected
+            print listing, "\n"

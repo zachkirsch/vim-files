@@ -1,0 +1,19 @@
+:PluginInstall :BundleInstall
+(installs plugins from .vimrc)
+
+
+Most vim improvements from:
+        https://realpython.com/blog/python/vim-and-python-a-match-made-in-heaven/
+
+Using macvim
+        https://github.com/macvim-dev/macvim/releases
+        ln -s /usr/local/bin/mvim vim
+
+
+
+YouCompleteMe installation
+        https://github.com/Valloric/YouCompleteMe
+        Copy mvim script from the MacVim download to /usr/local/bin/mvim and alias:
+                ignore symlink thing in the docs
+                ln -s /usr/local/bin/mvim /usr/local/bin/vim
+        just follow the directions

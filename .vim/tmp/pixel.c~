@@ -1,0 +1,28 @@
+/*
+ * pixel.c
+ * Dani Kupfer & Zach Kirsch | Comp 40 | HW 2
+ * 
+ * This is an implementation of a Pixel, which includes a row and
+ * a column.
+ *
+ */
+
+#include "stdlib.h"
+#include "assert.h"
+
+#include "pixel.h"
+
+Pixel* Pixel_new(int col, int row)
+{
+        Pixel *p = malloc(sizeof(*p));
+        assert( p != NULL );
+        p->row = row;
+        p->col = col;
+
+        return p;
+}
+
+void Pixel_free(Pixel *p)
+{
+        free(p);
+}

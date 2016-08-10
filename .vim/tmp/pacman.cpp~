@@ -1,0 +1,121 @@
+/*******************************************************************************
+ * Pacman Class Implementation                                                 *
+ * For Pacman Game (COMP 11 Project 1 | 2016 Spring)                           *
+ ******************************************************************************/
+
+#include <iostream>
+using namespace std;
+
+#include "pacman.h"
+
+/* constructor */
+Pacman::Pacman()
+{
+        alive = true;
+        num_moves = 0;
+        score = 0;
+        command = CMD_UP;
+        center();
+}
+
+void Pacman::center()
+{
+        col = COLS/2;
+        row = ROWS/2;
+        head = UP;
+}
+
+
+/* moves pacman;
+        arguments:
+                - board (2D char array)
+                - command: should be CMD_LFT, CMD_RGT, CMD_UP, or CMD_DWN
+                           as defined by constants.h
+*/
+bool Pacman::move(const char board[ROWS][COLS])
+{
+        num_moves++;
+        move_head(board);
+        return process_move(board);
+}
+
+/* changes the row/col of the head, and wraps if necessary
+ * if Pacman tries to run into a boulder, he doesn't move */
+void Pacman::move_head(const char board[ROWS][COLS])
+{
+        int new_row = row, new_col = col;
+
+        if (command == CMD_LFT) {
+                head = LEFT;
+                new_col--;
+        } else if (command == CMD_RGT) {
+                head = RIGHT;
+                new_col++;
+        } else if (command == CMD_UP) {
+                head = UP;
+                new_row--;
+        } else if (command == CMD_DWN) {
+                head = DOWN;
+                new_row++;
+        }
+
+        new_row = (new_row + ROWS) % ROWS;
+        new_col = (new_col + COLS) % COLS;
+
+        if (board[new_row][new_col] != BOULDER) {
+                row = new_row;
+                col = new_col;
+        }
+}
+
+/* dies if pacman ran into a ghost.
+ * if pacman ran into a dot, increments score and returns true.
+ * else returns false
+ */
+bool Pacman::process_move(const char board[ROWS][COLS])
+{
+        if (board[row][col] == GHOST)
+                die();
+
+
+        if (board[row][col] == DOT) {
+                score += DOT_REWARD;
+                return true;
+        }
+        else return false;
+}
+
+void Pacman::place_on_board(char board[ROWS][COLS])
+{
+        board[row][col] = head;
+}
+
+int Pacman::get_num_moves()
+{
+        return num_moves;
+}
+
+void Pacman::die()
+{
+        alive = false;
+}
+
+bool Pacman::is_alive()
+{
+        return alive;
+}
+
+void Pacman::add_to_score(int n)
+{
+        score += n;
+}
+
+int Pacman::get_score()
+{
+        return score;
+}
+
+void Pacman::set_command(char c)
+{
+        command = c;
+}

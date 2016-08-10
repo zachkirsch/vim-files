@@ -1,0 +1,43 @@
+NUM_CONTACTS = 1000
+NUM_FAMILIES = NUM_CONTACTS / 5
+MIN_FAMILIES_PER_CONTACT = 0
+MAX_FAMILIES_PER_CONTACT = 2
+NUM_BRANCHES = 100
+CITIES = [
+          "Redmond",
+          "Bellevue",
+          "Seattle",
+          "Tacoma",
+          "Renton",
+          "Issaquah",
+          "Sammamish",
+          "Kent",
+          "Everett",
+          "Covington"
+         ]
+SOCIAL_MEDIA = ["Facebook", "Twitter"]
+SOCIAL_MEDIA_POSTS = [
+                      "I love this bank!",
+                      "The lines are so long :(",
+                      "I can't wait to use an ATM!",
+                      "I wish I had more money!"
+                      "I had such a great time at the bank today",
+                      "I just love my bank"
+                     ]
+TOTAL_NUM_SOCIAL_MEDIA_POSTS = NUM_CONTACTS / 2
+NUM_DEPOSITS = NUM_CONTACTS * 10
+NUM_WITHDRAWALS = NUM_DEPOSITS
+
+CONTACTS_FILENAME = "Contact.csv"
+FAMILIES_FILENAME = "Family.csv"
+BRANCHES_FILENAME = "Branch.csv"
+SOCIAL_MEDIA_FILENAME = "SocialInteraction.csv"
+DEPOSITS_FILENAME = "BankDeposit.csv"
+WITHDRAWALS_FILENAME = "BankWithdrawal.csv"
+CONTACTFAMILY_FILENAME = "ContactFamily.csv"
+
+INCLUDE_HEADERS = True
+DELIMITER = ";"
+
+AVG_DEPOSITS_KPI_FILENAME = "Avg_Deposits_KPI.csv"
+AVG_WITHDRAWALS_KPI_FILENAME = "Avg_Withdrawals_KPI.csv"

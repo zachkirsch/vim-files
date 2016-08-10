@@ -1,0 +1,39 @@
+#!/usr/bin/python
+
+LISTING = "dir1\ndir2\n dir3\n  file2.jpeg\n file1.jpeg\nhello.gif"
+
+def indent_of(s):
+    return len(s) - len(s.lstrip(' '))
+
+def get_filepaths(filepaths, files, previous, prefix, indent):
+    if len(files) == 0:
+        return
+    first = files[0]
+    this_indent = indent_of(first)
+    first = first.lstrip(' ')
+    if (this_indent == indent):
+        files.pop(0)
+        this_filepath = prefix + "/" + first
+        filepaths.append(this_filepath)
+    elif this_indent > indent:
+        files.pop(0)
+        new_prefix = prefix + "/" + previous
+        this_filepath = new_prefix + "/" + first
+        filepaths.append(this_filepath)
+        get_filepaths(filepaths, files, first, new_prefix, indent + 1)
+    else:
+        return
+    get_filepaths(filepaths, files, first, prefix, indent)
+
+def get_images(filepaths):
+    extensions = (".jpeg", ".gif", ".png")
+    return filter(lambda f: f.endswith(extensions), filepaths)
+
+def sum_image_filepaths(listing):
+    paths = []
+    get_filepaths(paths, listing.split("\n"), "", "", 0)
+    print paths
+    return sum(map(len, get_images(paths)))
+
+if __name__ == "__main__":
+    print sum_image_filepaths(LISTING)

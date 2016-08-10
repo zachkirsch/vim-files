@@ -1,0 +1,192 @@
+(*
+* Tic Tac Toe Game. Implements the GAME signature.
+* For information, see https://en.wikipedia.org/wiki/Tic-tac-toe
+*
+* Wesley Wei & Zach Kirsch | 23 April 2016
+* Tufts University COMP 105: Programming Languages
+*)
+structure TTT :> GAME =
+        struct
+                structure Move = struct
+
+                (* move:
+                        (row, col)
+                        Indices are 0-based *)
+                type move = int * int
+
+                (* raised by fromString & makeMove *)
+                exception Move
+
+                (* prompts the user to move *)
+                fun prompt p = "[" ^ (Player.toString p) ^ "] >> "
+
+                (* converts a move to a string *)
+                fun toString p (r, c) =
+                let
+                        val upper = " upper"
+                        val middle = " middle"
+                        val lower = " lower"
+                        val left = " left"
+                        val right = " right"
+                        val prefix = "Player " ^ (Player.toString p)
+                                               ^ " moves to"
+                in
+                        prefix ^ (case (r, c)
+                                  of (0, 0) => upper  ^ left
+                                   | (0, 1) => upper  ^ middle
+                                   | (0, 2) => upper  ^ right
+                                   | (1, 0) => middle ^ left
+                                   | (1, 1) => middle
+                                   | (1, 2) => middle ^ right
+                                   | (2, 0) => lower  ^ left
+                                   | (2, 1) => lower  ^ middle
+                                   | (2, 2) => lower  ^ right
+                                   | _ => let exception ThisCan'tHappen
+                                          in raise ThisCan'tHappen end)
+                end
+
+                (* converts a string to move. raises Move if invalid move *)
+                fun fromString s =
+                let
+                        val ul = toString Player.X (0, 0)
+                        val uc = toString Player.X (0, 1)
+                        val ur = toString Player.X (0, 2)
+                        val cl = toString Player.X (1, 0)
+                        val cc = toString Player.X (1, 1)
+                        val cr = toString Player.X (1, 2)
+                        val ll = toString Player.X (2, 0)
+                        val lc = toString Player.X (2, 1)
+                        val lr = toString Player.X (2, 2)
+
+                        fun has a b = String.isSubstring a b
+                in
+                        if      (has s cc) orelse (s = "m")  then (1, 1)
+                        else if (has s ul) orelse (s = "ul") then (0, 0)
+                        else if (has s uc) orelse (s = "um") then (0, 1)
+                        else if (has s ur) orelse (s = "ur") then (0, 2)
+                        else if (has s cl) orelse (s = "ml") then (1, 0)
+                        else if (has s cr) orelse (s = "mr") then (1, 2)
+                        else if (has s ll) orelse (s = "ll") then (2, 0)
+                        else if (has s lc) orelse (s = "lm") then (2, 1)
+                        else if (has s lr) orelse (s = "lr") then (2, 2)
+                        else raise Move
+                end
+        end
+
+
+        (** functions for association lists of moves and players **)
+
+        fun find (((r, c), p)::rest) (r', c') =
+                if (r = r') andalso (c = c') then SOME p
+                else find rest (r', c')
+                | find [] k = NONE
+
+        fun bind ((r, c), p) l = ((r, c), p) :: l
+
+
+
+
+
+        (* A confiugration is a typle contains a player (whose turn it is) and
+           an association list from coordinates to players *)
+        type config = Player.player * (((int * int) * Player.player) list)
+
+        (* converts the confiugration to a ASCII representation *)
+        fun toString(p, b) =
+                let
+                        fun square2string (i) = case (find b (i div 3, i mod 3))
+                                                of SOME p => Player.toString p
+                                                |  NONE => " "
+                        val vert_row = "     |     |     \n"
+                        fun player_row (i) = "  " ^ (square2string i) ^ "  "
+                        fun player_row_string (lo) =
+                                (player_row lo) ^ "|" ^ (player_row (lo + 1))
+                                ^ "|" ^ (player_row (lo + 2)) ^ "\n"
+                        val horz_row = "_____|_____|_____\n"
+                in
+                (* return the board as a string, concatenated row by row *)
+                vert_row ^ (player_row_string 0) ^ horz_row ^
+                vert_row ^ (player_row_string 3) ^ horz_row ^
+                vert_row ^ (player_row_string 6) ^ vert_row ^ "\n" ^
+                (Player.toString(p)) ^ "'s turn.\n\n"
+        end
+
+        (* in the initial state, all spots are free *)
+        fun initial (p) = (p, [])
+
+        (* returns whose turn it is based on the configuration *)
+        fun whoseturn (p, _) = p
+
+        (* given a confiugration, returns a Player.outcome options of the result
+           of the game, or NONE if the game is still in progress *)
+        fun outcome (p, b) =
+        let
+                fun allEqual (SOME a, SOME b, SOME c) = (a = b) andalso (b = c)
+                  | allEqual _ = false
+
+                (* Get the player option at each square on the board *)
+                val ul = find b (0, 0)
+                val uc = find b (0, 1)
+                val ur = find b (0, 2)
+                val cl = find b (1, 0)
+                val cc = find b (1, 1)
+                val cr = find b (1, 2)
+                val ll = find b (2, 0)
+                val lc = find b (2, 1)
+                val lr = find b (2, 2)
+
+                val isFull = List.all (fn (SOME _) => true
+                                            | _        => false)
+                                      [ul, uc, ul, cl, cc, cr, ll, lc, lr]
+        in
+                if      allEqual (ul, uc, ur) then SOME (Player.WINS (valOf ul))
+                else if allEqual (cl, cc, cr) then SOME (Player.WINS (valOf cl))
+                else if allEqual (ll, lc, lr) then SOME (Player.WINS (valOf ll))
+                else if allEqual (ll, lc, lr) then SOME (Player.WINS (valOf ll))
+                else if allEqual (ul, cl, ll) then SOME (Player.WINS (valOf ul))
+                else if allEqual (uc, cc, lc) then SOME (Player.WINS (valOf uc))
+                else if allEqual (ur, cr, lr) then SOME (Player.WINS (valOf ur))
+                else if allEqual (ul, cc, lr) then SOME (Player.WINS (valOf ul))
+                else if allEqual (ur, cc, ll) then SOME (Player.WINS (valOf ur))
+                else if (not isFull)          then NONE
+                else SOME Player.TIE
+        end
+
+        (* returns true if the given configuration represents a finished game,
+           and false otherwise *)
+        fun finished c = case outcome c
+                          of NONE => false
+                          |  _    => true
+
+        (* Confiuguration -> coordinate:   (player, board) -> (row, col).
+           This raises the Move exception if a player attempts to move into a
+           spot that is already filled, or attempts to move after the game has
+           completed *)
+        fun makemove (p, b) (r, c) =
+                let val otherplayer = Player.otherplayer p
+                in
+                        if finished (p, b) then raise Move.Move
+                        else case find b (r, c)
+                              of NONE   => (otherplayer, bind ((r, c), p) b)
+                               | SOME p => raise Move.Move
+                end
+
+        (* returns a list of all possible moves, given a configuration *)
+        fun possmoves (p, b) =
+                let fun findMoves (r, c) =
+                        let val square = find b (r, c)
+                        in
+                                case (square, (r, c))
+                                 of (NONE,   (2, 2)) => [(2, 2)]
+                                 |  (SOME _, (2, 2)) => []
+                                 |  (NONE,   (r, 2)) =>
+                                                (r, 2) :: (findMoves (r + 1, 0))
+                                 |  (SOME _, (r, 2)) => findMoves (r + 1, 0)
+                                 |  (NONE,   (r, c)) =>
+                                                (r, c) :: (findMoves (r, c + 1))
+                                 |  (SOME _, (r, c)) => findMoves (r, c + 1)
+                        end
+                in findMoves (0, 0)
+                end
+end
+

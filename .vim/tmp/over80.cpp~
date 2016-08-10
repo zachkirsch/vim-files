@@ -1,0 +1,73 @@
+#include <fstream>
+#include <iostream>
+
+//the following are UBUNTU/LINUX ONLY terminal color codes.
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define YELLOW  "\033[33m"      /* Yellow */
+#define BLUE    "\033[34m"      /* Blue */
+#define MAGENTA "\033[35m"      /* Magenta */
+#define CYAN    "\033[36m"      /* Cyan */
+#define WHITE   "\033[37m"      /* White */
+#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+
+const int MAX_LENGTH = 80;
+const int TAB_LENGTH = 8;
+
+bool contains(std::string string_to_check, std::string string_to_find);
+bool check_lines(std::string filename, std::string color);
+bool can_exec(const char *file);
+
+int main (int argc, char* argv[]) {
+
+	std::string colors[] = {BOLDMAGENTA, BOLDCYAN};
+	int num_colors = 2;
+	int color_index = 0;
+
+	for (int i = 1; i < argc; i++) {
+		if ( check_lines(argv[i], colors[color_index]) )
+			color_index = (color_index + 1) % num_colors;
+	}
+
+	return 0;
+}
+
+bool contains(std::string string_to_check, std::string string_to_find) {
+	return string_to_check.find(string_to_find) != std::string::npos;
+}
+
+bool check_lines(std::string filename, std::string color) {	
+	std::string line;
+	std::ifstream file (filename );
+
+	bool some_lines_too_long = false;
+	int line_number = 1;
+
+	while (std::getline(file, line)) {
+		int line_length = 0;
+		for (int i = 0; i < (int) line.length(); i++) {
+			if (line[i] == '\t') line_length += TAB_LENGTH;
+			else line_length++;
+		}
+		if (line_length > MAX_LENGTH) {
+			std::cout << color
+				<< "File: " << filename << " | "
+				<< "Line " << line_number  << " | "
+				<< line_length << " Characters"
+				<< RESET << std::endl;
+			std::cout << line << std::endl << std::endl;
+			some_lines_too_long = true;
+		}
+		line_number++;
+	}
+	return some_lines_too_long;
+}

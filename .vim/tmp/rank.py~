@@ -1,0 +1,308 @@
+import sqlite3
+
+
+
+# pairwise functions - bijectino from NxN -> N
+def get_cantor(a, b):
+    if not a or not str(a).strip(): a = 0
+    if not b or not str(b).strip(): b = 0
+    return 0.5 * (a + b) * (a + b + 1) + max(a, b)
+
+def get_event(c, round_id):
+    c.execute("""SELECT "tournament" FROM "rounds" WHERE "id" = ?
+              """, (round_id,))
+    tourney_id = c.fetchone()[0]
+    c.execute("""SELECT "event" FROM "tournaments" WHERE "id" = ?
+              """, (tourney_id,))
+    return c.fetchone()[0]
+
+def get_date(c, round_id):
+    c.execute("""SELECT "tournament" FROM "rounds" WHERE "id" = ?
+              """, (round_id,))
+    tourney_id = c.fetchone()[0]
+    c.execute("""SELECT "date" FROM "tournaments" WHERE "id" = ?
+              """, (tourney_id,))
+    return c.fetchone()[0]
+
+
+def get_elo(conn, t1, t2, event):
+    # get elo
+    c = conn.cursor()
+    print t1
+    print t2
+    cantor = get_cantor(t1, t2)
+    c.execute("""SELECT "elo" from "results" WHERE "event" = ? AND "ids_cantor"
+              = ? """, (event, cantor))
+    record = c.fetchone()
+
+    elo = 1000.0
+    if not record: # not in there yet -> we have to insert
+        c.execute("""INSERT INTO "results" (ids_cantor, id_1, id_2, event, elo)
+                  VALUES (?, ?, ?, ?, ?) """, (cantor, t1, t2, event, elo))
+        # commit changes
+        conn.commit()
+    else:
+        elo = record["elo"]
+
+    return elo
+
+
+
+
+def get_new_rating(rating, opp_rating, outcome, ballot_diff, prelim):
+
+    if not ballot_diff:
+        ballot_diff = 1
+
+    expected_result = 1 / ( 1 + (10 ** ((opp_rating - rating)/400)) )
+    Elo_factor = 20
+    if not prelim and ballot_diff == 1:
+        Elo_factor *= 1.5
+
+    ballot_factor = 1.0
+    if ballot_diff > 2:
+        ballot_factor = ( 11.0 + float(ballot_diff)) / 8.0
+    elif ballot_diff > 1:
+        ballot_factor = 1.5
+
+    return rating + (Elo_factor * ballot_factor * ( outcome - expected_result  ))
+
+
+def same_season(date1, date2):
+    d1 = date1.split("-")
+    d2 = date2.split("-")
+
+    y1 = int(d1[0])
+    y2 = int(d2[0])
+    m1 = int(d1[1])
+    m2 = int(d2[1])
+
+    if abs(y1-y2) > 1: # years more than 1 apart
+        return False
+    elif y1 > y2:
+        return m1 < 9 and m2 >= 9
+    elif y1 < y2:
+        return m1 >= 9 and m2 <  9
+    else: # same year
+        return (m1 >= 9 and m2 >= 9) or (m1 < 9 and m2 < 9)
+
+
+def clear_record_if_nec(c, t1, t2, event, date):
+    cantor = get_cantor(t1, t2)
+    c.execute("""SELECT "last_competed" from "results" WHERE "event" = ?
+              AND "ids_cantor" = ? """, (event, cantor))
+    last_competed =  c.fetchone()
+    if last_competed and last_competed[0]:
+        if not same_season(last_competed[0], date):
+            # clear_record
+            c.execute("""UPDATE "results" SET "wins" = 0, "losses" = 0, "ties"
+                      = 0 WHERE "event" = ? AND "ids_cantor" = ? """, (event,
+                                                                       cantor))
+
+def update_w_elo(c, t1, t2, event, new_elo, date):
+    cantor = get_cantor(t1, t2)
+    clear_record_if_nec(c, t1, t2, event, date)
+    c.execute("""UPDATE "results" SET "elo" = {2}, "last_competed" = "{3}",
+              "wins" = "wins" + 1 WHERE "event" = "{1}" AND "ids_cantor" =
+              "{0}" """.format(cantor, event, new_elo, date))
+
+def update_l_elo(c, t1, t2, event, new_elo, date):
+    cantor = get_cantor(t1, t2)
+    clear_record_if_nec(c, t1, t2, event, date)
+    c.execute("""UPDATE "results" SET "elo" = {2}, "last_competed" = "{3}",
+              "losses" = "losses" + 1 WHERE "event" = "{1}" AND "ids_cantor" =
+              "{0}" """.format(cantor, event, new_elo, date))
+
+def update_t_elo(c, t1, t2, event, new_elo, date):
+    cantor = get_cantor(t1, t2)
+    clear_record_if_nec(c, t1, t2, event, date)
+    c.execute("""UPDATE "results" SET "elo" = {2}, "last_competed" = "{3}",
+              "ties" = "ties" + 1 WHERE "event" = "{1}" AND "ids_cantor" =
+              "{0}" """.format(cantor, event, new_elo, date))
+
+def get_orig(c, id):
+    c.execute("""SELECT "redundancy_id" from "debaters" WHERE "id" = ? """,
+              (id,))
+    orig = c.fetchone()
+    if orig and orig[0] and str(orig[0]).strip():
+        return get_orig(c, orig[0])
+    else: return id
+
+def get_team_code(team):
+    code = ""
+    if team[0]["first_name"]:
+        code = team[0]["first_name"] + " " + team[0]["last_name"]
+    else:
+        code = team[0]["last_name"]
+
+    if len(team) > 1:
+        if team[1]["first_name"]:
+            code += " and " + team[1]["first_name"] + " " + team[1]["last_name"]
+        else:
+            code += " and " + team[1]["last_name"]
+    code += " (" + team[0]["school"] + ")"
+
+    return code
+
+
+
+def search_for(c, search_term, w1, w2, l1, l2, round_name, debug):
+    c.execute(""" SELECT first_name, last_name, school  FROM "debaters" WHERE
+              id = ? OR id = ? """, (w1, w2))
+    winners = c.fetchall()
+    c.execute(""" SELECT first_name, last_name, school  FROM "debaters" WHERE
+              id = ? OR id = ? """, (l1, l2))
+    losers = c.fetchall()
+
+    found = False
+    for w in winners:
+        if search_term in w["last_name"]:
+            found = True
+
+    if not found:
+        for l in losers:
+            if search_term in l["last_name"]:
+                found = True
+
+    to_print = ""
+    if not debug:
+        to_print = get_team_code(winners) + " defeated " + get_team_code(losers)
+    else:
+        w_ids = str(w1) + ", " + str(w2)
+        l_ids = str(l1) + ", " + str(l2)
+        to_print = get_team_code(winners) + " (" + w_ids + ")  " + \
+        "defeated " + get_team_code(losers) + "( " + l_ids + ")"
+    if found:
+       print round_name
+       print to_print
+       print
+
+def update_all_results_table(c, round, t1, t2, opp_cantor, new_elo, result):
+    cantor = get_cantor(t1, t2)
+
+    # get wins, losses, ties
+    c.execute(""" SELECT wins, losses, ties FROM "results"
+                  WHERE ids_cantor = ? """, (cantor,))
+    record = c.fetchone()
+    wins   = record[0]
+    losses = record[1]
+    ties   = record[2]
+
+    c.execute("""
+              INSERT INTO "all_results" ( ids_cantor, id_1, id_2, round,
+              opp_cantor, result, elo, wins, losses, ties )
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              """, (cantor, t1, t2, round, opp_cantor, result, new_elo, wins,
+                    losses, ties))
+
+# add snapshot with record/elo at this point in time to "all_results" table
+def add_result(c, round, w1, w2, new_w_elo, l1, l2, new_l_elo, tie_factor):
+    ### WINNER ###
+    update_all_results_table(c, round, w1, w2, get_cantor(l1, l2), new_w_elo,
+                            1 - tie_factor)
+
+    ### LOSER ###
+    update_all_results_table(c, round, l1, l2, get_cantor(w1, w2), new_l_elo,
+                             0 + tie_factor)
+
+
+def rank():
+    with sqlite3.connect("rankings.db") as connection:
+        connection.row_factory = sqlite3.Row # for using records as dicts
+
+        # get a cursor object used to execute SQL commands
+        c = connection.cursor()
+
+        # empty results
+        c.execute("""DELETE FROM "results" WHERE 1=1""")
+        c.execute("""DELETE FROM "all_results" WHERE 1=1""")
+
+        # get number of rounds (for progress)
+        c.execute("""SELECT COUNT(*) FROM "rounds" """)
+        num_rounds = float(c.fetchone()[0])
+
+        c.execute("""SELECT * FROM "pairings" JOIN "rounds" ON
+                     pairings.round = rounds.id JOIN "tournaments" on
+                     rounds.tournament = tournaments.id ORDER BY
+                     tournaments.date ASC, tournaments.id, rounds.number ASC""")
+        pairings = c.fetchall()
+
+        search = False
+        # debug  = search and True
+        # search_term = "Vovata"
+        prog = not search
+
+        if prog: last_prog = -1
+        for pairing in pairings:
+
+            # progress
+            if prog:
+                this_prog = int(pairing["round"] / num_rounds * 100)
+                if this_prog > last_prog:
+                    print str(this_prog) + "% Complete"
+                    last_prog = this_prog
+
+            # get event
+            event = get_event(c, pairing["round"])
+
+            # get_date
+            date = get_date(c, pairing["round"])
+
+            # get winners
+            w1 = pairing["winner_id1"]
+            w1 = get_orig(c, w1)
+
+            w2 = pairing["winner_id2"]
+            w2 = get_orig(c, w2)
+
+            w_elo = get_elo(connection, w1, w2, event)
+
+            # get losers
+            l1 = pairing["loser_id1"]
+            l1 = get_orig(c, l1)
+
+            l2 = pairing["loser_id2"]
+            l2 = get_orig(c, l2)
+
+            l_elo = get_elo(connection, l1, l2, event)
+
+
+            # get prelim
+            c.execute("""SELECT "name" FROM "rounds" WHERE "id" = ?
+                      """, (pairing["round"],))
+            round_name = c.fetchone()[0]
+            prelim = " Round " in round_name
+
+            # get ballot differential
+            ballot_diff = pairing["ballot_diff"]
+
+            # get tie
+            tie = ballot_diff == 0
+            tie_factor = 0.5 if tie else 0
+
+            # get new elo's
+            new_w_elo = get_new_rating(w_elo, l_elo, 1 - tie_factor,
+                                       ballot_diff, prelim)
+            new_l_elo = get_new_rating(l_elo, w_elo, 0 + tie_factor,
+                                       ballot_diff, prelim)
+
+            if search:
+                search_for(c, search_term, w1, w2, l1, l2, round_name, debug)
+
+            if tie:
+                update_t_elo(c, w1, w2, event, new_w_elo, date)
+                update_t_elo(c, l1, l2, event, new_l_elo, date)
+            else:
+                update_w_elo(c, w1, w2, event, new_w_elo, date)
+                update_l_elo(c, l1, l2, event, new_l_elo, date)
+            connection.commit()
+            add_result(c, pairing["round"], w1, w2, new_w_elo, l1, l2,
+                       new_l_elo, tie_factor)
+            connection.commit()
+
+
+#################################################
+#############      MAIN PROGRAM     #############
+#################################################
+
+rank()

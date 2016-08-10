@@ -1,0 +1,55 @@
+
+import sqlite3
+from find_dupes import get_max_id, get_min_id, ask_dupes_from_table
+
+# if A is a dupe of B, and B is a dupe of ... D, A becomes a dupe of C
+#
+# also checks if any cases where X was marked as a dupe in Duplicates.csv,
+# but X is not marked as a dupe in the database
+def clean_up(connection):
+
+    c = connection.cursor()
+
+    max_id = get_max_id(c)
+    min_id = get_min_id(c)
+    id2check = min_id
+
+    while id2check <= max_id:
+        c.execute("""SELECT * FROM "debaters" WHERE "id" = ? """,
+                  (id2check,))
+        team_info = c.fetchone()
+        if team_info:
+            # if A is a dupe of B, get the original (D)
+            # mark A as a dupe of D
+            x = team_info # walks through dupes to find original
+
+            # while there are more to follow
+            print x
+            print x["redundancy_id"]
+            while x["redundancy_id"] and str(x["redundancy_id"]).strip():
+                c.execute("""SELECT * FROM "debaters" WHERE "id" = ? """,
+                          (x["redundancy_id"],))
+                x = c.fetchone()
+
+            if x["id"] is not team_info["id"]: # if it's moved...
+                c.execute("""UPDATE "debaters" SET "redundancy_id" = ? WHERE
+                          "id" = ?  """, (x["id"], id2check))
+                connection.commit()
+
+            # if X is a duplicate (from Duplicates.csv), make sure it's marked
+            # as a dupe in the database
+            # if team_info["dupe_old_team_id"] and not \
+                    # team_info["redundancy_id"]:
+                #     print "Should have a duplicate: ID = " + str(id2check)
+
+        id2check += 1
+
+
+#################################################
+#############      MAIN PROGRAM     #############
+#################################################
+
+with sqlite3.connect("rankings.db") as connection:
+    connection.row_factory = sqlite3.Row # for using records as dicts
+    ask_dupes_from_table(connection)
+    clean_up(connection)

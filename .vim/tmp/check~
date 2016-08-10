@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# checks if functions are over 30 lines or lines are over 80 columns
+# thanks to http://stackoverflow.com/questions/8213328/bash-script-find-output-to-array for turning find output into array
+
+over30="$HOME/.bin/over30/over30"
+over80="$HOME/.bin/len/len -ncpra -m 81"
+
+recurse=false # whether to recurse on the arguments provided
+
+while getopts ":rh" opt; do
+  case $opt in
+    r)
+        recurse=true
+        ;;
+    h)
+        echo "Checks for lines over 80 columns and functions over 30 lines"
+        echo "Options:"
+        echo "  -r : recursive"
+        echo "  -h : show this help text and exit"
+        exit 1
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+  esac
+done
+shift $(expr $OPTIND - 1 ) # shift command line arguments out
+
+files=("$@")
+
+# recurse if specified
+if [[ "$recurse" = true ]]; then
+    file_list=()
+    while IFS= read -d $'\0' -r file ; do
+        file_list=("${file_list[@]}" "$file")
+    done < <(find "${files[@]}" -print0)
+    files=("${file_list[@]}")
+fi
+
+echo "${files[@]}"
+# get .c and .cpp files
+file_list=()
+while IFS= read -d $'\0' -r file ; do
+file_list=("${file_list[@]}" "$file")
+done < <(find "${files[@]}" -maxdepth 0 \( -name \*.cpp -o \
+                                           -name \*.c \) -print0)
+c_cpp_files=("${file_list[@]}")
+
+echo "${c_cpp_files[@]}"
+
+$over30 "${c_cpp_files[@]}"
+$over80 "${files[@]}"

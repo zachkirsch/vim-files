@@ -1,0 +1,88 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <string>
+using namespace std;
+#include "statedb.h"
+
+void readdata(State * states[]);
+State * getState (ifstream& file);
+City * getCity (ifstream& file);
+
+int main () {
+        ifstream file ("cities.txt");
+        int num=0;
+        if (file.is_open()) {
+                file >> num;
+                file.ignore();
+        }
+        StateDB DB;
+        DB.amount = num;
+        DB.states = new State * [num];
+        if (file.is_open()) {
+                for (int i=0; i<num; i++) {
+                        DB.states[i] = getState(file);
+                }
+        }
+        else {
+                cout << "File could not be opened.\n";
+                return 0;
+        }
+        cout << "Please enter a state: ";
+        string ustate;
+        cin >> ustate;
+        cout << endl;
+        for (int i=0; i<(num+1); i++) {
+                if (i==num) {
+                        cout << "That state could not be found.\n";
+                }
+                else if (DB.states[i]->statename.compare(ustate)==0) {
+                        cout << "The cities in " << ustate << " are:\n";
+                        for (int j=0; j<DB.states[i]->number; j++) {
+                                cout << DB.states[i]->cities[j]->cityname << endl;
+                        }
+                        i=num;
+                }
+        }
+        cout << endl << "Please enter a city: ";
+        string ucity;
+        cin >> ucity;
+        cout << endl;
+        for (int i=0; i<(num+1); i++) {
+                if (i == num) {
+                        cout << "That city could not be found.\n";
+                        break;
+                }
+                for (int j=0; j<DB.states[i]->number; j++) {
+                        if (DB.states[i]->cities[j]->cityname.compare(ucity)==0) {
+                                cout << ucity << " is in " << DB.states[i]->statename << endl;
+                                i = num-1;
+                                break;
+                        }
+                }
+        }
+        int pop=0;
+        cin >> pop;
+        return 0;
+}
+
+State * getState (ifstream& file) {
+        State * st = new State;
+        getline(file, st->statename);
+        int size=0;
+        file >> size;
+        cout << size << endl;
+        file.ignore();
+        st->number=size;
+        st->cities = new City * [size];
+        for (int i=0; i<size; i++) {
+                st->cities[i] = getCity (file);
+        }
+        return st;
+}
+
+City * getCity (ifstream& file) {
+        City * c = new City;
+        getline(file, c->cityname);
+        return c;
+}

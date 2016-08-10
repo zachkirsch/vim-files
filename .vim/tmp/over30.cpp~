@@ -1,0 +1,124 @@
+#include <fstream>
+#include <iostream>
+#include <stack>
+#include <string>
+
+//the following are UBUNTU/LINUX ONLY terminal color codes.
+#define RESET           "\033[0m"               /* Reset        */
+#define BLACK           "\033[30m"              /* Black        */
+#define RED             "\033[31m"              /* Red          */
+#define GREEN           "\033[32m"              /* Green        */
+#define YELLOW          "\033[33m"              /* Yellow       */
+#define BLUE            "\033[34m"              /* Blue         */
+#define MAGENTA         "\033[35m"              /* Magenta      */
+#define CYAN            "\033[36m"              /* Cyan         */
+#define WHITE           "\033[37m"              /* White        */
+#define BOLDBLACK       "\033[1m\033[30m"       /* Bold Black   */
+#define BOLDRED         "\033[1m\033[31m"       /* Bold Red     */
+#define BOLDGREEN       "\033[1m\033[32m"       /* Bold Green   */
+#define BOLDYELLOW      "\033[1m\033[33m"       /* Bold Yellow  */
+#define BOLDBLUE        "\033[1m\033[34m"       /* Bold Blue    */
+#define BOLDMAGENTA     "\033[1m\033[35m"       /* Bold Magenta */
+#define BOLDCYAN        "\033[1m\033[36m"       /* Bold Cyan    */
+#define BOLDWHITE       "\033[1m\033[37m"       /* Bold White   */
+
+const int MAX_LENGTH = 30;
+
+bool contains(std::string string_to_check, std::string string_to_find);
+bool check_lines(std::string filename, std::string color);
+void print_message(std::string color, std::string filename,
+                std::string function_name, int length);
+std::string remove_brackets(std::string s);
+std::string trim(std::string str);
+
+int main (int argc, char* argv[]) {
+        std::string colors[] = {BOLDGREEN, BOLDBLUE};
+        int num_colors = 2;
+        int color_index = 0;
+        for (int i = 1; i < argc; i++) {
+                if ( check_lines(argv[i], colors[color_index]) )
+                        color_index = (color_index + 1) % num_colors;
+        }
+
+        return 0;
+}
+
+bool contains(std::string string_to_check, std::string string_to_find) {
+        return string_to_check.find(string_to_find) != std::string::npos;
+}
+
+bool check_lines(std::string filename, std::string color) {
+
+        std::string line;
+        std::ifstream file (filename );
+
+        bool some_functions_too_long = false;
+        int line_number = 0;
+        std::string function_name;
+        std::stack<std::string> s;
+
+        while (std::getline(file, line)) {
+                if (s.empty()) { // first line in function
+                        std::string new_name = remove_brackets(line);
+                        new_name = trim(new_name);
+                        if (new_name != "") function_name = new_name;
+                }
+                line_number++; // start next line
+                for (int i = 0; i < (int) line.length(); i++) {
+                        if (line[i] == '{') {
+                                s.push("{"); // push opening braces
+                        }
+                        else if (line[i] == '}') {
+                                if (s.empty() or s.top() != "{") {
+                                        std::cerr << BOLDRED
+                                                  << filename << std::endl
+                                                  << "Unmatched braces"
+                                                  << " on line "
+                                                  << line_number << "\n\n"
+                                                  << RESET;
+                                        exit(1);
+                                }
+                                else s.pop(); // pop when } is found
+                        }
+                }
+                if (s.empty()) {
+                        // if empty (or too long)
+                        if (line_number > MAX_LENGTH or line_number == 2) {
+                                some_functions_too_long = true;
+                                print_message(color,filename,
+                                                function_name, line_number);
+                        }
+                        line_number = 0;
+                }
+        }
+        return some_functions_too_long;
+}
+void print_message(std::string color, std::string filename,
+                std::string function_name, int length) {
+        std::cout << color
+                << "File: " << filename << " | "
+                << "Number of lines: " << length << std::endl << RESET
+                << "Function: " << function_name
+                << std::endl << std::endl;
+}
+
+std::string remove_brackets(std::string s) {
+        std::string temp = "";
+        for (int i = 0; i < (int) s.length(); i++)
+                if (s[i] != '{' and s[i] != '}') // and s[i] != ' ')
+                        temp += s[i];
+        return temp;
+}
+
+
+/* TRIMMING -
+ * http://www.codeproject.com/Articles/10880/A-trim-implementation-for-std-string
+ */
+std::string trim(std::string str)
+{
+        str.erase(str.begin(), find_if(str.begin(), str.end(),
+                                [](char& ch)->bool { return !isspace(ch); }));
+        str.erase(find_if(str.rbegin(), str.rend(),
+                                [](char& ch)->bool { return !isspace(ch); }).base(), str.end());
+        return str;
+}

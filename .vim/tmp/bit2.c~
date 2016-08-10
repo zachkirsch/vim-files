@@ -1,0 +1,93 @@
+/*
+ * Bit2 Implementation
+ * Dani Kupfer & Zach Kirsch | Comp 40 | HW 2
+ * 
+ * This is an implementation of an unboxed two-dimensional array of bits.
+ * Bits can be either 0 or 1.
+ *
+ * It is a checked run-time error:
+ *  - To attempt to access the array with an out of bounds reference
+ *  - If there is a failure allocating needed memory
+ */
+
+
+#include <stdlib.h>
+#include <stdio.h>
+#include "bit2.h"
+#include "assert.h"
+#include "bit.h"
+
+#include "array2_helpers.h"
+
+#define T Bit2_T
+
+struct T  {
+        Bit_T a;
+        int   width;
+        int   height;
+};
+
+
+T Bit2_new (int width, int height)
+{
+        T array = malloc(sizeof(*array));
+        assert(array != NULL);
+        
+        array->a = Bit_new(width * height);
+        array->width = width;
+        array->height = height;
+        
+        return array;
+}
+
+void Bit2_free (T *array)
+{
+        Bit_free( & ( (*array)->a) );
+        free(*array);    
+}
+
+int Bit2_put (T array, int col, int row, int val)
+{
+        int index = get_index(col, row, array->width);
+        return Bit_put(array->a, index, val);
+}
+
+int Bit2_get (T array, int col, int row)
+{
+        int index = get_index(col, row, array->width);
+        return Bit_get(array->a, index);
+}
+
+int  Bit2_width (T array)
+{
+        return (array->width);
+}
+
+int  Bit2_height (T array)
+{
+        return (array->height);        
+}
+        
+void Bit2_map_col_major (T array, 
+                void apply(int col, int row, T array, int bit, void *cl),
+                void *cl)
+{
+        for (int c = 0; c < array->width; c++) {
+                for (int r = 0; r < array->height; r++) { 
+                        apply (c, r, array, Bit2_get(array, c, r), cl);
+                }
+        }
+}
+                   
+void Bit2_map_row_major (T array, 
+                void apply(int col, int row, T array, int bit, void *cl),
+                void *cl)
+{
+        for (int r = 0; r < array->height; r++) { 
+                for (int c = 0; c < array->width; c++) {
+                        apply (c, r, array, Bit2_get(array, c, r), cl);
+                }
+        }
+}
+
+#undef T

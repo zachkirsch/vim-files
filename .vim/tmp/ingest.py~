@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+
+import json
+import copy
+from course import Course
+
+def load_courses():
+    with open('all.json', 'r') as file:
+        courses = json.loads(file.read())["searchResults"]
+        return map(lambda c: Course(c), courses)
+
+
+def any_overlap(courses):
+    sections = map(lambda c: c.sections["Lecture"][0], courses)
+    for s1 in sections:
+        for s2 in sections:
+            if s1 != s2 and s1.overlaps(s2):
+                return True
+    return False
+
+# returns whether the given course has n lecture sections
+def n_lectures(course, n):
+    return len(course.sections["Lecture"]) == n
+
+def has_one_lecture(course):
+    return n_lectures(course, 1)
+
+def has_no_lectures(course):
+    return n_lectures(course, 0)
+
+def opt_sched(courses, fail):
+    # base cases
+    if any(has_no_lectures(c) for c in courses):
+        return fail()
+    if all(has_one_lecture(c) for c in courses):
+        if any_overlap(courses):
+            return fail()
+        else:
+            return courses
+
+    # otherwise, we have some optimizing to do!
+    for i, c in enumerate(courses):
+        sections = c.sections["Lecture"]
+        if len(sections) > 1:
+            chosenSection = sections[-1]
+
+            newCourse = copy.deepcopy(c)
+            newCourse.sections["Lecture"] = [sections[-1]]
+
+            altCourse = c
+            altCourse.sections["Lecture"] = sections[:-1]
+
+            newCourseList = courses[:i] + courses[i+1:] + [newCourse]
+            altCourseList = courses[:i] + courses[i+1:] + [altCourse]
+
+            return opt_sched(newCourseList,
+                             lambda: opt_sched(altCourseList, fail))
+
+
+def get_options(courses):
+    quit = "q"
+    search_term = raw_input("Search for a course ({} if done): ".format(quit))
+    if search_term == quit:
+        print("\n")
+        return []
+
+    try: # if user entered a number, get that course
+        options = filter(lambda c: int(search_term) == int(c.number), courses)
+    except ValueError: # otherwise, search as text
+        options = filter(lambda c: search_term.lower() in c.title.lower(),
+                         courses)
+
+    if len(options) != 1:
+        for o in options:
+            print("  " + o.title)
+        options = []
+    else:
+        print "'" + options[0].title + "' added."
+
+    return options + get_options(courses)
+
+
+
+class NoScheduleFound(Exception):
+    pass
+
+if __name__ == "__main__":
+    courses = load_courses()
+    courses = filter(lambda c: c.department == "COMP", courses)
+
+    options = get_options(filter(lambda c: "Lecture" in c.sections, courses))
+    def fail(): raise NoScheduleFound()
+    schedule = opt_sched(options, fail)
+
+    for course in schedule:
+        print course.title + "\n" + str(course.sections["Lecture"][0]) + "\n"

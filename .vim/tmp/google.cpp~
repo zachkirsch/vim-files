@@ -1,0 +1,72 @@
+
+
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+#include <stdio.h>
+#include <string.h>
+
+using namespace std;
+
+
+
+const string LISTING = "dir1\ndir2\n dir3\n  file2.jpeg\nfile1.jpeg\nhello.gif";
+
+int strlen(string s) {
+        return strlen(s.c_str());
+}
+
+bool isEmpty(string s) {
+        int len = strlen(s);
+        for (int i = 0; i < len; i++) {
+                if ( !isspace(s[i])) {
+                        return false;
+                }
+        }
+        return true;
+}
+
+
+int indent_of(string s) {
+        int len = strlen(s);
+        int indent = 0;
+        for (int i = 0; i < len; i++) {
+                if (s[i] == ' ')
+                        indent++;
+                else return indent;
+        }
+        return indent;
+}
+
+void get_all_filepaths(vector<string> filepaths, istringstream &listing, string prefix, int indent)
+{
+        string file;
+        if ( !getline(listing, file))
+                return;
+        string this_filepath = prefix + "/" + file;
+        int this_indent = indent_of(file);
+        if (this_indent == indent) {
+                // filepath == prefix + "/" + first
+                filepaths.push_back(this_filepath);
+                get_all_filepaths(filepaths, listing, prefix, indent);
+        } else if (this_indent > indent) {
+                get_all_filepaths(filepaths, listing, this_filepath, indent + 1);
+        } else { // this_indent < indent
+                string rest = listing.str();
+                string old_listing = file + "\n" + rest;
+                return;
+        }
+}
+int main() {
+        istringstream listing(LISTING);
+        string line;
+
+        vector<string> filepaths;
+        get_all_filepaths(filepaths, listing, "/", 0);
+        for (std::vector<string>::iterator it = filepaths.begin(); it != filepaths.end();
+                        ++it)
+                std::cout << ' ' << *it;
+        std::cout << '\n';
+        return 0;
+}

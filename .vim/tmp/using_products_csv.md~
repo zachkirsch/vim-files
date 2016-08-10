@@ -1,0 +1,10 @@
+Descriptions have to be written in html. If you are just writing paragraphs, just put a <p> at the beginning of each paragraph and a </p> at the end of each paragraph.
+
+It is super important to escape key characters, otherwise the site will become confused about what content to show and where. Every escape code starts with an ampersand and ends with a semicolon - e.g. if you want a comma to show up, replace it with &#44;
+
+double quote: &quot;
+single quote/apostrophe: &#39;
+comma: &#44;
+ampersand: &amp;
+
+If you use Microsoft Excel to edit the file, sometimes it will randomly put two double quotes ("") where there should only be one or none. Also, it sometimes places double quotes around fields that should not have double quotes (e.g. the description field). If you use Excel, open the file up in a text editor to make sure to fix these occurences if they took place.

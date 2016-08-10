@@ -1,0 +1,14 @@
+
+
+#include <iostream>
+using namespace std;
+
+#include "cipher.h"
+#include "dictionary.h"
+
+int main()
+{
+        Cipher c(3,14);
+        cout << c.encrypt("a_long_time_ago_in_a_galaxy_far_far_away", "bca") << endl;
+        return 0;
+}

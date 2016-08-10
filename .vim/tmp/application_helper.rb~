@@ -1,0 +1,21 @@
+require 'addressable/uri'
+
+# thanks
+# http://stackoverflow.com/questions/4216906/automatically-append-parameters-to-url-or-path-methods-rails
+module ApplicationHelper
+  def url_for(options={})
+#    @hash_of_additional_params = { :locale => I18n.locale }
+#    options = case options
+#    when String
+#      uri = Addressable::URI.new
+#      uri.query_values = @hash_of_additional_params
+#      options + (options.index('?').nil? ? '?' : '&') + uri.query
+#    when Hash
+#      options.reverse_merge(@hash_of_additional_params)
+#    else
+#      options
+#    end
+
+    super
+  end
+end

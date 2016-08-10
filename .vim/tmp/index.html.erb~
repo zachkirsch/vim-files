@@ -1,0 +1,13 @@
+<% content_for :js do %>
+  init_table()
+<% end %>
+
+<% puts I18n.locale %>
+<p id="notice"><%= notice %></p>
+<div class="col-md-10 col-md-offset-1">
+    <table id="incident-list" class="table dt-responsive" data-source="<%= incidents_url(format: "json") %>" >
+      </tbody>
+    </table>
+</div>
+<div id="update" class="label label-info"> Auto Updated</div>
+<br>

@@ -1,0 +1,47 @@
+#!/bin/bash
+# Checks if grades have been updated on SIS and sends and email if so
+# Zach Kirsch | 13 May 2016
+
+FLDR="$(pwd)"
+PYTHON="/usr/local/bin/python"
+
+SSH_USER="zkirsc01"
+SSH_SERVER="homework.cs.tufts.edu"
+SIS_PASS=$(cat "$HOME/.pwd")
+EMAIL="zachary.kirsch@tufts.edu"
+
+# for comparing old grades with new grades
+OLD="$FLDR/.grades.txt"
+NEW="$FLDR/.new_grades.txt"
+
+
+finish {
+        rm -f $NEW
+}
+
+
+touch $OLD $NEW
+
+cd $FLDR
+echo $SIS_PASS | $PYTHON $FLDR/parseGrades.py > $NEW
+if [ $? -ne 0 ]; then # python error
+        finish
+        exit 1
+fi
+
+
+pkill -u $USER phantomjs # kill leftover processes
+
+cat $NEW
+
+diff $OLD $NEW > /dev/null
+
+if [ $? -ne 0 ]; then # i.e. if diff had ouptut
+        # email me
+        ssh $SSH_USER@$SSH_SERVER mail -s \"Grades updated\" $EMAIL < /dev/null > /dev/null
+        echo "*** Grades updated ***"
+fi
+
+mv $NEW $OLD
+
+finish

@@ -1,0 +1,52 @@
+/*******************************************************************************
+ * GameItem Class Inmplementation                                              *
+ * For Pacman Game (COMP 11 Project 1 | 2016 Spring)                           *
+ ******************************************************************************/
+
+
+#include <iostream>
+using namespace std;
+
+#include "gameitem.h"
+
+/* GameItem::GameItem() */
+/* { */
+/*         row = 0; */
+/*         col = 0; */
+/* } */
+
+void GameItem::set_location(int r, int c)
+{
+        row = r;
+        col = c;
+}
+
+bool GameItem::is_at(int r, int c)
+{
+        return row == r and col == c;
+}
+
+void GameItem::set_row(int r)
+{
+        row = r;
+}
+
+void GameItem::set_col(int c)
+{
+        col = c;
+}
+
+int GameItem::get_row()
+{
+        return row;
+}
+
+int GameItem::get_col()
+{
+        return col;
+}
+
+void GameItem::place_on_board(char board[ROWS][COLS])
+{
+        board[row][col] = icon;
+}

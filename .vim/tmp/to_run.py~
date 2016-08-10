@@ -1,0 +1,8 @@
+
+import sqlite3
+from find_dupes import find_dupes
+
+with sqlite3.connect("rankings.db") as connection:
+    connection.row_factory = sqlite3.Row # for using records as dicts
+    find_dupes(connection, 199)
+    find_dupes(connection, 200)

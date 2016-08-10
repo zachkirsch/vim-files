@@ -1,0 +1,31 @@
+/*******************************************************************************
+ * Dictionary class interface for storing words in a dynamic array             *
+ *                                                                             *
+ * Zach Kirsch | 22 Feb 2016                                                   *
+ * COMP 11 Final Project 2016 Spring                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+#ifndef DICT_H_INCLUDED
+#define DICT_H_INCLUDED
+
+class Dictionary {
+        public:
+                Dictionary();
+                Dictionary(std::string filename);
+
+                void read(std::string filename);
+                bool is_word(std::string);
+
+                std::string get_word(int index);
+                int get_length();
+        private:
+                std::string *dict;
+                int len;
+                int cap;
+                void insert(std::string);
+                void expand();
+};
+
+
+#endif

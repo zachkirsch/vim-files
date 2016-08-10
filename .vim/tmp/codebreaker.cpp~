@@ -1,0 +1,119 @@
+/*******************************************************************************
+ * Main program for decyphering an encrypted message                           *
+ * For Columbar Transposition Cipher                                           *
+ *                                                                             *
+ * Zach Kirsch | 22 Feb 2016                                                   *
+ * COMP 11 Final Project 2016 Spring                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+#include <iostream>
+#include <cassert>
+#include <math.h>   /* ceil() */
+#include <stdlib.h> /* atoi() and strtol() and exit() */
+
+using namespace std;
+
+#include "cipher.h"
+#include "dictionary.h"
+
+const bool PROMPTS = false;
+
+void usage (string prgm);
+string read_in_ciphertext();
+void brute_force(string dict_filename, string keys_filename, int key_len);
+bool isInteger(const string & s);
+bool isEnglish(string s, Dictionary d);
+
+
+void usage (string prgm)
+{
+        cout << "Usage: " << endl
+             << "       " << prgm << " <dictionary> <keys> <key length>\n";
+        exit(1);
+}
+
+
+int main(int argc, char *argv[])
+{
+        if (argc != 4 || ! isInteger(argv[3]))
+                usage(argv[0]);
+        else brute_force(argv[1], argv[2], atoi(argv[3]));
+}
+
+
+void brute_force(string dict_filename, string keys_filename, int key_len)
+{
+        Dictionary dict(dict_filename);
+        Dictionary keys(keys_filename);
+        int num_keys = keys.length();
+
+        string ciphertext = read_in_ciphertext();
+
+        /* calculate height of cipher */
+        int height = ceil((float) ciphertext.length() / key_len);
+
+        Cipher c(key_len, height);
+        cout << num_keys << endl;
+        for (int i = 0; i < num_keys; i++) {
+                string word = keys.get_word(i);
+                cout << word << endl;
+                if ( (int) word.length() == key_len) {
+                        string plaintext = c.decrypt(ciphertext, word);
+                        if (isEnglish(plaintext, dict)) {
+                                if (PROMPTS)
+                                        cout << "Plaintext:" << endl;
+                                cout << plaintext << endl;
+                                return;
+                        }
+                }
+        }
+
+        if (PROMPTS)
+                cout << "Cannot decipher." << endl;
+}
+
+bool isEnglish(string s, Dictionary d)
+{
+        int len = s.length();
+        string word = "";
+
+        for (int i = 0; i < len; i++) {
+                if (s[i] == ' ') {
+                        if ( not d.is_word(word) ) {
+                                cout << "NOT A WORD: " << word << "." << endl;
+                                return false;
+                        }
+                        word = "";
+                } else
+                        word += s[i];
+        }
+
+        return true;
+}
+
+
+string read_in_ciphertext()
+{
+        string s;
+        if (PROMPTS) {
+                cout << "Please enter the ciphertext, encoded with a columnar "
+                        "transposition cipher:  ";
+        }
+        cin >> s;
+        return s;
+}
+
+/* determines whether an string is an integer. taken from
+   stackoverflow.com/questions/2844817/how-do-i-check-if-a-c-string-is-an-int
+   */
+inline bool isInteger(const string & s)
+{
+        if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+')))
+                return false ;
+
+        char * p ;
+        strtol(s.c_str(), &p, 10) ;
+
+        return (*p == 0) ;
+}

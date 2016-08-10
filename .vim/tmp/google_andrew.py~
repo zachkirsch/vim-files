@@ -1,0 +1,45 @@
+#!/usr/bin/python
+
+LISTINGS = [("dir1\ndir2\n dir3\n  file2.jpeg\n file1.jpeg\nhello.gif",48),
+            ("",1)]
+
+def indent_of(s):
+    return len(s) - len(s.lstrip(' '))
+
+def join(prefix, filename):
+    return prefix + "/" + filename
+
+def get_filepaths(filepaths, files, previous, prefix, indent):
+    if len(files) == 0:
+        return
+    first = files[0]
+    this_indent = indent_of(first)
+    first = first.lstrip(' ')
+    if (this_indent == indent):
+        files.pop(0)
+        this_filepath = join(prefix, first)
+    elif this_indent > indent:
+        files.pop(0)
+        new_prefix = join(prefix, previous)
+        this_filepath = join(new_prefix, first)
+        get_filepaths(filepaths, files, first, new_prefix, indent + 1)
+    else: # outdent
+        return
+    filepaths.append(this_filepath)
+    get_filepaths(filepaths, files, first, prefix, indent)
+
+def get_images(filepaths):
+    extensions = (".jpeg", ".gif", ".png")
+    return filter(lambda f: f.endswith(extensions), filepaths)
+
+def sum_image_filepaths(listing):
+    paths = []
+    get_filepaths(paths, listing.split("\n"), "", "", 0)
+    return sum(map(len, get_images(paths)))
+
+if __name__ == "__main__":
+    for (listing, expected) in LISTINGS:
+        result = sum_image_filepaths(listing)
+        if result != expected:
+            print "Error: Calculated", result, "but expected", expected
+            print listing, "\n"

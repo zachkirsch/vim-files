@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# By Zach Kirsch | September 2015
+
+# This script allows for uploading a directory and its contents to a remote FTP server.
+# This uses the lftp mirror command, so only files that have been modified will be
+# uploaded.
+
+# Thanks to http://serverfault.com/a/106365
+
+# ---------------------------------- #
+# ------------ OPTIONS ------------- #
+# ---------------------------------- #
+
+## STEP 1 ##
+# Enter Host address/IP of FTP server (e.g. ftp.zachkirsch.com)
+HOST=""
+
+## STEP 2 ##
+# Enter your user name (e.g. zachkirsch)
+USER=""
+
+## STEP 3 ##
+# Enter the local directory (on your machine) of the directory that will be mirrored
+# e.g. ~/path/to/site/
+LCD=""
+
+## STEP 4 ##
+# Enter the remote directory (on the FTP server) as the destination
+# e.g. /public_html/
+RCD=""
+
+## STEP 5 (Optional) ##
+# Uncomment if you want to delete the directory on the server
+#DELETE="--delete"
+
+## STEP 6 (Optional) ##
+# Edit the '--exclude-glob' portions of the mirror command at the bottom of
+# this script in order to prevent certain files & folders from uploading.
+# - Put '/' at the end of directories (e.g. '.git/')
+# - Avoid slashes for files if you want to exclude all matches (e.g. '.DS_Store' 
+# will exclude .DS_Store in the parent directory and in every subdirectory).
+#
+# The default excludes .git/, .DS_Store, *.sh files, .* (hidden) files, and
+# all folders named 'unused'.
+
+
+# ---------------------------------- #
+# ---------- END OPTIONS ----------- #
+# ---------------------------------- #
+
+# Prompt for password (insecure to have password hardcoded in this script)
+echo -n "Password: "
+read -s PASS
+echo
+
+FTPURL="ftp://$USER:$PASS@$HOST"
+
+# check if mkdir required
+echo 'Checking if directory needs to be created on server...'
+checkfolder=$(lftp -c "open -u $USER,$PASS $FTPURL; ls $RCD")
+# checkfolder is "" if $RCD doesn't exist -> we must mkdir $RCD before mirroring
+if [ "$checkfolder" == "" ];
+then
+	MKDIR="mkdir $RCD"
+	echo "  Directory created"
+	# directory not actually created now - set flag for creating it while in lftp shell
+else
+	echo "  Directory already exists"
+fi
+
+echo 'Uploading modified files...'
+lftp -c "
+set cmd:fail-exit yes;
+open '$FTPURL';
+lcd $LCD;
+$MKDIR;
+cd $RCD;
+mirror --reverse \
+	   $DELETE \
+	   --verbose \
+	   --exclude-glob .git/ \
+	   --exclude-glob .DS_Store \
+	   --exclude-glob *.sh \
+	   --exclude-glob .* \
+	   --exclude-glob unused/
+"

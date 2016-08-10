@@ -1,0 +1,172 @@
+#!/usr/bin/env python
+
+import json
+import datetime
+import copy
+import random
+
+class Course:
+
+    def __init__(self, course):
+        self.department  = course["course_num"].split("-")[0].encode('utf-8')
+        self.number      = course["course_num"].split("-")[1].encode('utf-8')
+        self.title       = course["course_title"].encode('utf-8')
+        self.description = course["desc_long"].encode('utf-8')
+        self.id          = course["level1_groupid"].encode('utf-8')
+
+        self.sections = {}
+        for s in course["sections"]:
+            self.sections[s["comp_desc"].encode('utf-8')] = \
+                                map(lambda c: Section(c), s["components"])
+
+    def __str__(self):
+        meetings = ""
+        for type,sections in self.sections.iteritems():
+            meetings = meetings + type + "\n"
+            for s in sections:
+                meetings = meetings + str(s) + "\n"
+
+        return "\n\n" + self.title + "\n" +                 \
+               self.department + "-" + self.number + "\n" + \
+               self.description + "\n" +                    \
+               "Sections:\n" +                              \
+               meetings
+
+
+
+class Section:
+
+    def __init__(self, section):
+        location = section["locations"][0]
+
+        self.type       = section["component"].encode('utf-8')
+        self.id         = section["class_num"].encode('utf-8')
+        self.instructor = location["instructor"].encode('utf-8')
+        self.location   = location["class_loc"].encode('utf-8')
+
+        self.meetings = []
+        for m in location["meetings"]:
+            start = m["meet_start"]
+            end   = m["meet_end"]
+            for d in m["days"]:
+                self.meetings.append(Meeting(d, start, end))
+
+    def overlaps(self, other):
+        if not isinstance(other, Section):
+            raise TypeError(type(other).__name__ + " type unsupported")
+        for a in self.meetings:
+            for b in other.meetings:
+                if a.overlaps(b):
+                    return True
+        return False
+
+    def __str__(self):
+        return self.instructor + "\n" + \
+               "Location: " + self.location + "\n"   + \
+               "Meetings:\n" +          \
+               "\n".join(map(str, self.meetings))
+
+
+class Meeting:
+
+    in_format = "%I:%M%p"
+    out_format ="%-I:%M%p" # no leading zero in hour
+
+    def __init__(self, day, start, end):
+        self.day   = day
+        self.start = datetime.datetime.strptime(start, Meeting.in_format).time()
+        self.end   = datetime.datetime.strptime(end, Meeting.in_format).time()
+
+    def overlaps(self, other):
+        if not isinstance(other, Meeting):
+            raise TypeError(type(other).__name__ + " type unsupported")
+        if self.day != other.day:
+            return False
+        if self.start >= other.end or other.start >= self.end:
+            return False
+        return True
+
+    def __str__(self):
+        return self.day + " " + \
+               self.start.strftime(Meeting.out_format) + "-" + \
+               self.end.strftime(Meeting.out_format)
+
+def load_courses():
+    with open('all.json', 'r') as file:
+        courses = json.loads(file.read())["searchResults"]
+        courses = filter(lambda c: c['course_num'].startswith('COMP'), courses)
+        return map(lambda c: Course(c), courses)
+
+
+def any_sections_overlap(sections):
+    for s1 in sections:
+        for s2 in sections:
+            if s1 != s2 and s1.overlaps(s2):
+                return True
+    return False
+
+def opt_sched(courses, fail):
+    # base cases
+    if len(filter(lambda c: len(c.sections["Lecture"]) == 0, courses)) > 0:
+        return fail()
+    if len(filter(lambda c: len(c.sections["Lecture"]) != 1, courses)) == 0:
+        if any_sections_overlap(map(lambda c: c.sections["Lecture"][0],
+                                    courses)):
+            return fail()
+        else:
+            return courses
+
+    # otherwise, we have some optimizing to do!
+    for i, c in enumerate(courses):
+        sections = c.sections["Lecture"]
+        if len(sections) > 1:
+            chosenSection = sections[-1]
+
+            newCourse = copy.deepcopy(c)
+            newCourse.sections["Lecture"] = [sections[-1]]
+
+            altCourse = c
+            altCourse.sections["Lecture"] = sections[:-1]
+
+            newCourseList = courses[:i] + courses[i+1:] + [newCourse]
+            altCourseList = courses[:i] + courses[i+1:] + [altCourse]
+
+            return opt_sched(newCourseList,
+                             lambda: opt_sched(altCourseList, fail))
+
+
+def get_options(courses):
+    search_term = raw_input("Search for a course (q if done): ")
+    if search_term == "q":
+        return []
+
+    try: # if user entered a number, get that course
+        options = filter(lambda c: int(search_term) == int(c.number), courses)
+    except ValueError: # otherwise, search as text
+        options = filter(lambda c: search_term.lower() in c.title.lower(),
+                         courses)
+
+    if len(options) != 1:
+        for o in options:
+            print("  " + o.title)
+        options = []
+    else:
+        print "'" + options[0].title + "' added."
+
+    return options + get_options(courses)
+
+
+
+class NoScheduleFound(Exception):
+    pass
+
+if __name__ == "__main__":
+    courses = load_courses()
+    options = get_options(filter(lambda c: "Lecture" in c.sections, courses))
+
+    def fail(): raise NoScheduleFound()
+
+    schedule = opt_sched(options, fail)
+
+    for course in schedule:
+        print course.title + "\n" + str(course.sections["Lecture"][0]) + "\n"

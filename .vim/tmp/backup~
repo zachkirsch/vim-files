@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+#
+# Backup script that backs up:
+#       (1) Things in the home folder in HOME_FOLDER_BACKUPS
+#       (2) Safari extensions
+#       (3) Homebrew packages (using $RESTORE_HOMEBREW_SCRIPT)
+#       (4) Quiver library
+#       (5) The list of Applications
+#
+# Moves things into $BACKUPFOLDER
+#
+# Zach Kirsch
+# Created 2015
+# Updated July 2016
+
+BACKUPFOLDER=~/Dropbox/Backups/Zach/terminal_backups
+HOME_FOLDER_BACKUPS=( ".bin" ".ssh" ".bash_profile" ".lftprc" ".inputrc"
+                      ".xvimrc" ".vimrc" ".vim" ".gitconfig" )
+RESTORE_HOMEBREW_SCRIPT=~/.bin/backup-homebrew
+
+# these can be changed by setup
+SUPPRESS_OUTPUT=false
+FORCE_BACKUP=false
+
+# help text
+read -r -d '' HELP_TEXT <<- EOM
+Backs up to $BACKUPFOLDER
+Options:
+  -s : suppress output
+  -f : force backup of all items
+  -h : show this help text and exit
+EOM
+
+# function to check if a backup is necessary
+#  i.e. if current version and backed up version were modified at diff. times
+# requires 2 arguments
+#   1 - backed up file/directory
+#   2 - orignal file/directory
+backup_required() {
+  dst="$1"
+  src="$2"
+
+  if [ "$dst" -ot "$src"  ]; then # if backup is older than the original
+    echo true  # backup required
+  else
+    echo false # backup not required
+  fi
+}
+
+
+
+# function to backup is necessary
+# requires 2 arguments
+#   1 - backed up file/directory
+#   2 - orignal file/directory
+backup_if_required() {
+  dst="$1"
+  src="$2"
+  if [ -e "$dst" ]; then # if exists in backup folder
+    needs_backup=$(backup_required "$dst" "$src")
+  else
+    needs_backup=true
+  fi
+
+  if [ "$needs_backup" = true ] || [ "$FORCE_BACKUP" = true ]; then
+    if [ "$SUPPRESS_OUTPUT" = false ] ; then
+      echo "  Backing up $src"
+    fi
+    rm -rf "$dst"
+    cp -r "$src" "$dst"
+  elif [ "$SUPPRESS_OUTPUT" = false ] ; then
+    echo "  Backup not required for $src"
+  fi
+}
+
+
+
+# backs up list of applications
+backup_list_of_applications() {
+  if [ "$SUPPRESS_OUTPUT" = false ] ; then
+    echo "  Backing up list of Applications"
+  fi
+  ls /Applications/ > "$BACKUPFOLDER/List of Applications.txt"
+}
+
+
+# backs up things that are in the home folder
+backup_home_folder_items() {
+  for f in "${HOME_FOLDER_BACKUPS[@]}"; do
+    backup_if_required "$BACKUPFOLDER/$f" "$HOME/$f"
+  done
+}
+
+# finds the date modified reliably
+# $1 is the file in question
+date_mod() {
+    find "$1" -exec stat -f "%m" \{} \; | sort -n -r | head -1
+}
+
+# backs up a folder as a zip
+# requires 4 arguments:
+#   1: location of folder to back up: e.g. "/a" if backing up "/a/b"
+#   2: name of the folder to back up: e.g. "b" if backing up "/a/b"
+#   3: filepath to backup: e.g. "$BACKUPFOLDER/b.zip"
+#   4: name of item being backed up (for logging)
+backup_folder_as_zip() {
+  orig_location="$1"
+  orig_name="$2"
+  orig="$1/$2"
+  backup_zip="$3"
+  item_name="$4"
+
+  needs_backup=false;
+
+  if [ -e "$backup_zip" ]; then
+    # if zip backup is older then Quiver Library, backup
+    date_mod_backup=$(date_mod "$backup_zip")
+    date_mod_orig=$(date_mod "$orig")
+    if [ $date_mod_orig -gt $date_mod_backup ]; then
+      needs_backup=true
+    fi
+  else
+    needs_backup=true
+  fi
+
+  if [ "$needs_backup" = true ] || [ "$FORCE_BACKUP" = true ]; then
+    if [ "$SUPPRESS_OUTPUT" = false ] ; then
+      echo "  Backing up $item_name"
+    fi
+    cd $orig_location
+    zip -r "$backup_zip" "$orig_name" > /dev/null
+    cd
+  elif [ "$SUPPRESS_OUTPUT" = false ] ; then
+    echo "  Backup not required for $item_name"
+  fi
+}
+
+# backs up quiver library
+backup_quiver_library() {
+  library_location=~/Dropbox/Backups/Zach
+  library_name="Quiver.qvlibrary"
+  backup_zip="$BACKUPFOLDER/Quiver.qvlibrary.zip"
+
+  backup_folder_as_zip "$library_location" "$library_name" "$backup_zip" \
+                       "Quiver library"
+}
+
+
+# backs up safari extensions
+backup_safari_extensions() {
+  orig_location=~/Library/Safari
+  orig_name="Extensions"
+  backup_zip="$BACKUPFOLDER/Safari_Extensions.zip"
+
+  backup_folder_as_zip "$orig_location" "$orig_name" "$backup_zip" \
+                       "Safari Extensions"
+}
+
+
+# creates homebrew restore script
+backup_homebrew() {
+  restore_script=$BACKUPFOLDER/restore-homebrew
+
+  needs_backup=true
+  if [ -f $restore_script ]; then # make sure restore script exists
+    brew_info=$(/usr/local/bin/brew info | cut -f1 -d",")
+    backed_up_brew_info=$(sed '3q;d' $restore_script | sed 's/^#//' \
+                                                     | cut -f1 -d",")
+    # check if number of kegs is the same
+    if [ "$brew_info" = "$backed_up_brew_info" ] ; then
+      needs_backup=false
+    fi
+  fi
+
+  if [ "$needs_backup" = true ] || [ "$FORCE_BACKUP" = true ]; then
+    if [ "$SUPPRESS_OUTPUT" = false ] ; then
+      echo "  Creating restore script for Homebrew"
+    fi
+    $RESTORE_HOMEBREW_SCRIPT "$BACKUPFOLDER" > $restore_script && \
+        chmod u+x $restore_script
+  elif [ "$SUPPRESS_OUTPUT" = false ] ; then
+    echo "  Backup not required for Homebrew"
+  fi
+}
+
+
+# clears backup folder
+reset_backup_folder_if_required() {
+  if [ "$FORCE_BACKUP" = true ] ; then
+    if [ "$SUPPRESS_OUTPUT" = false ] ; then
+      echo "  Emptying the backup folder"
+    fi
+    rm -rf "$BACKUPFOLDER"
+    mkdir "$BACKUPFOLDER"
+  fi
+}
+
+main() {
+  if [ "$SUPPRESS_OUTPUT" = false ] ; then
+    echo "  Backup folder: $BACKUPFOLDER"
+    echo
+  fi
+
+  reset_backup_folder_if_required
+
+  backup_list_of_applications
+  backup_home_folder_items
+  backup_safari_extensions
+  backup_quiver_library
+  backup_homebrew
+}
+
+################################################################################
+
+# parse arguments
+while getopts ":sfh" opt; do
+  case $opt in
+    s)
+        SUPPRESS_OUTPUT=true
+        ;;
+    f)
+        FORCE_BACKUP=true
+        ;;
+    h)
+        echo "$HELP_TEXT"
+        exit 1
+        ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+main
+
+
+

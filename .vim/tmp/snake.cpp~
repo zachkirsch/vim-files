@@ -1,0 +1,737 @@
+//////////////////////////////////////////////////////
+//                    SNAKE GAME                    //
+//////////////////////////////////////////////////////
+/*                        **                        */
+/* Combines snake with tron.                        */
+/* User can move in whichever direction he wants.   */
+/* Each move increaes the score by one, but         */
+/*  costs a energy unit (EU).                       */
+/* Collect snacks to gain EU.			    */
+/* Run into self   = GAME OVER                      */
+/* Run out of time = GAME OVER                      */
+/* Run out of EU   = GAME OVER                      */
+/*			  **			    */
+//////////////////////////////////////////////////////
+
+#include <iostream>
+#include "termfuncs.h"
+#include <time.h>
+
+using namespace std;
+
+
+////////////////////////////////////////////////////
+//                GLOBAL CONSTANTS                //
+////////////////////////////////////////////////////
+
+const bool    INCLUDE_INSTRUCTIONS  = false;  // instructions at beginning
+const bool    INCLUDE_CONTROLS	    = false;  // controls at top of screen
+const bool    AUTONOMOUS_SNAKE	    = false;  // snake moves on its own
+const int     SNAKE_PACE	    = 1;      // (if autonomous) in deciseconds
+const bool    INCLUDE_GAME_OVER	    = false;  // big 'GAME OVER' at end
+const bool    INCLUDE_KEY_TO_QUIT   = false; // e.g. 'Press q to quit' at end
+
+const int     TIME_LIMIT	    = 0;  // in sec. Use 0 for no limit
+
+const string  FG_COLOR		    = "blue";
+
+const int     ROWS            	    = 23;
+const int     COLS             	    = 63;
+
+const char    HORIZONTAL_BORDER	    = '-';
+const char    VERTICAL_BORDER  	    = '|';
+const char    CORNER_BORDER         = '+';
+
+const char    SNAKE_BODY	    = '#';
+const char    HEAD_UP               = '^';
+const char    HEAD_DOWN             = 'v';
+const char    HEAD_RIGHT      	    = '>';
+const char    HEAD_LEFT        	    = '<';
+
+const int     INITIAL_EU       	    = COLS-3; // snake can wrap around once
+const char    SNACK_1		    = '*';
+const int     SNACK_1_VALUE	    = 25;
+const char    SNACK_2		    = 'X';
+const int     SNACK_2_VALUE	    = 15;
+
+const char    MOVE_KEY	     	    = 'f';
+const char    LEFT_KEY	     	    = 'l';
+const char    RIGHT_KEY	     	    = 'r';
+const char    QUIT_KEY	     	    = 'q';
+
+const int     TIME_FOR_INSTRUCTIONS = 7;
+
+const int     START_TIME	    = time(NULL);
+
+
+///////////////////////////////////////////////////
+//                   FUNCTIONS                   //
+///////////////////////////////////////////////////
+
+//     SETUP
+void   setup_board	    	 (char board[ROWS][COLS]);
+void   clear_board	    	 (char board[ROWS][COLS]);
+void   build_borders	    	 (char board[ROWS][COLS]);
+void   place_snack		 (char board[ROWS][COLS], char snack_to_place);
+void   place_random_snack        (char board[ROWS][COLS]);
+
+//     SCREEN OUTPUT
+void   print_instructions	 ();
+void   print_welcome		 ();
+void   print_board	    	 (char board[ROWS][COLS]);
+void   print_bottom_line 	 (int score, int EU);
+
+//     GAME PLAY
+int    play_game	    	 (char board[ROWS][COLS]);
+char   get_action	   	 ();
+int    move_horiz		 (int col, char head);
+int    move_vert		 (int row, char head);
+char   turn_left	    	 (char head);
+char   turn_right	    	 (char head);
+int    ate_snack        	 (char board[ROWS][COLS], int row, int col);
+int    score_per_minute		 (int score);
+int    playing_time		 ();
+
+//     GAME OVER
+bool   game_over		 (char board[ROWS][COLS], int row, int col,
+				  int EU);
+void   print_game_over		 (char board[ROWS][COLS], char action, int EU);
+void   print_gameover_text	 ();
+void   report		    	 (int score);
+
+//     UTILITIES
+void   refresh_screen	    	 ();
+void   sleep			 (int n);
+int    board_top		 ();
+int    board_bottom		 ();
+int    game_bottom		 ();
+int    min_width		 ();
+int    min_height		 ();
+
+
+/*--------------- MAIN  -----------------------------------------------------*/
+int main ()
+{
+	char board[ROWS][COLS];
+	int score;
+	setup_board(board);
+	score = play_game(board);
+	report(score);
+	return 0;
+}
+
+////////////////////////////////////////////////////
+//                   GAME SETUP                   //
+////////////////////////////////////////////////////
+
+/*--------------- SETUP_BOARD -------------------------------------------------
+ purp: 	sets up the board at the start for gameplay.
+ args: 	board as character array.
+ does: 	adds borders to board.
+       	places snake head in the middle.
+       	places two snacks.
+       	prints instructions (if enabled in global constants).
+       	clears screen prints board.
+ rets: 	none.
+*/ 
+void setup_board (char board[ROWS][COLS])
+{
+	hide_cursor();
+	clear_board(board);		// clear all spots of the board
+	board[ROWS/2][COLS/2]=HEAD_UP;  // start snake in middle spot
+	build_borders(board);           // add borders to board
+	place_snack(board, SNACK_1);	// place snacks
+	place_snack(board, SNACK_2);	
+	refresh_screen();		// clear screen
+	if (INCLUDE_INSTRUCTIONS)
+		print_instructions();   // print instructions
+}
+
+/*--------------- CLEAR_BOARD -------------------------------------------------
+ purp: 	clear every element of the passed-in array.
+ args: 	board as character array.
+ does: 	adds borders to board.
+ rets: 	none.
+*/
+void clear_board (char board[ROWS][COLS])
+{
+	for (int i = 0; i < ROWS; i++)
+		for (int j = 0; j < COLS; j++)
+			board[i][j]=' ';
+}
+
+/*--------------- BUILD_BORDERS -----------------------------------------------
+ purp:	adds borders to board.
+ args: 	board as character array.
+ does: 	uses global constants for what characters are used in the border.
+       	can have different border for: top/bottom, left/ride, corners.
+ rets: 	none.
+*/
+void build_borders(char board[ROWS][COLS])
+{
+	int i;
+	// add top and bottom border
+	for (i=0; i < COLS; i++)
+	{
+		board[0][i]      = HORIZONTAL_BORDER;
+		board[ROWS-1][i] = HORIZONTAL_BORDER;
+	}
+
+	// add borders on sides
+	for (i=0; i < ROWS; i++)
+	{
+		board[i][0]      = VERTICAL_BORDER;
+		board[i][COLS-1] = VERTICAL_BORDER;
+	}
+
+	// fix corners
+	board[0][0]           = CORNER_BORDER;
+	board[0][COLS-1]      = CORNER_BORDER;
+	board[ROWS-1][0]      = CORNER_BORDER;
+	board[ROWS-1][COLS-1] = CORNER_BORDER;
+}
+
+/*--------------- PLACE_SNACK--------------------------------------------------
+ purp: 	places a snack in a random empty space on the board.
+ args: 	board	       as character array.
+	snack_to_place as character.
+ does: 	chooses random spots on the board until it finds an empty spot.
+	places the 'snack_to_place' character in that spot.
+ errs:  if called but there aren't any available slots on the board, then
+	 the program stalls and the user has to manually quit.
+ rets:  none.
+*/
+void place_snack(char board[ROWS][COLS], char snack_to_place)
+{
+	int row, col;
+	do {
+		row = random_int(1,ROWS-2);
+		col = random_int(1,COLS-2);
+	} while (board[row][col] != ' ');
+	board[row][col] = snack_to_place;	
+}
+
+/*--------------- PLACE_RANDOM_SNACK-------------------------------------------
+ purp: 	places a random snack in a random empty space on the board.
+ args: 	board as character array.
+ does: 	chooses random spots on the board until it finds an empty spot.
+	places a random snack in that spot.
+	uses global constants for what characters are used for snacks.
+       	with this implementation, there are two snack options.
+ errs:	if called but there's aren't any available slots on the board, then
+	 the program stalls and the user has to manually quit.
+ rets: 	none.
+*/
+void place_random_snack(char board[ROWS][COLS])
+{
+	int row, col;
+	do {
+		row = random_int(1,ROWS-2);
+		col = random_int(1,COLS-2);
+	} while (board[row][col] != ' ');
+	
+	char snack;
+	int snack_number = random_int(1,2);
+	if (snack_number == 1) snack = SNACK_1;
+	else snack = SNACK_2;
+	board[row][col] = snack;
+}
+
+
+
+///////////////////////////////////////////////////
+//                 SCREEN OUTPUT                 //
+///////////////////////////////////////////////////
+
+
+/*--------------- PRINT_INSTRUCTIONS ------------------------------------------
+ purp: 	prints instructions before the gam.e
+ args: 	none.
+ does: 	prints a welcome & header.
+       	prints the rules of the game.
+       	prints the minimum window size for the game to not look weird.
+       	waits for a specified amount of time (in global constants).
+ note:	is only called if INCLUDE_INSTRUCTIONS is true.
+ rets: 	none.
+*/
+void print_instructions()
+{
+        print_welcome();
+	cout << "*******  SNAKE GAME  *******\n\n";
+        cout << "You can go through walls, ";
+        cout << "but don't run into yourself!\n";
+        cout << "Each " << SNACK_1 << " is worth ";
+        cout << SNACK_1_VALUE;
+        cout << " energy units.\n";
+        cout << "Each " << SNACK_2 << " is worth ";
+        cout << SNACK_2_VALUE;
+        cout << " energy units.\n";
+        cout << "If you run out of energy, you lose!\n\n";
+	cout << "Your window should be at least " << min_width();
+	cout << "x" << min_height() << "." << endl;
+	// wait for given amount of time
+	sleep(TIME_FOR_INSTRUCTIONS);
+
+	screen_home();
+}
+
+/*--------------- PRINT_WELCOME -----------------------------------------------
+ purp: 	prints a welcome sign.
+ args: 	none.
+ note: 	can be made fancier in the future!
+ rets: 	none.
+*/
+void print_welcome()
+{
+	cout << endl;
+	cout << "********  WELCOME!  ********";
+	cout << endl;
+}
+
+/*--------------- PRINT_BOARD--------------------------------------------------
+ purp:	prints board in terminal window.
+ args:	board as character array.
+ does:	moves cursor to top left of window and changes text color.
+      	if enabled in global constants, prints out controls at top.
+      	prints out board.
+ rets: 	none.
+*/
+void print_board(char board[ROWS][COLS])
+{
+	screen_home();			// prints over itself each time	
+	screen_fg(FG_COLOR);		// change text color
+	if (INCLUDE_CONTROLS) {
+		cout << "Your turn! ('";
+		if (!AUTONOMOUS_SNAKE) cout << MOVE_KEY << "' to move, '";
+		cout << LEFT_KEY << "' to turn left, '";
+		cout << RIGHT_KEY << "' to turn right, '";
+		cout << QUIT_KEY << "' to quit)." << endl;
+	}
+	// print board
+	for (int i = 0; i < ROWS; i++)
+	{
+		for (int j = 0; j < COLS; j++)
+			cout << board[i][j];
+		cout << endl;
+	}
+}
+
+/*--------------- PRINT_BOTTOM_LINE -------------------------------------------
+ purp:	prints out remaining EU, total score & speed below the board.
+ args:	score  as integer.
+      	energy as integer.
+ does:	places cursor below the board.
+      	prints out EU, score, and "speed" (moves/minute).
+ rets:	none.
+*/
+void print_bottom_line(int score, int EU)
+{
+	place_cursor(board_bottom()+1,0);
+	cout << "EU: " << EU;
+	cout << "  Score: " << score;
+	cout << "   move? ";
+	cout.flush();
+}
+
+
+///////////////////////////////////////////////////
+//                   GAME PLAY                   //
+///////////////////////////////////////////////////
+
+/*--------------- PLAY_GAME ---------------------------------------------------
+ purp:	allows the user to control the movement of the snake on the board.
+ args:	board as character array.
+ does:	asks for user action, and moves head and/or body based on the input.
+	updates the score and EU values as well.
+	after each move, it prints the new board & EU/scores over the old ones.
+	when the user quits or loses, the user can't control the board.
+	prints out a 'game over' sign (if enabled in global constants).
+ rets:	final score as integer.
+*/
+int play_game (char board[ROWS][COLS])
+{
+	int score = 0, EU = INITIAL_EU, row = ROWS/2, col = COLS/2;
+	char head = HEAD_UP, action;
+	do {
+		print_board (board);
+		print_bottom_line (score, EU);
+		action = get_action();
+		if (action == MOVE_KEY) {
+			int temp_col = move_horiz(col, head);
+			int temp_row = move_vert(row, head);
+			if (board[temp_row][temp_col] != SNAKE_BODY)
+				board[row][col]=SNAKE_BODY;
+			row = temp_row;
+			col = temp_col;
+			EU--;
+			score++;
+		}
+		else if (action == LEFT_KEY)  head = turn_left(head);
+		else if (action == RIGHT_KEY) head = turn_right(head);	
+		EU += ate_snack(board, row, col);
+		if (board[row][col] != SNAKE_BODY)
+			board[row][col] = head;
+	} while (action != QUIT_KEY && !game_over(board, row, col, EU));
+	if (action != QUIT_KEY) {
+		score--;
+		if (INCLUDE_GAME_OVER) print_game_over(board, action, EU);
+	}
+	return score;
+}
+
+/*--------------- GET_ACTION --------------------------------------------------
+ purp:	gets user input as a character.
+ args:	none.
+ does:  uses getacharnow(1) from termfuncs to wait .1 secs to get user input
+ rets:	returns character.
+	if snake autonomy enabled in global constants, returns MOVE_KEY.
+	otherwise returns '\0' and this will get re-called by play_game().
+*/
+char get_action()
+{
+	char response;
+
+	if (SNAKE_PACE != 0) response = getacharnow(SNAKE_PACE);
+	else response = getacharnow(1);
+	if (AUTONOMOUS_SNAKE)
+	{
+		// user can't move if it's autonomous
+		if (response == MOVE_KEY) return '\0';
+
+		if (response == '\0') response = MOVE_KEY;
+	}
+	return response; 
+}
+
+/*--------------- MOVE_HORIZ --------------------------------------------------
+ purp:	shifts the column one unit (if head if horizontal).
+ args:	column of head  as integer.
+	head character  as character.
+ does:  if head is facing left, decreases column by one.
+	if head is facing right, increases column by one.
+	 if head is on edge of board, it "wraps around" to the other side.
+	if head is facing vertically, column is unchanged.
+ rets:  column  as integer.
+*/
+int move_horiz(int col, char head)
+{
+	if (head==HEAD_RIGHT)
+	{
+		if (col == (COLS-2)) col = 1;
+		else col++;
+	}
+	else if (head==HEAD_LEFT)
+	{
+		if (col==1) col = COLS-2;
+		else col--;
+	}
+	return col;
+}
+
+/*--------------- MOVE_VERT ---------------------------------------------------
+ purp:	shifts the row by one unit (if head if vertical).
+ args:	row of head	as integer.
+	head character  as character.
+ does:  if head is facing down, decreases row by one.
+	if head is facing up, increases row by one.
+	 if head is on edge of board, it "wraps around" to the other side.
+	if head is facing horizontally, row is unchanged.
+ rets:  row  as integer.
+*/
+int move_vert(int row, char head)
+{
+	if (head==HEAD_DOWN)
+	{
+		if (row == (ROWS-2)) row = 1;
+		else row++;
+	}
+	else if (head==HEAD_UP)
+	{
+		if (row==1) row = ROWS-2;
+		else row--;
+	}
+
+	return row;
+}	
+
+/*--------------- TURN_LEFT  --------------------------------------------------
+ purp:	rotates head character 90 degrees counter clockwise.
+ args:	head  as char.
+ rets: 	head  as char.
+*/
+char turn_left(char head)
+{
+	if (head == HEAD_UP)         return HEAD_LEFT;
+	else if (head == HEAD_RIGHT) return HEAD_UP;
+	else if (head == HEAD_DOWN)  return HEAD_RIGHT;
+	else			     return HEAD_DOWN;
+}
+
+/*--------------- TURN_RIGHT --------------------------------------------------
+ purp:	rotates head character 90 degrees clockwise.
+ args:	head  as char.
+ rets: 	head  as char.
+*/
+char turn_right(char head)
+{
+	if (head == HEAD_UP)         return HEAD_RIGHT;
+	else if (head == HEAD_RIGHT) return HEAD_DOWN;
+	else if (head == HEAD_DOWN)  return HEAD_LEFT;
+	else			     return HEAD_UP;
+}
+
+/*--------------- ATE_SNACK ---------------------------------------------------
+ purp:	checks to see if a specific space is a snack.
+ args:	board  as character array.
+	row    as integer.
+	column as integer.
+ does:  checks if a current element of the board is a snack.
+	if it is, it places a new snack somewhere on the board.
+ rets: 	integer.
+	returns 0 if the given space is not a snack.
+	returns the snack value (plus 1) if the given space is a snack.
+	 the +1 is b/c the user gets an extra energy unit by getting a snack
+	 as a refund for the previous move.
+*/
+int ate_snack(char board[ROWS][COLS], int row, int col)
+{
+	if (board[row][col] == SNACK_1)
+	{
+		place_random_snack(board);
+		return SNACK_1_VALUE + 1;
+	}
+	else if (board[row][col] == SNACK_2)
+	{	
+		place_random_snack(board);
+		return SNACK_2_VALUE + 1;
+	}
+	else return 0;
+
+}
+
+/*--------------- SCORE_PER_MINUTE --------------------------------------------
+ purp:	calculates the users speed (moves per minute).
+ args:	score  as integer.
+ does:  calculates moves (number of moves is equal to the user's score).
+	calculates the time (current time minus the start time).
+	calculates the speed by dividing the moves by the time.
+ 	converts speed from double to integer.
+ rets:	speed  as integer.
+*/
+int score_per_minute (int score)
+{
+	double double_score = score;
+	double double_play_time = playing_time();
+	int score_per_minute = double_score / double_play_time * 60;
+	return score_per_minute;
+}
+
+/*--------------- PLAYING_TIME ------------------------------------------------
+ purp:	calculates the number of seconds the user has been playing
+ args:	none.
+ does:	calculates playing time by subtracting start time from current time.
+	if instructions played at the start,
+	 substracts the 'instructions time' from the playing time.
+ rets:	playing time  as integer.
+	if playing time is <= 0, returns 1 to prevent errors
+*/
+int playing_time ()
+{
+	int total_time = (time(NULL) - START_TIME);
+	if (INCLUDE_INSTRUCTIONS) total_time -= TIME_FOR_INSTRUCTIONS;
+	if (total_time<=0) return 1;	
+	else return total_time;
+}
+
+
+///////////////////////////////////////////////////
+//                   GAME OVER                   //
+///////////////////////////////////////////////////
+
+
+/*--------------- GAME_OVER ---------------------------------------------------
+ purp:	check if the user lost.
+ args:	board   as character array.
+	row     as integer.
+	column  as integer.
+	energy	as integer.
+ does:	game over if:
+	 user ran out of time,
+	 or user ran into the snake body,
+	 or user ran out of energy.
+ rets:  boolean.
+	if it's a game over, returns true.
+	otherwise, returns false.
+*/
+bool game_over(char board[ROWS][COLS], int row, int col, int EU)
+{
+	if (TIME_LIMIT != 0 and playing_time() > TIME_LIMIT) return true;
+	else if (board[row][col] == SNAKE_BODY) return true;
+	else if (EU == 0) return true;
+	else return false;
+}
+
+/*--------------- PRINT_GAME_OVER ---------------------------------------------
+ purp: 	prints game-over sign, and how the user lost.
+ args: 	board	      as character array.
+       	last_action   as character (user's last action).
+	remaining_EU  as integer (how much energy the user had left).
+ does:	moves cursor to home using screen_home().
+	clears the screen within the borders of the board.
+	prints a game-over sign within the game borders.
+	moves cursor to home and prints game-board
+	 (same state as the board time of game over as it hasn't been edited).
+	prints the cause of game-over below the board.
+ rets:	none.
+ note:	is only called if INCLUDE_GAME_OVER is true.
+*/
+void print_game_over(char board[ROWS][COLS], char last_action, int remaining_EU)
+{
+	screen_home();
+	if (INCLUDE_CONTROLS) cout << endl;
+	cout << endl;
+	for (int i = board_top(); i < (board_bottom()-1); i++) { // clear screen
+		cout << "\033[C"; // skip border
+		for (int j = 1; j < (COLS-1); j++)
+			cout << " ";
+		cout << endl;
+	}
+	screen_home();
+	print_gameover_text();
+	sleep(2);
+	screen_home();
+	print_board(board);	
+	place_cursor(board_bottom()+2, 0); // move cursor to below the board
+	cout << endl;
+	if (TIME_LIMIT != 0 and playing_time() >= TIME_LIMIT)
+		cout << "You ran out of time!";
+	else if (remaining_EU==0) cout << "You ran out of energy units!";
+	else if (last_action != QUIT_KEY)  cout << "You ran into yourself!";
+}
+
+/*--------------- PRINT_GAMEOVER_TEXT -----------------------------------------
+ purp: 	prints a game over sign.
+ args: 	none.
+ note: 	can be made fancier in the future!
+ rets: 	none.
+*/
+void print_gameover_text()
+{
+	cout << "\v\v\v\v";
+	cout << "\t\t" << "       " << "*** GAME OVER ***" << endl;
+}
+
+/*--------------- REPORT ------------------------------------------------------
+ purp:	reports the score to the user.
+ args:	score to report  as integer.
+ does:	places cursor below the board.
+	if INCLUDE_GAME_OVER is false (meaning user hasn't seen it's game over)
+	 prints 'Game Over' and final score at the bottom.
+	if INCLUDE_KEY_TO_QUIT allows user to end & clear screen via keyboard.
+ rets:	none.
+*/
+void report (int score)
+{
+	place_cursor(board_bottom()+1, 0);
+	cout << endl;
+	if (!INCLUDE_GAME_OVER)
+		cout << "Game over.  Final Score: "
+			<< score << ".";
+	cout << endl;
+	if (INCLUDE_KEY_TO_QUIT) {	
+		cout << endl << "Press '" << QUIT_KEY << "' to quit\n";
+		char action;
+		do
+			action = get_action();
+		while(action != 'q');
+		refresh_screen();
+	}
+	screen_reset(); 
+}
+
+
+///////////////////////////////////////////////////
+//                   UTILITIES                   //
+///////////////////////////////////////////////////
+
+
+/*--------------- REFRESH_SCREEN ----------------------------------------------
+ purp:	clears the screen and moves the cursor to the top left of the window.
+*/
+void refresh_screen()
+{
+	screen_clear();
+	screen_home();
+}
+
+/*--------------- SLEEP -------------------------------------------------------
+ purp:	sleep for n seconds.
+ args:	number of seconds  as integer.
+ does:	waits until time is n seconds after the function started.
+	while it's running, it continuously calls getacharnow() to stop echo.
+ rets:	none.
+*/
+void sleep(int n)
+{
+	int time_now = time(NULL);
+	while (time(NULL) < time_now + n)
+		// stops user's text from showing on the screen
+		// also each run through takes .1 seconds
+		getacharnow(1);
+}
+
+/*--------------- BOARD_TOP ---------------------------------------------------
+ purp:	returns the line number of the top of the board (top line is 0)
+*/
+int board_top()
+{
+	if (INCLUDE_CONTROLS) return 1;
+	else return 0;
+}
+
+/*--------------- BOARD_BOTTOM ------------------------------------------------
+ purp:	returns the line number of the bottom of the board (top line is 0)
+*/
+int board_bottom()
+{
+	int board_bottom = ROWS - 1;
+	if (INCLUDE_CONTROLS) board_bottom++;
+	return board_bottom;
+}
+
+
+/*--------------- GAME_BOTTOM -------------------------------------------------
+ purp:	returns the line number bottom of the whole game (top line is 0)
+*/
+int game_bottom()
+{
+	int game_bottom = board_bottom() + 2;
+	if (INCLUDE_KEY_TO_QUIT) game_bottom++;
+	return game_bottom;
+}
+
+/*--------------- MIN_WIDTH ---------------------------------------------------
+ purp:	returns the minimum width for the board & text to fit
+*/
+int min_width()
+{
+	// controls are 75 pixels long, but 62 if autonomous (no move key)
+	if (COLS >= 75) return 75;
+	if (INCLUDE_CONTROLS) {
+		if (!AUTONOMOUS_SNAKE) return 75;
+		else if (COLS <= 62) return 62;
+	}
+	return COLS;
+}
+
+
+/*--------------- MIN_HEIGHT --------------------------------------------------
+purp:	returns the minimum height for the board & text to fit
+*/
+int min_height()
+{
+	int min = game_bottom() + 1;
+	min++; // extra line for command prompt
+	min = min + 2; // extra 2 lines for command prompt after termination
+	return min;
+}

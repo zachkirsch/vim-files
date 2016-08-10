@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+from __future__ import division
+import csv
+import ucigraph_constants as c
+
+
+def write_kpis_to_file(kpis, output_filename, calcValue):
+    with open(output_filename, 'w') as output:
+        header = c.DELIMITER.join(["CONTACTID", "BRANCHID", "VALUE"])
+        rows = [header]
+        for (contact, branch), (total, count) in kpis.iteritems():
+            items = map(lambda x: str(x),
+                        [contact, branch, calcValue(total, count)])
+            rows.append(c.DELIMITER.join(items))
+        output.write("\n".join(rows))
+
+# for deposits and withdrawals
+def find_kpi(input_filename, output_count_filename, output_avg_filename):
+    with open(input_filename, 'rb') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=c.DELIMITER)
+        kpis = {}
+        for row in reader:
+            key = (row["CONTACTID"], row["BRANCHID"])
+            try:
+                (old_value, count) = kpis[key]
+            except KeyError:
+                (old_value, count) = (0,0)
+            kpis[key] = (old_value + int(row["AMOUNT"]), count + 1)
+
+    write_kpis_to_file(kpis, output_count_filename, lambda total, count: count)
+    write_kpis_to_file(kpis, output_avg_filename,
+                       lambda total, count: total/count)
+
+def Main():
+    find_kpi(c.DEPOSITS_FILENAME,
+             c.COUNT_DEPOSITS_KPI_FILENAME,
+             c.AVG_DEPOSITS_KPI_FILENAME)
+    find_kpi(c.WITHDRAWALS_FILENAME,
+             c.COUNT_WITHDRAWALS_KPI_FILENAME,
+             c.AVG_WITHDRAWALS_KPI_FILENAME)
+
+if __name__ == "__main__":
+    Main()
+

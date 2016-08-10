@@ -1,0 +1,74 @@
+/*******************************************************************************
+ * GameItem Class Interface                                                    *
+ * For Pacman Game (COMP 11 Project 1 | 2016 Spring)                           *
+ ******************************************************************************/
+
+#ifndef GAMEITEM_H_INCLUDED
+#define GAMEITEM_H_INCLUDED
+
+#include "constants.h"
+
+class GameItem {
+        public:
+                /* constructor initiailzes protected members */
+                GameItem();
+
+                /*
+                 * Places the item on the board, at its location
+                 *
+                 * Arguments:
+                 *      - 2D array of board
+                 *
+                 * Returns: None.
+                 */
+                void place_on_board(char[ROWS][COLS]);
+
+                /*
+                 * Moves the item by altering its row and column, but does not
+                 * alter the board in any way.
+                 *
+                 * Note: this is a virtual function and should be overridden by
+                 * subclasses that have the ability to move.
+                 */
+                /* virtual bool move(const char[ROWS][COLS]) { return true; } */
+                virtual bool move(const char[ROWS][COLS]) {};
+
+                /*
+                 * For getting the location of the item.
+                 *
+                 * Arguments:
+                 *      - a row
+                 *      - a col
+                 *
+                 * Returns:
+                 *      True if the item is at the given row and column.
+                 *      False otherwie.
+                 */
+                bool is_at(int r, int c);
+
+                /*
+                 * Sets the location of the item
+                 *
+                 * Arguments:
+                 *      - the new row
+                 *      - the new col
+                 *
+                 * Returns: None.
+                 *
+                 */
+                void set_location(int r, int c);
+
+                /* getters */
+                int  get_row();
+                int  get_col();
+
+                /* setters */
+                void set_row(int r);
+                void set_col(int c);
+
+        protected:
+                int row, col;
+                char icon;
+};
+
+#endif

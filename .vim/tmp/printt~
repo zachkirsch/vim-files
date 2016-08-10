@@ -1,0 +1,25 @@
+#!/bin/bash
+# Printing script for Halligan
+# Zach Kirsch | October 2015
+
+USER="zkirsc01"
+SERVER="homework.cs.tufts.edu"
+PRINT_DIR="/tmp/"
+
+if [ "$#" -lt 2 ]; then
+        echo "Usage: printt 116, 118, 120 <files>"
+        exit
+fi
+
+ROOM=$local_file
+shift
+
+while [[ $# > 0 ]] ; do
+        local_file=$1
+        base="$(basename "$local_file")"
+        remote_file="$PRINT_DIR/$base"
+        scp "$local_file" $USER@$SERVER:\""$remote_file"\"
+        ssh $USER@$SERVER a2ps -1 -B -Php$ROOM \""$remote_file"\"
+        shift
+        echo ; echo ;
+done

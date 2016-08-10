@@ -1,0 +1,131 @@
+#!/usr/bin/python
+
+import names
+import random
+import ucigraph_constants as c
+
+
+def write_csv(list_of_maps, filename):
+    if len(list_of_maps) == 0:
+        return
+    keys = list_of_maps[0].keys()
+    keys.sort()
+    s = ""
+    if c.INCLUDE_HEADERS:
+        headers = map(lambda x: str(x).upper(), keys)
+        s = c.DELIMITER.join(headers) + "\n"
+    for m in list_of_maps:
+        for i, k in enumerate(keys):
+            last_char = c.DELIMITER if i < len(keys)-1 else "\n"
+            s += str(m[k]) + last_char
+
+    # remove last newline from s
+    s = s[:-1]
+
+    with open(filename, "w") as f:
+        f.write(s)
+
+
+
+def get_branches():
+    branches = []
+    for i in xrange(c.NUM_BRANCHES):
+        mapping = {}
+        mapping["branchid"]   = i
+        mapping["name"] = "Branch #" + str(i)
+        mapping["city"] = random.choice(c.CITIES)
+        branches.append(mapping)
+    return branches
+
+def get_contacts():
+    contacts = []
+    for i in xrange(c.NUM_CONTACTS):
+        mapping = {}
+        mapping["contactid"]   = i
+        mapping["first_name"] = names.get_first_name()
+        mapping["last_name"]  = names.get_last_name()
+        mapping["city"]       = random.choice(c.CITIES)
+        contacts.append(mapping)
+    return contacts
+
+def get_families():
+    families = []
+    for i in xrange(c.NUM_FAMILIES):
+        mapping = {}
+        mapping["familyid"] = i
+        families.append(mapping)
+    return families
+
+def get_contactfamily():
+    contactfamily = []
+    next_id = 0
+    for i in xrange(c.NUM_CONTACTS):
+        num_fams_for_this_contact = random.randint(c.MIN_FAMILIES_PER_CONTACT,
+                                                   c.MAX_FAMILIES_PER_CONTACT)
+        fams_for_this_contact = random.sample(xrange(c.NUM_FAMILIES),
+                                              num_fams_for_this_contact)
+        for f in fams_for_this_contact:
+            mapping = {}
+            mapping["contactfamilyid"] = next_id
+            next_id += 1
+            mapping["contactid"] = i
+            mapping["familyid"]  = f
+            contactfamily.append(mapping)
+    return contactfamily
+
+def get_social_interactions():
+    social_interactions = []
+    for i in xrange(c.TOTAL_NUM_SOCIAL_MEDIA_POSTS):
+        mapping = {}
+        mapping["socialinteractionid"] = i
+        mapping["contactid"] = random.randint(0, c.NUM_CONTACTS-1)
+        mapping["content"] = random.choice(c.SOCIAL_MEDIA_POSTS)
+        mapping["socialnetworkname"] = random.choice(c.SOCIAL_MEDIA)
+        social_interactions.append(mapping)
+    return social_interactions
+
+# get a contact's preferred branch based on a seed
+def get_a_preferred_branch(seed):
+    fave_branch = hash(seed) % c.NUM_BRANCHES
+    branch_id = random.randint(fave_branch-1, fave_branch+1) % c.NUM_BRANCHES
+    return branch_id
+
+
+def get_deposits():
+    deposits = []
+    for i in xrange(c.NUM_DEPOSITS):
+        mapping = {}
+        mapping["bankdepositid"] = i
+        mapping["contactid"] = random.randint(0, c.NUM_CONTACTS-1)
+        mapping["branchid"] = get_a_preferred_branch(mapping["contactid"])
+        mapping["amount"] = random.randint(1,25) * 20
+        deposits.append(mapping)
+    return deposits
+
+def get_withdrawals():
+    withdrawals = []
+    for i in xrange(c.NUM_WITHDRAWALS):
+        mapping = {}
+        mapping["bankdepositid"] = i
+        mapping["contactid"] = random.randint(0, c.NUM_CONTACTS-1)
+        mapping["branchid"] = get_a_preferred_branch(mapping["contactid"])
+        mapping["amount"] = random.randint(1,25) * 20
+        withdrawals.append(mapping)
+    return withdrawals
+
+def Main():
+
+    items = [
+             (get_contacts(), c.CONTACTS_FILENAME),
+             (get_families(), c.FAMILIES_FILENAME),
+             (get_contactfamily(), c.CONTACTFAMILY_FILENAME),
+             (get_branches(), c.BRANCHES_FILENAME),
+             (get_social_interactions(), c.SOCIAL_MEDIA_FILENAME),
+             (get_deposits(), c.DEPOSITS_FILENAME),
+             (get_withdrawals(), c.WITHDRAWALS_FILENAME)
+            ]
+    map(lambda (rows, filename): write_csv(rows, filename), items)
+
+
+if __name__ == "__main__":
+    Main()

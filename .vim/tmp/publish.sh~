@@ -1,0 +1,56 @@
+#!/bin/bash
+LCD="~/Documents/Jobs/Debate/Victory/VBI\ 2015/site"
+FAIL_EXIT="set cmd:fail-exit yes;"
+DELETE="--delete"
+
+#HOST="ftp.zachkirsch.com"
+#USER="zachkirsch"
+#RCD="/public_html/vb_master_site"
+
+HOST="ftp.vbriefly.com"
+USER="zachkirsch@vbriefly.com"
+RCD="/vb_master_site"
+
+
+# ---------------------------------- #
+# ---------------------------------- #
+# ---------------------------------- #
+
+# Read Password
+echo -n "Password: "
+read -s PASS
+echo
+FTPURL="ftp://$USER:$PASS@$HOST"
+
+# check if mkdir required
+checkfolder=$(lftp -c "open -u $USER,$PASS $FTPURL; ls $RCD")
+if [[ $? -ne 0 ]]; then
+        exit 1
+fi
+echo 'Checking if directory needs to be created on server...'
+if [ "$checkfolder" == "" ];
+then
+        MKDIR="mkdir $RCD;"
+        echo "  Directory created"
+else
+        echo "  Directory already exists"
+fi
+
+echo 'Uploading modified files...'
+lftp -c "
+$FAIL_EXIT
+open '$FTPURL';
+lcd $LCD;
+$MKDIR
+cd $RCD;
+mirror --reverse \
+           $DELETE \
+           --verbose \
+           --exclude-glob .git/ \
+           --exclude-glob .DS_Store \
+           --exclude-glob *.sh \
+           --exclude-glob .* \
+           --exclude-glob template.zip \
+           --exclude-glob Products/ \
+           --exclude-glob Shared\ Images/ \
+           --exclude-glob unused/"

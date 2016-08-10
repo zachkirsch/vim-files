@@ -1,0 +1,87 @@
+<% content_for :js do %>
+
+    // date time picker
+    $('.datetimepicker').datetimepicker({
+      sideBySide: true,
+      locale: "<%= I18n.locale %>"
+    });
+    $('.datetimepicker').val(moment().format("YYYY-MM-DD hh:mm A"));
+    $('.datetimepicker').change();
+
+    $('input:checkbox').bootstrapSwitch();
+<% end %>
+
+<%= javascript_include_tag 'fileupload' %>
+
+<% if @incident.errors.any? %>
+  <div id="error_explanation" class="alert alert-danger">
+    <h4><%= pluralize(@incident.errors.count, "error") %> prohibited this incident from being saved:</h2>
+    <ul>
+    <% @incident.errors.full_messages.each do |message| %>
+      <li><%= message %></li>
+    <% end %>
+    </ul>
+  </div>
+<% end %>
+          <li><%= button_to 'New Incident', new_incident_path, :method => :get, class: "btn btn-danger navbar-btn", params: { locale: I18n.locale } %></li>
+
+<%= form_for(@incident, html: { class: 'directUpload', data: { 'form-data' => (@s3_direct_post.fields), 'url' => @s3_direct_post.url, 'host' => URI.parse(@s3_direct_post.url).host } }) do |f| %>
+
+<div class="col-md-10 col-md-offset-1">
+  <div class="field form-group col-md-7">
+    <%= f.label :subject, :class => 'required' %>
+    <%= f.text_field :subject, :class => "form-control"%>
+  </div>
+
+  <div class="field form-group col-md-5">
+    <%= f.label :priority, :class => 'required' %><br>
+    <%= f.select :priority, [['Low','1'],['Medium','2'],['High','3']],
+      {:selected => @incident.priority}, {class: 'selectpicker'} %>
+
+  </div>
+
+  <div class="field form-group col-md-7" >
+    <%= f.label :additional_details, "Additional Details" %>
+    <%= f.text_area :additional_details, :class => "form-control", :rows => "10"%>
+  </div>
+
+  <div class="field form-group col-md-5">
+    <%= f.label :location_of_incident, "Location of Incident",
+        :class => 'required' %>
+    <%= f.text_field :location_of_incident, :class => "form-control"%>
+  </div>
+
+  <div class="field form-group col-md-5">
+    <%= f.label :time_of_incident, "Time of Incident", :class => 'requred' %>
+    <%= f.datetime_select :time_of_incident, :class => "form-control"%>
+  </div>
+
+  <div class="field form-group col-md-5">
+    <%= f.label :incident_category_id, 'Intended Department',
+        :class => 'required' %>
+    <%= collection_select(:incident, :incident_category_id, IncidentCategory.all_cached,
+                          :id, :name, {:prompt => false},
+                          {:class => "selectpicker",
+                           :'data-live-search' => "true"}) %>
+  </div>
+
+  <div class="field form-group col-md-5">
+    <%= f.label :public do %>
+            <%= f.check_box :public, :checked => true,
+                        :data => {:size=>'small', 'on-text'=>'PUBLIC', 'off-text'=>'PRIVATE' }
+                %>
+
+    <% end %>
+  </div>
+
+  <div class="field form-group col-md-8">
+  <%= f.label :picture_url %><br>
+  <%= f.file_field :picture_url %>
+  </div>
+
+  <div class="actions col-md-10">
+      <%= f.submit :class => "btn btn-success btn-md"%>
+  </div>
+</div>
+
+<% end %>

@@ -1,0 +1,71 @@
+i(*
+ * Abstract Game Solver Functor.
+ * An abstract game solver takes a Game (implemented with the GAME signature)
+ * and calculates the best move via exhaustive search.
+ *
+ * Wesley Wei & Zach Kirsch | 23 April 2016
+ * Tufts University COMP 105: Programming Languages
+ *)
+
+functor AgsFun (structure Game : GAME) :> AGS
+    where type Game.Move.move = Game.Move.move
+    and   type Game.config    = Game.config
+= struct
+  structure Game = Game
+
+
+    (* compare takes tuple of two tuples, each containing a move option
+       and a outcome option. The second argument is a Player.player.
+
+       This returns the inner tuple that contains the more preferable outcome
+       from the passed-in player's perspective
+
+       In determining the best move, the following inequality is used:
+                                        WIN > TIE > LOSS *)
+    fun compare p (SOME(Player.WINS a), b) = if a = p
+                                             then SOME(Player.WINS a)
+                                             else b
+    | compare p (SOME(Player.TIE), _) = SOME(Player.TIE)
+    | compare p (a, b) = compare p (b, a)
+
+
+    (* forecast takes a configuration and returns the outcome, assuming both
+       players play optimally *)
+    fun forecast conf =
+        let
+        in
+            if Game.finished conf then valOf (Game.outcome conf)
+            else let
+                val alloutcomes =
+                    map (fn move => SOME (forecast (Game.makemove conf move)))
+                        (Game.possmoves conf)
+                val bestoutcome = foldr (compare (Game.whoseturn conf))
+                                        (hd alloutcomes) (tl alloutcomes)
+            in valOf bestoutcome
+            end
+        end
+
+    (* bestresult takes a configuration and returns a tuple contains:
+        - the best move for the player whose turn it is (as an option)
+        - the ultimate outcome of that move (as an option), assuming both
+          players play perfectly *)
+    fun bestresult conf =
+        let val results =
+                map (fn move => (SOME move,
+                                 SOME (forecast (Game.makemove conf move))))
+                              (Game.possmoves conf)
+            val (_, outcomes) = ListPair.unzip results
+            val best_outcome = foldr (compare (Game.whoseturn conf))
+                                     (hd outcomes) (tl outcomes)
+
+            (* returns the key of the given value in an association list *)
+            fun findbyvalue ((k,v)::rest) s = if (s = v) then k
+                                              else findbyvalue rest s
+             |  findbyvalue [] _ = let exception NotFound in raise NotFound end
+        in
+            ((findbyvalue results best_outcome), best_outcome)
+        end
+
+    (* bestmove takes a configuration and returns the best choice of move *)
+    fun bestmove conf = #1 (bestresult conf)
+end

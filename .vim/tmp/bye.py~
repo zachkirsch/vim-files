@@ -1,0 +1,135 @@
+################################################################################
+#                           Set to comments mapping                            #
+#                                                                              #
+# given a list of sets of integers, and a set of comments, create a mapping    #
+# from each set S to a set of comments C, such that:                           #
+#   - for each comment c in C:                                                 #
+#       S contains N, where N is the number of syllabus in C                   #
+#   - the collection of all comment sets contains no overlap. equivalently,    #
+#     for each S, one could choose any of the comments in C, and there is no   #
+#     possibilty that the same comment will be chosen twice.                   #
+#                                                                              #
+# usage: matchSetsToComments() takes a set of integers and a set of comments.  #
+#                              comments are in the form (commentId, syllables) #
+#                              it returns the mapping (an association list)    #
+#                              mapping sets of integers to sets of comments),  #
+#                              or None if no such mapping exists.              #
+#                                                                              #
+# Zach Kirsch | July 2016                                                      #
+################################################################################
+
+
+# given an association list, returns the values
+def values(theList):
+    return zip(*theList)[1]
+
+
+# returns the index of a mapping in the association list where the value (set)
+# still has more than one option
+def getPair(theMap):
+    for i, (k,v) in enumerate(theMap):
+        if len(v) > 1:
+            return (i, k, v)
+    return None
+
+# given a list of sets, returns whether all sets are pairwise disjoint
+def allDisjoint(sets):
+    allSeen = set()
+    for s in sets:
+        for x in s:
+            if x in allSeen: return False
+            allSeen.add(x)
+    return True
+
+
+# findMapping() finds the mappings from sets of integers to sets of comments,
+# using continuation passing style.
+#
+# arguments:
+#   theMap : a mapping (association list) from sets of integers to sets of
+#            comments, where each int-set could map to *any* of the comments in
+#            the comment-set.
+#   chosen : the comments that have already been chosen. when called externally,
+#            this parameter should be the union of all the comment-sets in
+#            theMap whose length is 1.
+#   fail   : the failure continuation, which is called if there is no mapping.
+def findMapping(theMap, chosen, fail):
+    # if some set has no options left, then we've failed
+    if any(not s for s in values(theMap)):
+        return fail()
+    # if all the sets map to distinct comments, then we've succeeded
+    elif allDisjoint(values(theMap)):
+        return theMap
+    else:
+        (index, s, comments) = getPair(theMap)
+
+        # the options for what the set s could map to is the set difference of
+        # its possible values (comments) and the comments we've already chosen
+        options = comments.difference(chosen)
+        # if there are no options for this set to map to, we've failed
+        if not options:
+            return fail()
+        else:
+            # choose an arbitrary comment to map this set to
+            # if it doesn't work out, we'll end up backtracking and pick another
+            chosenComment = options.pop()
+
+            # map the set to the chosen comment
+            theMap[index] = (s, {chosenComment})
+
+            # if this doesn't work out, create an alternative that we'll
+            # investigate when we backtrack
+            altMap = theMap[:] # deep copy
+            altMap[index] = (s, options)
+
+            # since we just chose chosenComment, add it to our "chosen" set
+            newChosen = chosen.copy()
+            newChosen.add(chosenComment)
+
+            return findMapping(theMap, newChosen,
+                                lambda: findMapping(altMap, chosen, fail))
+
+
+
+# matchSetsToComments():
+# given a list of sets of integers, and a set of comments, this function create
+# a mapping from each set S to a set of comments C, such that:
+#   - for each comment c in C:
+#       S contains N, where N is the number of syllabus in C
+#   - the collection of all comment sets contains no overlap. equivalently, for
+#     each S, one could choose any of the comments in C, and there is no
+#     possibilty that the same comment will be chosen twice.
+#
+# arguments:
+#   sets     : the list of sets of integers
+#   comments : the set of comments, where a comment is a tuple of the form
+#              (commentID, syllable length of comment)
+#
+# returns: the mapping from sets of ints to sets of comments (as an association
+#          list), or None if no such mapping exists
+def matchSetsToComments(sets, comments):
+
+    # theMap maps a set to a set of comments, where the set *could* map to any
+    # of those comments. theMap is an association list.
+    theMap = []
+    for s in sets:
+        theMap.append((set(s),
+                       set(filter(lambda (id,syls): syls in s, comments))))
+
+    # the comments we've already chosen are the ones where a set only has one
+    # possible comment it could map to
+    chosen = reduce(lambda x, y: list(x) + list(y),
+                    filter(lambda x: len(x) == 1, values(theMap)),
+                    [])
+
+    # if chosen contains a duplicate, then we've already failed
+    if len(chosen) != len(set(chosen)):
+        return None
+    else:
+        return findMapping(theMap, set(chosen), lambda: None)
+
+
+if __name__ == "__main__":
+    sets = [{0,1,2,3},{1,2,3,0},{5,1},{4,6,7},{5,0}]
+    comments = {(12345,4),(23123,2),(31242,5),(12434,2),(31245,7),(12351,0)}
+    print matchSetsToComments(sets,comments)

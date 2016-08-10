@@ -1,0 +1,163 @@
+/*******************************************************************************
+ * Main program for decyphering an encrypted message                           *
+ * For Columbar Transposition Cipher                                           *
+ *                                                                             *
+ * Zach Kirsch | 22 Feb 2016                                                   *
+ * COMP 11 Final Project 2016 Spring                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+#include <iostream>
+#include <cassert>
+#include <math.h>   /* ceil() */
+#include <stdlib.h> /* atoi() and strtol() and exit() */
+
+using namespace std;
+
+#include "cipher.h"
+#include "dictionary.h"
+
+const bool PROMPTS = false;
+
+enum Operation { ENCRYPT, DECRYPT_WITH_KEY, DECRYPT_WITH_KEY_LEN };
+
+void   usage              (string prgm);
+void   perform_cipher_op  (Operation, string);
+int    get_key_width      (Operation, string);
+string read_in_ciphertext ();
+string read_in_plaintext  ();
+int    get_key_length     ();
+
+bool isInteger(const string & s);
+
+int main(int argc, char *argv[])
+{
+        Operation op = ENCRYPT;
+
+        if (argc < 3)
+                usage(argv[0]);
+        else if (((string) argv[1]).compare("--decrypt") == 0)
+                if (isInteger(argv[2]))
+                        op = DECRYPT_WITH_KEY_LEN;
+                else op = DECRYPT_WITH_KEY;
+        else if (((string) argv[1]).compare("--encrypt") == 0)
+                op = ENCRYPT;
+        else usage(argv[0]);
+
+        perform_cipher_op(op, argv[2]);
+}
+
+void usage (string prgm)
+{
+        cout << "Usage: " << endl
+             << "       " << prgm << " --encrypt <key>" << endl
+             << "       " << prgm << " --decrypt <key>" << endl
+             << "       " << prgm << " --decrypt <key_length>" << endl;
+        exit(1);
+}
+
+
+/* performs a columnar transposition cipher operation:
+ *      - encrypt plaintext with key
+ *      - decrypt ciphertext with key
+ *      - decrypt ciphertext with key length
+ *
+ * The operation should be specified with the first parameter (Operation).
+ * The second parameter is the attachment required for the operation.
+ *      - If encrypting/decrypting with key, attachment should be the key
+ *      - If decrypting with key length, attachment should be key length (as
+ *        string)
+ */
+void perform_cipher_op(Operation op, string attachment)
+{
+        assert (op == ENCRYPT || op == DECRYPT_WITH_KEY ||
+                op == DECRYPT_WITH_KEY_LEN);
+
+        /* parse key/width from attachment */
+        string key;
+        if (op != DECRYPT_WITH_KEY_LEN)
+                key = attachment;
+        int width = get_key_width(op, attachment);
+
+        /* get ciphertext or plaintext */
+        string text;
+        if (op == ENCRYPT) text = read_in_plaintext();
+        else text = read_in_ciphertext();
+
+        /* calculate height of cipher */
+        int height = ceil((float) text.length() / width);
+
+        /* create dictionary */
+        Dictionary dict;
+        dict.read("words.txt");
+
+        /* create and initialize cipher */
+        Cipher cipher(width, height, dict);
+
+        if (op == ENCRYPT) cipher.insert_plaintext(text);
+        else cipher.insert_ciphertext(text);
+
+        cout << "encrypting..." << endl;
+        /* determine the result */
+        string result = "";
+        if (op == ENCRYPT)
+                result = cipher.encrypt(key);
+        else if (op == DECRYPT_WITH_KEY)
+                result = cipher.decrypt(key);
+        else if (op == DECRYPT_WITH_KEY_LEN)
+                result = cipher.get_most_likely_message();
+
+        cout << result << endl;
+}
+
+int get_key_width(Operation op, string attachment)
+{
+        int width;
+        if (op == DECRYPT_WITH_KEY_LEN) {
+                assert(isInteger(attachment));
+                width = atoi(attachment.c_str());
+        } else {
+                string key = attachment;
+                width = key.length();
+        }
+        return width;
+}
+
+string read_in_ciphertext()
+{
+        string s;
+        if (PROMPTS) {
+                cout << "Please enter the ciphertext, encoded with a columnar "
+                        "transposition cipher:  ";
+        }
+        cin >> s;
+        return s;
+}
+
+/* gets plaintext from user. replaces spaces with the SPACE constant */
+string read_in_plaintext()
+{
+        string s_full, s_part;
+        if (PROMPTS) {
+                cout << "Please enter the plaintext to be encoded with a "
+                        "columnar transposition cipher:  ";
+        }
+        cin >> s_full;
+        while (cin >> s_part)
+                s_full += SPACE + s_part;
+        return s_full;
+}
+
+/* determines whether an string is an integer. taken from
+   stackoverflow.com/questions/2844817/how-do-i-check-if-a-c-string-is-an-int
+*/
+inline bool isInteger(const string & s)
+{
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+')))
+           return false ;
+
+   char * p ;
+   strtol(s.c_str(), &p, 10) ;
+
+   return (*p == 0) ;
+}

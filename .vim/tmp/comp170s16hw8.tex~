@@ -1,0 +1,650 @@
+\documentclass[11pt]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{fullpage}
+\renewcommand{\theenumi}{\roman{enumi}}
+\usepackage{color}
+\definecolor{Purple}{rgb}{.9,0,.9}
+\usepackage{graphicx}
+\usepackage{color}
+
+\newcommand{\solution}[1]{\textcolor{Purple}{\\Solution: #1}}  %Solution
+\newcommand{\C}[1]{\ensuremath{\mathord{\rm #1}}}
+\newcommand{\pair}[1]{\ensuremath{\mathopen{\langle}#1\mathclose{\rangle}}}
+\newcommand{\lng}[1]{\ensuremath{\mathopen{|}#1\mathclose{|}}}
+\newcommand{\card}[1]{\ensuremath{\mathopen{|\!|}#1\mathclose{|\!|}}}
+\newcommand{\manyone}{\ensuremath{\leq_m}}
+\newcommand{\pmanyone}{\ensuremath{\leq_m^p}}
+
+
+\newcommand{\pmli}{\ensuremath{\leq_{m,\mathord{\rm li}}^p}}
+\newcommand{\ponem}{\ensuremath{\mathrel{\leq_m^{p/1}}}}
+\newcommand{\ponett}{\ensuremath{\mathrel{\leq_{1-\mathord{\rm tt}}^{p/1}}}}
+\newcommand{\ptt}{\ensuremath{\mathrel{\leq_{\mathord{\rm tt}}^p}}}
+\newcommand{\pktt}{\ensuremath{\mathrel{\leq_{k-\mathord{\rm tt}}^p}}}
+\newcommand{\pttk}[1]{\ensuremath{\mathrel}{\leq_{#1-\mathord{\rm
+        tt}}^p}}
+        \newcommand{\pmhat}{\ensuremath{\mathrel{\leq_{\hat{m}}^p}}}
+        \newcommand{\pmhatli}{\ensuremath{\mathrel{\leq_{\hat{m}\mathord{\rm
+                ,l.i.}}^p}}}
+                \newcommand{\pmhathonest}{\ensuremath{\mathrel{\leq_{\hat{m},\mathord{\rm
+                honest}}^p}}}
+                \newcommand{\PNP}{\C{P}^{\C{NP}}}
+                \newcommand{\pT}{\ensuremath{\mathrel{\leq_T^p}}}
+                \newenvironment{proof}{\vspace*{1em}\noindent{\bf
+                Proof.}}{\hfill$\Box$}
+                \newtheorem{theorem}{Theorem}
+                \newtheorem{lemma}[theorem]{Lemma}
+                \newtheorem{corollary}[theorem]{Corollary}
+
+
+                %% added by zach
+                \usepackage{{mathtools}}
+                \usepackage{parskip}
+                \newcommand{\sub}[1]{\subsubsection*{#1}}
+                \setlength{\parindent}{0cm}
+
+                % margins
+                \usepackage[top=3cm, bottom=4cm, left=2cm,
+                right=2cm,headsep=16pt]{geometry}
+
+                %% HEADER/FOOTER %%
+                \usepackage{fancyhdr}
+                %\usepackage[headsep=8pt]{geometry}  %% adjust here
+
+                \setlength{\headheight}{15.2pt}
+                \pagestyle{fancy}
+
+                % lines in header & footer area
+                \renewcommand{\headrulewidth}{0.4pt}
+                \renewcommand{\footrulewidth}{0pt}
+
+                \fancyhead[L]{\textsc{Tufts University Comp 170}}
+                \fancyhead[C]{\textsc{Homework 8}}
+                \fancyhead[R]{\textsc{Zach Kirsch}}
+                %% END HEADER/FOOTER %%
+
+                \begin{document}
+
+                \subsection*{Problem 1}
+
+
+                \textbf{Proof idea} We create a language
+                $\C{NTG-SAT-WITH-FALSE}$ that is identical to to $\C{NTG-SAT}$
+                \textit{except} there also exists a constant FALSE that can be
+                used in the formula and is always assigned to be false. We then
+                create machines $M$ and $N$, and show that $M$ is a polynomial
+                time reduction from $\C{3-SAT}$ to $\C{NTG-SAT-WITH-FALSE}$, and
+                $N$ is a polynomial time reduction from $\C{NTG-SAT-WITH-FALSE}$
+                to $\C{NTG-SAT}$. Transitively, this shows the $\C{3-SAT}$ is
+                reducible in polynomial time to $\C{NTG-SAT}$. We then show that
+                $\C{NTG-SAT} \in \C{NP}$ by creating a polynomial time verifier
+                for $\C{NTG-SAT}$. Because $\C{NTG-SAT} \in \C{NP}$, $\C{3-SAT}$
+                        is NP-complete, and $\C{3-SAT}$ reduces to
+                        $\C{NTG-SAT}$, $\C{NTG-SAT}$ is NP-complete.
+
+                \noindent\hrulefill
+
+                Define $\C{NTG-SAT-WITH-FALSE}$, which is identical to to
+                $\C{NTG-SAT}$ \textit{except} that there exists a constant FALSE
+                that can be used in the formula and is always assigned to be
+                false.
+
+                \bigskip
+
+                Consider the machine $M$ on input $\pair{\phi}$:
+
+                \renewcommand{\labelenumi}{\arabic{enumi}}
+                \begin{enumerate}
+                \item Decode $\pair{\phi}$ as a formula $\phi$ in 3CNF
+                \item Let $\phi'$ be the empty formula
+                \item For each clause $(\C{A} \lor \C{B} \lor \C{C})$ in $\phi$:
+                \begin{enumerate}
+                \item Let $i$ be the index of the clause in $\phi$
+                \item Let $\Delta_i := (\C{A} \lor \C{B} \lor D_i) \land (\C{C} \lor \C{FALSE} \lor \C{\overline{D_i}})$
+                \item Append $\Delta_i$ to $\phi'$
+                \end{enumerate}
+                \item Return $\phi'$
+                \end{enumerate}
+
+                \bigskip
+
+                Consider the machine $N$ on input $\pair{\phi}$:
+
+                \renewcommand{\labelenumi}{\arabic{enumi}}
+                \begin{enumerate}
+                \item Decode $\pair{\phi}$ as a formula $\phi$ in 3CNF
+                \item Let $\phi'$ be a copy of $\phi$
+                \item Create a dummy variable $\C{X_F}$
+                \item For each clause in $\phi'$:
+                \begin{enumerate}
+                \item If any of the literals is the constant $\C{FALSE}$, change it to  $\C{X_F}$.
+                \end{enumerate}
+                \item Return $\phi'$
+                \end{enumerate}
+
+                \clearpage
+
+
+                \textbf{Claim:} $M$ is a polynomial-time reduction from $\C{3-SAT}$ to $\C{NTG-SAT-WITH-FALSE}$
+
+                \begin{proof} N inputs $\phi$ and outputs $\phi'$.
+
+                \textbf{Case 1: $\boldsymbol{\phi \in \C{3-SAT}}$:}
+                There is a satisfaction of $\phi$ that every variable of $\phi$ is assigned a boolean value and each clause of $\phi$ is true. For every clause $(\C{A} \lor \C{B} \lor \C{C})$ in $\phi$, it is transformed by $M$ to be $\Delta_i := (\C{A} \lor \C{B} \lor \C{D_i}) \land (\C{C} \lor \C{FALSE} \lor \C{\overline{D_i}})$. For any assignments of A, B, and C such that the clause is true, there is an assignment of variables such that $\Delta_i$ is also true:
+
+                \begin{table}[h]
+                \centering
+                \begin{tabular}{ccccc|cc}
+                A & B & C & $\C{X_F}$ & $\C{D_i}$ & $\C{A} \lor \C{B} \lor \C{C}$ & $(\C{A} \lor \C{B} \lor \C{D_i}) \land (\C{C} \lor \C{FALSE} \lor \C{\overline{D_i}})$ \\
+                        \hline
+                        T & T & T & F & F & T & T \\
+                                T & T & F & F & F & T & T \\
+                                T & F & T & F & F & T & T \\
+                                T & F & F & F & F & T & T \\
+                                F & T & T & F & F & T & T \\
+                                F & T & F & F & F & T & T \\
+                                F & F & T & F & T & T & T \\
+                                F & F & F & F & n/a & F & n/a \\
+                                \end{tabular}
+                                \end{table}
+
+                                Because $\C{D_i}$ is fresh for every clause in $\phi$, there will never be any inconsistency in these assignments. Therefore, because each $\Delta_i$ is satisfiable, $\phi' =$ the formula returned by $M$ (the conjunction of each $\Delta_i$) has a satisfying assignment.
+
+                                Because $\phi$ is in 3CNF, and $M$ returns a conjunction of formulas that are each in the format of $\Delta_i$, $M$ returns a formula in 3CNF.
+
+                                By the truth table above, each assignment of variables causes each clause in $\phi'$ to have a false assignment. Therefore, the formula is satisfiable where no clause is all true.
+
+                                $\phi'$ is in CNF and is satisfiable with a formula where no clause is all true. Additionally, $\phi'$ contains the constant FALSE.
+
+                                $\therefore \phi' \in \C{NTG-SAT-WITH-FALSE}$.
+
+                                \clearpage
+
+                                \textbf{Case 2: $\boldsymbol{\phi' \in \C{NTG-SAT-WITH-FALSE}}$:} There is a satisfaction of $\phi'$ that every variable of $\phi'$ is assigned a boolean value, the FALSE constant is assigned to false, and each clause of $\phi'$ is true but not all true. $\phi'$ is in the form of $\Delta_1 + \Delta_2 + \cdots + \Delta_n$ for each $\Delta_i := (\C{A} \lor \C{B} \lor \C{D_i}) \land (\C{C} \lor \C{FALSE} \lor \C{\overline{D_i}})$ for some variables A, B, C, and $\C{D_i}$. Each $\Delta_i$ in $\phi'$ corresponds to the clause $(\C{A} \lor\C{B} \lor \C{C})$ in $\phi$. For any assignments of A, B, C and $\C{D_i}$ such that $\Delta_i$ is true, the same assignments make $(\C{A} \lor\C{B} \lor \C{C})$ true as well:
+
+                                \begin{table}[h]
+                                \centering
+                                \begin{tabular}{ccccc|cc}
+                                A & B & C & $\C{D_i}$ & $\C{FALSE}$ & $(\C{A} \lor \C{B} \lor \C{D_i}) \land (\C{C} \lor \C{FALSE} \lor \C{\overline{D_i}})$ & $\C{A} \lor \C{B} \lor \C{C}$  \\
+                                        \hline
+                                        T & T & T & T & F & T & T \\
+                                                T & T & T & F & F & T & T \\
+                                                T & T & F & T & F & F & n/a \\
+                                                T & T & F & F & F & T & T \\
+                                                T & F & T & T & F & T & T \\
+                                                T & F & T & F & F & T & T \\
+                                                T & F & F & T & F & F & n/a \\
+                                                T & F & F & F & F & T & T \\
+                                                F & T & T & T & F & T & T \\
+                                                F & T & T & F & F & T & T \\
+                                                F & T & F & T & F & F & n/a \\
+                                                F & T & F & F & F & T & T \\
+                                                F & F & T & T & F & T & T \\
+                                                F & F & T & F & F & F & n/a \\
+                                                F & F & F & T & F & F & n/a \\
+                                                F & F & F & F & F & F & n/a \\
+                                                \end{tabular}
+                                                \end{table}
+
+                                                \bigskip
+
+                                                Because there is a satisfaction of $\phi'$ such that each $\Delta_i$ is satisfiable, each $(\C{A} \lor\C{B} \lor \C{C})$ is also satisfiable (with the same assignments), and $\phi$ -- the conjunction of these clauses -- is satisfiable as well.
+
+                                                Because $\phi$ is in the format of conjunctions of clauses in the format $(\C{A} \lor\C{B} \lor \C{C})$, $\phi$ is in 3CNF.
+
+                                                $\therefore \phi \in \C{3-SAT}$.
+
+                                                \vfill
+
+                                                $M$ maps $\phi$ to $\phi'$.
+
+                                                %$\phi \in \C{3-SAT} \implies \phi' \in \C{NTG-SAT-WITH-FALSE}$
+
+                                                %$\phi' \in \C{NTG-SAT-WITH-FALSE} \implies \phi \in \C{3-SAT}$.
+
+                                                $\phi \in \C{3-SAT} \iff \phi' \in \C{NTG-SAT-WITH-FALSE}$.
+
+                                                Therefore, $M$ is a reduction and $\C{3-SAT}$ is reducible to $\C{NTG-SAT-WITH-FALSE}$.
+
+                                                Step 1 of $M$ decodes $\pair{\phi}$, which operates in linear time. Step 2 of $M$ creates an empty formula, which operates in constant time. Step 3 of $M$ iterates the $\phi$ and performs a constant-time transformation on each clause, which operates in linear time. Step 4 of $M$ outputs $\phi'$, which operates in linear time. Because each step of $M$ operates in polynomial time, $M$ operates in polynomial time.
+
+                                                $\therefore M$ is a polynomial-time reduction from $\C{3-SAT}$ to $\C{NTG-SAT-WITH-FALSE}$.
+                                                \end{proof}
+
+                                                \clearpage
+
+                                                \textbf{Lemma:} For an satisfaction of a formula $\phi \in \C{NTG-SAT}$, there is another satisfaction of $\phi$ where each assignment is flipped.
+
+                                                Because $\phi$ is satisiable, at least one literal in each clause is true so that the conjunction of each clause is true. Because $\phi \in \C{NTG-SAT}$, at least one literal in each clause is false. Therefore, each clause contains at least one literal that is true and at least one literal that is false. Therefore, if each assignment is flipped, there will still be at least one literal in each clause that is true and at least one literal in each clause that is false. Therefore, for this new satisfaction, each clause is true, and no clause is all true; this is thus a valid satisfaction for a formula in $\C{NTG-SAT}$.
+
+                                                \bigskip
+
+                                                \textbf{Claim:} $N$ is a polynomial-time reduction from $\C{NTG-SAT-WITH-FALSE}$ to $\C{NTG-SAT}$.
+
+                                                \begin{proof}
+                                                N inputs $\phi$ and outputs $\phi'$.
+
+                                                \textbf{Case 1: $\boldsymbol{\phi \in \C{NTG-SAT-WITH-FALSE}}$:}
+                                                There is a satisfaction of $\phi$ that every variable of $\phi$ is assigned a boolean value, the constant FALSE is assigned to false, and each clause of $\phi$ is true but not all true. $N$ returns a formula $\phi'$ that is identical to $\phi$ except that each constant FALSE is replaced by the dummy variable $\C{X_F}$. There is thus a satisfaction of $\phi$ that every variable of $\phi$ is assigned a boolean value, the $\C{X_F}$ is assigned to false, and each clause of $\phi$ is true but not all true. Therefore, $\C{X_F} \in \C{NTG-SAT}$.
+
+                                                \textbf{Case 2: $\boldsymbol{\phi' \in \C{NTG-SAT}}$:} There is a satisfaction of $\phi'$ that every variable of $\phi'$ is assigned a boolean value, and each clause of $\phi'$ is true but not all true. $\C{X_F}$ is the variable introduced by $M$ that may or may not occur in $\phi'$.
+
+                                                \textbf{Case 2a: $\boldsymbol{\phi'}$ does not contain $\boldsymbol{\C{X_F}}$:} $\phi'$ was therefore unchanged by $M$. $\phi \in \C{NTG-SAT}$, and therefore, $\phi \in \C{NTG-SAT-WITH-FALSE}$, as $\C{NTG-SAT}$ is a subset of $\C{NTG-SAT-WITH-FALSE.}$
+
+                                                \textbf{Case 2b: $\boldsymbol{\phi'}$ contains $\boldsymbol{\C{X_F}}$:} Let $A$ be the assignment of variables of that satisfies $\phi'$ where no clause is all true. If $\C{X_F}$ is assigned to be false, then $\phi$ is also satisfiable because $\phi$ is identical to $\phi'$ except for that $\C{X_F}$ is replaced with the constant FALSE (that is forced to be false.) If $\C{X_F}$ is assigned to be true, by the lemma above, there is another satisfaction of $\phi'$ where $\C{X_F}$ is assigned to be false. Then, $\phi$ is also satisfiable where no clause is all true because $\phi$ is identical to $\phi'$ except for that $\C{X_F}$ is replaced with the constant FALSE (that is forced to be false). Therefore, $\phi \in \C{NTG-SAT-WITH-FALSE}$.
+
+                                                \vfill
+
+                                                $N$ maps $\phi$ to $\phi'$.
+
+                                                %$\phi \in \C{NTG-SAT-WITH-FALSE} \implies \phi' \in \C{NTG-SAT}$
+
+                                                %$\phi' \in \C{NTG-SAT} \implies \phi \in \C{NTG-SAT-WITH-FALSE}$.
+
+                                                $\phi \in \C{NTG-SAT-WITH-FALSE} \iff \phi' \in \C{NTG-SAT}$.
+
+                                                Therefore, $N$ is a reduction and $\C{NTG-SAT-WITH-FALSE}$ is reducible to $\C{NTG-SAT}$.
+
+                                                Step 1 of $N$ decodes $\pair{\phi}$, which operates in linear time. Step 2 of $N$ creates an copy of $\phi$, which operates in linear time. Step 3 of $N$ creates a dummy variable, which operates in constant time. Step 4 of $N$ iterates the $\phi'$ and performs a constant-time transformation on each clause, which operates in linear time. Step 5 of $N$ outputs $\phi'$, which operates in linear time. Because each step of $N$ operates in polynomial time, $N$ operates in polynomial time.
+
+                                                $\therefore N$ is a polynomial-time reduction from $\C{NTG-SAT-WITH-FALSE}$ to $\C{NTG-SAT}$.
+                                                \end{proof}
+
+
+                                                \clearpage
+
+                                                Consider the non-deterministic machine $A$ on input $\pair{\phi}$:
+                                                \renewcommand{\labelenumi}{\arabic{enumi}}
+                                                \begin{enumerate}
+                                                \item Decode $\pair{\phi}$ as a formula $\phi$ in 3CNF.
+                                                \item For the variables that appear in $\phi$, nondeterministically choose an mapping of variables to boolean values $S$.
+                                                \item For each clause in $\phi$, consult $S$:
+                                                \begin{enumerate}
+                                                \item If no variables in the clause are assigned to be true, REJECT.
+                                                \item If no variables in the clause are assigned to be false, REJECT.
+                                                \end{enumerate}
+                                                \item ACCEPT.
+                                                \end{enumerate}
+
+                                                \bigskip
+
+                                                \textbf{Claim:} $A$ is a polynomial time verifier for $\C{NTG-SAT}$
+
+                                                \begin{proof}
+                                                For a formula $\phi$, there are two cases: $\phi \in \C{NTG-SAT}$ and $\phi \notin \C{NTG-SAT}$.
+
+                                                \textbf{Case 1: $\boldsymbol{\phi \in \C{NTG-SAT}}$}: There is a mapping of variables to booleans $S$ such that each clause is true but not all true. Equivalently, each clause in $\phi$ contains a variable that is assigned to be false and contains a variable that is assigned to be true. When $A$ nondeterministically chooses a mapping, one of these choices is $S$. When $A$ iterates through $\phi$, each clause contains a variable that is assigned to be false and contains a variable that is assigned to be true. Therefore, $A$ does not reject, and after iterating through all clauses, $A$ reaches step 4 and accepts.
+
+                                                \textbf{Case 2: $\boldsymbol{\phi \notin \C{NTG-SAT}}$}: There is no mapping of variables to booleans such that each clause is true but not all true. Equivalently, there exists a clause in $\phi$ that is either all false or all true. For every mapping that $A$ chooses, $A$ will find a clause that is all true or all false, and reject. Therefore, all branches of $A$ reject.
+
+                                                \bigskip
+
+                                                A branch of $A$ accepts on input $\pair{\phi}$ when $\phi \in \C{NTG-SAT}$ and all branches of $A$ reject on input $\pair{\phi}$ when $\phi \notin \C{NTG-SAT}$. Therefore, $A$ is a nondeterministic verifier for $\C{NTG-SAT}$.
+
+                                                Step 1 of $A$ decodes $\pair{\phi}$, which operates in linear time. Step 2 of $A$ chooses a mapping of each variable of $\phi$, which operates in $O(n)$ time, where $n$ is the number of variables in $\phi$. Step 3 of $A$ iterates through each clause in $\phi$, which operates in linear time. Step 4 of $A$ operates in constant time. Because each step of $A$ operates in polynomial time, $A$ operates in polynomial time.
+
+                                                $\therefore A$ is a polynomial time verifier for $\C{NTG-SAT}$ and $\C{NTG-SAT} \in \C{NP}$.
+                                                \end{proof}
+
+                                                \bigskip
+
+                                                \textbf{Claim:} $\C{NTG-SAT}$ is NP-Complete.
+
+                                                \begin{proof}
+                                                $\C{NTG-SAT} \in \C{NP}$. $\C{3-SAT}$ is NP-complete. There is a polynomial-time reduction from $\C{3-SAT}$ to $\C{NTG-SAT-WITH-FALSE}$. There is a polynomial-time reduction from $\C{NTG-SAT-WITH-FALSE}$ to $\C{NTG-SAT}$. Transitively, this shows $\C{3-SAT}$ is reducible in polynomial time to $\C{NTG-SAT}$.
+
+                                                $\therefore \C{NTG-SAT}$ is NP-complete.
+                                                \end{proof}
+
+                                                \clearpage
+
+                                                \subsection*{Problem 2}
+                                                \vspace{2mm}
+
+                                                Barely Legal 3SAT is similar to $\C{NTG-SAT}$ except that only one literal can be true in each clause.
+
+                                                \vspace{4mm}
+
+
+                                                $\C{BL-SAT}$ $=$ $\{\pair{\phi}\mid \phi \mbox{ is 3CNF and is satisfiable with a formula where only one literal in each clause is true}\}$.
+
+                                                \vspace{4mm}
+
+
+                                                Prove that  $\C{BL-SAT}$ is in $\C{NP-complete}$. Do a reduction from $\C{3SAT}$.
+
+                                                Huge Hint: Replace each clause $C_i$ with 3 new clauses $(\neg(l_{i1}), a_i, b_i), (l_{i2}, b_i, c_i), (\neg(l_{i3}), c_i, d_i)$. Where $\neg(l_{i1})$ is the negation of the literal and $a_i,b_i,c_i,$ and $d_i$ are new dummy variables for that clause.
+
+                                                \noindent\hrulefill
+
+                                                Consider the machine $M$ on input $\pair{\phi}$:
+
+                                                \renewcommand{\labelenumi}{\arabic{enumi}}
+                                                \begin{enumerate}
+                                                \item Decode $\pair{\phi}$ as a formula $\phi$ in 3CNF
+                                                \item Let $\phi'$ be the empty formula
+                                                \item For each clause $(\C{A} \lor \C{B} \lor \C{C})$ in $\phi$:
+                                                \begin{enumerate}
+                                                \item Let $i$ be the index of the clause in $\phi$
+                                                \item Create dummy variables $\C{W_i}$, $\C{X_i}$, $\C{Y_i}$, and $\C{Z_i}$ that are not present in $\phi$.
+                                                \item Let $\Delta_i := (\C{\overline{A}} \lor \C{W_i} \lor \C{X_i}) \land (\C{B} \lor \C{X_i} \lor \C{Y_i}) \land (\C{\overline{C}} \lor \C{Y_i} \lor \C{Z_i})$
+                                                \item Append $\Delta_i$ to $\phi'$
+                                                \end{enumerate}
+                                                \item Return $\phi'$
+                                                \end{enumerate}
+
+                                                \bigskip
+
+                                                Consider the non-deterministic machine $N$ on input $\pair{\phi}$:
+
+                                                \renewcommand{\labelenumi}{\arabic{enumi}}
+                                                \begin{enumerate}
+                                                \item Decode $\pair{\phi}$ as a formula $\phi$ in 3CNF
+                                                \item For the variables that appear in $\phi$, nondeterministically choose an mapping of variables to boolean values $S$.
+                                                \item For each clause in $\phi$, consult $S$:
+                                                \begin{enumerate}
+                                                \item If no variables in the clause are assigned to be true, REJECT.
+                                                \item If more than one variable in the clause is assigned to be true, REJECT.
+                                                \end{enumerate}
+                                                \item ACCEPT.
+                                                \end{enumerate}
+
+                                                \clearpage
+
+                                                \textbf{Claim:} $N$ is a polynomial-time non-deterministic verifier for $\C{BL-SAT}$.
+
+                                                \begin{proof}
+                                                For a formula $\phi$ in 3-CNF, either $\phi \in \C{BL-SAT}$ or $\phi \notin \C{BL-SAT}$.
+
+                                                \textbf{Case 1: $\boldsymbol{\phi \notin \C{BL-SAT}}$:} There is a mapping of variables to booleans $S$ such that each clause contains a single true. When $N$ nondeterministically chooses a mapping, one of these choices is $S$. When $N$ iterates through $\phi$, each clause contains a variable that is assigned to be true but does not contain more than one variable that is assigned to be true.Therefore, $N$ does not reject, and after iterating through all clauses, $N$ reaches step 4 and accepts.
+
+                                                \textbf{Case 2: $\boldsymbol{\phi \notin \C{BL-SAT}}$}: There is no mapping of variables to booleans such that each clause contains a single true. For every mapping that $N$ chooses, $N$ will find a clause that is contains no trues or more than one true, and reject. Therefore, all branches of $N$ reject.
+
+                                                Step 1 of $N$ decodes $\pair{\phi}$, which operates in linear time. Step 2 of $N$ chooses a mapping of each variable of $\phi$, which operates in $O(n)$ time, where $n$ is the number of variables in $\phi$. Step 3 of $N$ iterates through each clause in $\phi$, which operates in linear time. Step 4 of $N$ operates in constant time. Because each step of $N$ operates in polynomial time, $N$ operates in polynomial time.
+
+                                                A branch of $N$ accepts on input $\pair{\phi}$ when $\phi \in \C{BL-SAT}$ and all branches of $N$ reject on input $\pair{\phi}$ when $\phi \notin \C{BL-SAT}$. Therefore, $N$ is a polynomial-time non-deterministic verifier for $\C{BL-SAT}$, and $\C{BL-SAT} \in \C{NP}$.
+                                                \end{proof}
+
+                                                \vfill
+
+                                                \textbf{Claim:} $M$ is a polynomial-time reduction from $\C{3-SAT}$ to $\C{BL-SAT}$.
+
+                                                \begin{proof}
+                                                For a formula $\phi$ in 3-CNF, either $\phi \in \C{3-SAT}$ or $\phi \notin \C{3-SAT}$.
+
+                                                \textbf{Case 1: $\boldsymbol{\phi \in \C{3-SAT}}$}:
+                                                There is a satisfaction of $\phi$ that every variable of $\phi$ is assigned a boolean value and each clause of $\phi$ contains exactly one variable that is assigned to be true. For every clause $(\C{A} \lor \C{B} \lor \C{C})$ in $\phi$, it is transformed by $M$ to be $\Delta_i := (\C{\overline{A}} \lor \C{W_i} \lor \C{X_i}) \land (\C{B} \lor \C{X_i} \lor \C{Y_i}) \land (\C{\overline{C}} \lor \C{Y_i} \lor \C{Z_i})$. For any assignments of A, B, and C such that the clause is true, there is an assignment of variables such that $\Delta_i$ is in $\C{BL-SAT}$:
+
+                                                \begin{table}[h]
+                                                \centering
+                                                \begin{tabular}{ccccccc|cc}
+                                                A & B & C & $\C{W_i}$ & $\C{X_i}$ & $\C{Y_i}$ & $\C{Z_i}$ & $\C{A} \lor \C{B} \lor \C{C}$ & $(\C{\overline{A}} \lor \C{W_i} \lor \C{X_i}) \land (\C{B} \lor \C{X_i} \lor \C{Y_i}) \land (\C{\overline{C}} \lor \C{Y_i} \lor \C{Z_i})$ \\
+                                                        \hline
+                                                        T & T & T & T & F & F & T & T & BL \\
+                                                                T & T & F & T & F & F & F & T & BL \\
+                                                                T & F & T & T & F & T & F & T & BL \\
+                                                                T & F & F & F & T & F & F & T & BL \\
+                                                                F & T & T & F & F & F & T & T & BL \\
+                                                                F & T & F & F & F & F & F & T & BL \\
+                                                                F & F & T & F & F & T & F & T & BL \\
+                                                                F & F & F & n/a & n/a & n/a & n/a & F & n/a \\
+                                                                \end{tabular}
+                                                                \end{table}
+
+                                                                Because $\C{W_i}$, $\C{X_i}$, $\C{Y_i}$ and $\C{Z_i}$ are fresh for every clause in $\phi$, there will never be any inconsistency in these assignments. Therefore, because each $\Delta_i$ is in $\C{BL-SAT}$, $\phi' =$ the formula returned by $M$ (the conjunction of each $\Delta_i$) is also in $\C{BL-SAT}$.
+
+                                                                \clearpage
+
+                                                                \textbf{Case 2: $\boldsymbol{\phi \notin \C{3-SAT}}$}:
+                                                                For every assignment of variables of $\phi$, there exists a clause $(\C{A} \lor \C{B} \lor \C{C})$ where each variable is assigned to false. When that clause it is transformed by $M$ to be $\Delta_i := (\C{\overline{A}} \lor \C{W_i} \lor \C{X_i}) \land (\C{B} \lor \C{X_i} \lor \C{Y_i}) \land (\C{\overline{C}} \lor \C{Y_i} \lor \C{Z_i})$, $\Delta_i$ is not in $\C{BL-SAT}$. For any assignments of $\C{W_i}$, $\C{X_i}$, $\C{Y_i}$ and $\C{Z_i}$, $\Delta_i$ is not in $\C{BL-SAT}$ because some clause contains no trues or more than one true:
+
+                                                                \begin{table}[h]
+                                                                \centering
+                                                                \begin{tabular}{ccccccc|cc}
+                                                                A & B & C & $\C{W_i}$ & $\C{X_i}$ & $\C{Y_i}$ & $\C{Z_i}$ & $\C{A} \lor \C{B} \lor \C{C}$ & $(\C{\overline{A}} \lor \C{W_i} \lor \C{X_i}) \land (\C{B} \lor \C{X_i} \lor \C{Y_i}) \land (\C{\overline{C}} \lor \C{Y_i} \lor \C{Z_i})$ \\
+                                                                        \hline
+                                                                        F & F & F & T & T & T & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & T & T & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & T & F & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & T & F & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & F & T & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & F & T & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & F & F & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & T & F & F & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & T & T & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & T & T & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & T & F & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & T & F & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & F & T & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & F & T & F & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & F & F & T & F & $\overline{\C{BL}}$ \\
+                                                                                F & F & F & F & F & F & F & F & $\overline{\C{BL}}$ \\
+                                                                                \end{tabular}
+                                                                                \end{table}
+
+                                                                                Therefore, because there exists a $\Delta_i$ that is not in $\C{BL-SAT}$, $\phi' =$ the formula returned by $M$ (the conjunction of each $\Delta_i$) is also not in $\C{BL-SAT}$.
+
+                                                                                \bigskip
+
+                                                                                $N$ on input $\pair{\phi}$ produces a formula in $\C{BL-SAT}$ when $\phi \in$ 3-SAT, and produces a formula that is not in $\C{BL-SAT}$ when $\phi \notin$ 3-SAT\@. Therefore, $N$ is a reduction and 3-SAT is reducible to $\C{BL-SAT}$.
+
+                                                                                Step 1 of $M$ decodes $\pair{\phi}$, which operates in linear time. Step 2 creates an empty formula, which operates in constant time. Step 3 of $M$ iterates through each clause in $\phi$ and performs a constant time transformation, which operates in linear time. Step 4 of $M$ operates in constant time. Because each step of $M$ operates in polynomial time, $M$ operates in polynomial time.
+
+                                                                                $\therefore N$ is a polynomial-time reduction from 3-SAT to $\C{BL-SAT}$.
+                                                                                \end{proof}
+
+
+                                                                                \clearpage
+
+
+
+                                                                                \subsection*{Problem 3}
+
+                                                                                Given a universe $U$ and subset of the power set of $U$, $S \subseteq \mathcal{P}(U)$, we are interested in determining if $S$ contains an exact covering of $U$, where an exact covering is a set $I, I \subseteq S$ such that every element of $U$ belongs to \emph{exactly} one set in $I$.
+
+                                                                                \vspace{2mm}
+
+                                                                                $$\C{EXACT-COVER} = \{\pair{U, S} \mid S \subseteq \mathcal{P}(U) \mbox{ and } S \mbox{ contains an exact cover of } U\}$$
+
+                                                                                \vspace{2mm}
+
+                                                                                Prove $\C{EXACT-COVER}$ is NP-complete. Do a reduction from $\C{3-COLOR}$
+
+
+                                                                                %\vspace{2mm}
+
+                                                                                %Hint 1. Create the universe, $U$, as follows, for every vertex $v$ in the graph instance of $\C{3-COLOR}$, add 4 elements into the  universe $U$:  $v$, $Red_{v}, Blue_{v}, Green_{v}$. For every edge, $(u, v)$ in the graph $G$ add 6 elements $Red_{uv}, Blue_{uv}, Green_{uv}$, $Red_{vu}, Blue_{vu}, Green_{vu}$.
+
+                                                                                %\vspace{2mm}
+
+                                                                                %Hint 2. To create the set $S$, there are three types of sets:
+
+                                                                                %\begin{enumerate}
+
+                                                                                %\item for each node $u$, and each color $c\in\{Red, Green, Blue\}$, add the set $\{u, c_u\}$, in total this gives you $3n$ sets, where $n$ is the number of nodes;for example, for node $u$, we will have $\{u, Red_u\}$, $\{u, Green_u\}$, $\{u, Blue_u\}$.
+
+                                                                                %\item for each node $u$, and each color $c\in\{Red, Green, Blue\}$, add the set
+                                                                                %$S_u^c$, which has $|N(u)|+1$ elements where $N(u)$ is the set of $u$'s neighbors, as %follows: add $c_u$ into $S_u^c$, and for each neighbor $v\in N(u)$, add
+                                                                                %$c_{uv}$. In total, this gives you $3n$ sets. For example, for node $u$ with
+                                                                                %two neighbors $w$ and $v$, you will have $S_u^{Red}$, $S_u^{Blue}$, $S_u^{Green}$, where $S_u^{Red}=\{Red_u, Red_{uv}, Red_{uw}\}$,
+                                                                                %$S_u^{Green}=\{Green_u, Green_{uv}, Green_{uw}\}$,
+                                                                                %$S_u^{Blue}=\{Blue_u, Blue_{uv}, Blue_{uw}\}$.
+
+                                                                                %\item for each edge $e=(u,v)$ and each color $c,c'\in\{Red,Green,Blue\}$ where
+                                                                                %$c\neq c'$, add $\{c_{uv}, c'_{vu}\}$ into S. In total, this gives you $6m$
+                                                                                %sets, where $m$ is the total number of edges. For example, for edge $(u,v)$,
+                                                                                %you will have the following 6 sets: $\{Green_{uv}, Blue_{vu}\}$, $\{Green_{uv}, %Red_{vu}\}$, $\{Green_{vu}, Blue_{uv}\}$, $\{Green_{vu}, Red_{uv}\}$, $\{Blue_{uv}, %Red_{vu}\}$, $\{Blue_{vu}, Red_{uv}\}$.
+
+                                                                                %\end{enumerate}
+
+                                                                                %Hint 3. In total, there are $4n+6m$ elements in $U$ and $3n+3n+6m$ sets
+                                                                                %in $S$. Consider this as your reduction and show it is valid and runs
+                                                                                %in polynomial time.
+
+                                                                                \noindent\hrulefill
+
+                                                                                Consider the non-deterministic machine $M$ on input $\pair{U,S}$:
+
+                                                                                \renewcommand{\labelenumi}{\arabic{enumi}}
+                                                                                \begin{enumerate}
+                                                                                \item Non-deterministically choose an subset $I$ of $S$
+                                                                                \item For each element $e$ in $U$
+                                                                                \begin{enumerate}
+                                                                                \item If $e$ does not belong to any sets in $I$, REJECT
+                                                                                \item It $e$ belongs to more than one set in $I$, REJECT
+                                                                                \end{enumerate}
+                                                                                \item Else, ACCEPT
+                                                                                \end{enumerate}
+
+                                                                                \bigskip
+
+                                                                                \textbf{Claim:} $M$ is a polynomial-time verifier of $\C{EXACT-COVER}$
+
+                                                                                \begin{proof}
+                                                                                For a universe $U$ and a subset of the power set of the universe $S$, there are two cases: $\pair{S,U} \in \C{EXACT-COVER}$ and $\pair{S,U} \notin \C{EXACT-COVER}$.
+
+                                                                                \textbf{Case 1: $\boldsymbol{\pair{S,U} \in \C{EXACT-COVER}}$} S contains an exact cover of U, There exists a subset $I$ of $S$ such that each element of $U$ belongs to exactly one set in $I$. When $M$ is run on input $\pair{S,U}$, one of the choices in Step 1 is $I$. Because every element in  $U$ belongs to exactly one set in I, $M$ does not reject in Step 2. In Step 3, $M$ accepts.
+
+                                                                                \textbf{Case 2: $\boldsymbol{\pair{S,U} \notin \C{EXACT-COVER}}$} S does not contain an exact cover of U, There is no subset $X$ of $S$ such that each element of $U$ belongs to exactly one set in $X$. When $M$ is run on input $\pair{S,U}$, every choice $I$ in Step 1 will not contain some element of $U$, or some element of $U$ will appear in two sets in $I$. Therefore, every choice will reject in Step 2, and no branches of $M$ accept.
+
+                                                                                Step 1 of $M$ non-deterministically chooses a subset of $S$, which operates in $O(n)$ time, where $n$ is the size of $S$. Step 2 of $M$ iterates through the $U$, which operates in $O(n)$ time, where $n$ is the size of $U$. Step 3 of $M$ operates in $O(1)$ time. Because each step of $M$ operates in polynomial time, $M$ operates in polynomial time.
+
+                                                                                For a universe $U$ and a subset of the power set of the universe $S$, a branch of $M$ accepts when $\pair{U,S} \in \C{EXACT-COVER}$ and all branches of $M$ reject when $\pair{U,S} \notin \C{EXACT-COVER}$. Therefore, $M$ is a polynomial-time verifer for $\C{EXACT-COVER}$, and $\C{EXACT-COVER} \in \C{NP}$.
+                                                                                \end{proof}
+
+                                                                                \clearpage
+
+                                                                                Consider the machine $N$ on input $\pair{G}$:
+
+                                                                                \renewcommand{\labelenumi}{\arabic{enumi}}
+                                                                                \begin{enumerate}
+                                                                                \item Define $U$ as $\emptyset$
+                                                                                \item Define $S$ as $\emptyset$
+                                                                                \item Define $C$ as \{Green, Red, Blue\}
+                                                                                \item For each vertex $v$ in $G$
+                                                                                \begin{enumerate}
+                                                                                \item Add $v$ to $U$
+                                                                                \item For each color $c$ in $C$
+                                                                                \begin{enumerate}
+                                                                                \item Add $c_v$ to $U$
+                                                                                \end{enumerate}
+                                                                                \end{enumerate}
+                                                                                \item For each edge $(u,v)$ in $G$
+                                                                                \begin{enumerate}
+                                                                                \item For each color $c$ in $C$
+                                                                                \begin{enumerate}
+                                                                                \item Add $c_{uv}$ and $c_{vu}$ to $U$
+                                                                                \end{enumerate}
+                                                                                \end{enumerate}
+                                                                                \item For each vertex $v$ in $G$
+                                                                                \begin{enumerate}
+                                                                                \item For each color $c$ in $C$
+                                                                                \begin{enumerate}
+                                                                                \item Add $\{v, c_v\}$ to $S$
+                                                                                \end{enumerate}
+                                                                                \end{enumerate}
+                                                                                \item For each vertex $v$ in $G$
+                                                                                \begin{enumerate}
+                                                                                \item For each color $c$ in $C$
+                                                                                \begin{enumerate}
+                                                                                \item Define $S^c_v$ as $\emptyset$
+                                                                                \item Add $c_v$ to $S^c_v$
+                                                                                \item For each neighbor $u$ of $v$
+                                                                                \begin{enumerate}
+                                                                                \item Add $c_{vu}$ to $S^c_v$
+                                                                                \end{enumerate}
+                                                                                \item Add $S^c_v$ to $S$
+                                                                                \end{enumerate}
+                                                                                \end{enumerate}
+                                                                                \item For each edge $(u,v)$ in $G$
+                                                                                \begin{enumerate}
+                                                                                \item For each color $c$ in $C$
+                                                                                \begin{enumerate}
+                                                                                \item For each color $c'$ in $C$
+                                                                                \begin{enumerate}
+                                                                                \item If $c \neq c'$, add $\{c_{uv}, c_{vu}\}$ to $S$
+                                                                                \end{enumerate}
+                                                                                \end{enumerate}
+                                                                                \end{enumerate}
+                                                                                \item Return $\pair{U,s}$
+                                                                                \end{enumerate}
+
+                                                                                \clearpage
+
+                                                                                \subsection*{Problem 4}
+
+                                                                                $\C{SUBSET-SUM} = \{ \pair{S, t} \mid S \mbox{ is a set of non-negative integers, } t \mbox{ is a non-negative integer, and }$ $\exists I, I \subseteq S \mbox{ where } \forall i \in I, \Sigma i = t \}$.
+
+                                                                                \vspace{2mm}
+
+                                                                                Prove that $\C{EXACT-COVER}  \pmanyone \C{SUBSET-SUM}$.
+
+                                                                                \vspace{2mm}
+
+Hint: You should change the base of the integers to be very large, you then assign each element in U an unique power of the base, this creates a unique number to sum up to in the new problem space and prevents overlap.
+
+\bigskip
+
+Consider the machine $M$ on input $\pair{U,S}$
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+\item Decode $\pair{U,S}$ as a set $U$ and a set of sets $S$
+\item For each element $e_s$ of $S$
+\begin{enumerate}
+\item For each element $x$ in $e_s$
+\begin{enumerate}
+\item If $x \notin U$, return $\pair{\emptyset,1}$
+\end{enumerate}
+\end{enumerate}
+\item Let $S'$ be a copy of $S$
+\item Let $i := 0$
+\item For each element $e_u$ in $U$
+\begin{enumerate}
+\item For each element $e_s$ of $S'$
+\begin{enumerate}
+\item If $e_s$ contains $e_u$, replace the instance of $e_u$ with $2^i$
+\end{enumerate}
+\item $i := i + 1$
+\end{enumerate}
+\item For each element $e_s$ of $S'$
+\begin{enumerate}
+\item Replace $e_s$ with the sum of its elements
+\end{enumerate}
+\item Let $t := \sum_{n=1}^{i} 2^n$
+\item Return $\pair{S',t}$
+\end{enumerate}
+
+\bigskip
+
+\textbf{Lemma:} Let $t := \sum_{i=1}^{n} 2^i$. It is impossible to sum powers of 2 (integers of the form $2^a$) to equal $t$ if some term $2^j$ is not included in the sum or is included twice in the sum,  with $1 \leq j \leq n$.
+
+\begin{proof}
+
+\end{proof}
+
+\clearpage
+
+\textbf{Claim:} $M$ is a polynomial-time many-one reduction from $\C{EXACT-COVER}$ to $\C{SUBSET-SUM}$.
+
+\begin{proof}
+For a universe $U$ and a subset of the powerset of the universe $S$, there are two cases: $\pair{U,S} \in \C{EXACT-COVER}$ and $\pair{U,S} \notin \C{EXACT-COVER}$.
+
+\textbf{Case 1: $\boldsymbol{\pair{U,S} \in \C{EXACT-COVER}}$:} There is a subset $I$ of $S$ such that each element in $U$ appears in exactly one set in $I$. When $M$ is run on input $\pair{U,S}$, a duplicate of $S$, $S'$, is constructed. In each set in $S'$, each element of $U$ is replaced by a unique integer. The first element is replaced by $2^1$, the second by $2^2$, $\cdots$, and the last by $2^n$, where $n = \card{U}$. The original subset $I$ now contains sets where each term, $2^1, 2^2, \cdots, 2^n$, appears exactly once. Because each element was replaced by $2^i$ for some non-negative integer $i$, each element in $S'$ $I$ are sets of non-negative integers. Then, each set in $S'$ is replaced by the sum of its elements, so $S'$ and $I$ are now sets of integers. Because all the elements of the sets were non-negative integers, $S'$ and $I$ are still sets of non-negative integers. The sum of the elements of $I$ is $2^1 + 2^2 + \cdots + 2^n$, because each of these $2^i$ terms appeared in one set of $I$. When each element in each set is summed, and each set is summed, the result is the sum of each $2^i$ term. Equivalently, the sum of the elements of $I$ is $\sum_{i=1}^{i} 2^i$. Additionally, $t$ is defined to be $\sum_{n=1}^{i} 2^n$. Therefore, when $M$ returns $\pair{S',t}$, there is a subset of $S'$ ($I$) that sums to be $t$, and $\pair{S',t} \in \C{SUBSET-SUM}$.
+
+\textbf{Case 2: $\boldsymbol{\pair{U,S} \notin \C{EXACT-COVER}}$:} If $\pair{U,S}$ is not well formed, and $S$ is not a subset of the power set of $U$, then $M$ returns $\pair{\emptyset,1}$. The only subset of $\emptyset$ is $\emptyset$, and there is no way to sum zero elements to equal 1, $\pair{\emptyset,1} \notin \C{SUBSET-SUM}$. If $\pair{U,S}$ is well formed, there is no subset $I$ of $S$ such that each element in $U$ appears in exactly one set in $I$. When $M$ is run on input $\pair{U,S}$, a duplicate of $S$, $S'$, is constructed. In each set in $S'$, each element of $U$ is replaced by a unique integer. The first element is replaced by $2^1$, the second by $2^2$, $\ldots$, and the last by $2^n$, where $n = \card{U}$. Now, $S'$ and $I$ are sets of integers that are each of the form $2^a$ (a power of 2). For every subset $I$ of $S$, either there is a $2^i$ term that is not in any set in $I$, or there is some $2^i$ term that appears in two sets in $I$ (with $1 \leq j \leq n$). Then, each set in $S'$ is replaced by the sum of its elements. Additionally, $t$ is defined to be $\sum_{i=1}^{n} 2^i$. For each subset $I$ of $S'$, let $2^j$ be the term that was not in any set in $I$ or that appeared in two sets in $I$. Now, when the elements of $I$ are summed up, either the $2^j$ term is not included in the summation or the $2^j$ term appears twice in the summation. Recall that each subset of $S'$ was a set of powers of 2, and now each element of $I$ is a sum of powers of 2. By the lemma above, it is impossible for powers of 2 to sum to $t$ if some $2^j$ term is not included exactly once, with $1 \leq j \leq n$. Therefore, when $M$ returns $\pair{S',t}$, there is no subset of $S'$ that sums to be $t$, and $\pair{S',t} \notin \C{SUBSET-SUM}$.
+
+On an input $\pair{U,S}$, $M$ returns a pair $\pair{S,t}$ that is in $\C{SUBSET-SUM}$ when $\pair{U,S} \in \C{EXACT-COVER}$ and returns a pair $\pair{S,t}$ that is not in $\C{SUBSET-SUM}$ when $\pair{U,S} \notin \C{EXACT-COVER}$. Therefore, $M$ is a reduction and $\C{EXACT-COVER}$ is reducible to $\C{SUBSET-SUM}$.
+
+Step 1 of $M$ decodes $U$ and $S$, which operates in $O(n)$ time, where $n$ is the length of the input. Step 2 iterates through each element of $S$, which operates in $O(n)$ time, where $n$ is the size of $S$. Step 3 duplicates $S$ into $S'$, which operates in $O(n)$ time, where $n$ is the size of $S$. Step 4 operates in $O(1)$ time. Step 5 iterates through each element in $U$ and each element in $S'$, which operates in $(m \times n)$ time, where $m$ is the size of $U$ and $n$ is the size of $S'$ (which is the size of $S$). Step 6 iterates through $S'$, which operates in $O(n)$ time, where $n$ is the size of $S'$ (which is the size of $S$). Step 7 performs a summation from 1 to $\card{U}$, which operates in $O(n)$ time, where $n$ is the size of $U$. Step 8 operates in $O(1)$ time. Because each step of $M$ operates in polynomial time, $M$ operates in polynomial time.
+\end{proof}
+
+\clearpage
+
+\subsection*{Problem 5}
+
+Prove that $\C{NTG-SAT} \pmanyone 4-color$.  Hint: Use gadgets on last page.
+
+\end{document}
+
+

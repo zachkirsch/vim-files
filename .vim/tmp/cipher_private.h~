@@ -1,0 +1,43 @@
+/*******************************************************************************
+ * Cipher Class Interface                                                      *
+ * For Columbar Transposition Cipher                                           *
+ *                                                                             *
+ * Zach Kirsch | 22 Feb 2016                                                   *
+ * COMP 11 Final Project 2016 Spring                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+#ifndef CIPHER_PRIVATE_H_INCLUDED
+#define CIPHER_PRIVATE_H_INCLUDED
+
+class CipherPrivate {
+        public:
+                CipherPrivate(int w, int h);
+                ~CipherPrivate();
+
+                /* cipher stored as array of strings - each element is a column
+                   in the cipher */
+                std::string* cols;
+                int width;
+                int height;
+
+                /* for decrypting. ciphertext is inserted in
+                   column-major order */
+                void insert_ciphertext(std::string ciphertext);
+
+                /* for inserting the plaintext into the Cipher as a string */
+                void insert_plaintext(string plaintext);
+
+                /* converts cipher to string as read in row-major order. SPACE
+                   characters are replaced with spaces and PADDDING characters
+                   are removed. */
+                std::string to_string();
+
+                /* same as to_string() but padding is kept */
+                std::string text();
+
+                char get_letter(int col, int row);
+
+};
+
+#endif

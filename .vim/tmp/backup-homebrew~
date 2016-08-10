@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+backup_folder="$1"
+restore_script="$backup_folder/restore-homebrew"
+~/.bin/generate-homebrew-restore-script.sh &> "$restore_script"

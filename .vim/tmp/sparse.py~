@@ -1,0 +1,85 @@
+#!/usr/bin/python
+
+# implementation of sparse spreadsheet
+# Zach Kirsch | July 2016
+
+
+
+class Spreadsheet:
+
+    @staticmethod
+    def __coord_as_key(row, col):
+        return (row, col)
+        # return Coordinate(row, col)
+
+    def __init__(self):
+        self.__spreadsheet = {}
+
+    def put(self, row, col, data):
+        old = self.delete(row, col)
+        c = Spreadsheet.__coord_as_key(row, col)
+        self.__spreadsheet[c] = data
+        return old
+
+    def get(self, row, col):
+        if self.is_empty(row, col):
+            raise LookupError("Cell empty")
+        c = Spreadsheet.__coord_as_key(row, col)
+        return self.__spreadsheet[c]
+
+    def is_empty(self, row, col):
+        return Spreadsheet.__coord_as_key(row, col) not in self.__spreadsheet
+
+    def delete(self, row, col):
+        if self.is_empty(row, col):
+            return None
+        old = self.get(row, col)
+        c = Spreadsheet.__coord_as_key(row, col)
+        del self.__spreadsheet[c]
+        return old
+
+    def __str__(self):
+        return "\n".join(map(lambda (coor, data): str(coor) + ": " + str(data),
+                             sorted(self.__spreadsheet.iteritems())))
+
+
+class Coordinate:
+
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+
+    def __eq__(self, other):
+        if not isinstance(other, Coordinate):
+            return False
+        return self.row == other.row and self.col == other.col
+
+    def __hash__(self):
+        return hash((self.row, self.col))
+
+    def __str__(self):
+        return "Row " + str(self.row) + ", Column " + str(self.col)
+
+    def __cmp__(self, other):
+        assert isinstance(other, Coordinate)
+        if self.row != other.row:
+            return self.row - other.row
+        return self.col - other.col
+
+
+
+
+
+
+if __name__ == "__main__":
+    s = Spreadsheet()
+    map(lambda x: s.put(*x), [(400, 1231, "-1"),
+                              (4123, 123, "F"),
+                              (401, 1231, "D"),
+                              (401, 1232, "E"),
+                              (400, 400, "-1"),
+                              (400, 1230, "A"),
+                              (400, 1232, "C"),
+                              (400, 1231, "B")])
+    s.delete(400,400)
+    print(s)

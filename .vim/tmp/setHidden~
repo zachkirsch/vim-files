@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if [[ "$#" -ne 1 || ("$1" != "true" && "$1" != "false") ]]; then
+        echo "$0 [true | false]"
+        exit 1
+fi
+
+SHOW_HIDDEN="YES"
+if [ "$1" = "false" ]; then
+        SHOW_HIDDEN="NO"
+fi
+
+set -x
+defaults write com.apple.finder AppleShowAllFiles "$SHOW_HIDDEN" && \
+killall Finder /System/Library/CoreServices/Finder.app
+

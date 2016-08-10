@@ -1,0 +1,6 @@
+flags = [
+    '-Wall',
+    '-Wextra',
+    '-std=c++11',
+    'c++',
+]

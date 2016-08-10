@@ -1,0 +1,240 @@
+import sqlite3
+import sys #command line arguments
+import json
+
+QUIT = "q"
+
+def get_team_code(team, debug):
+    code = ""
+    if team["d1_first_name"] and team["d1_first_name"].strip():
+        code += team["d1_first_name"] + " "
+    code += team["d1_last_name"]
+    if debug:
+        code += " [" + str(team["d1_id"]) + "] "
+
+    if team["d2_last_name"]:
+        code += " and "
+        if team["d2_first_name"] and team["d2_first_name"].strip():
+            code += team["d2_first_name"] + " "
+        code += team["d2_last_name"]
+        if debug:
+            code += " [" + str(team["d2_id"]) + "] "
+
+    code += " (" + team["school"] + ")"
+
+    return code
+
+def get_cantor(c, ld, debug):
+
+    search_term = raw_input("Search (q to quit)   ")
+    if search_term.lower() == QUIT:
+        return QUIT
+
+    c.execute("""
+              SELECT
+              results.ids_cantor as ID,
+              debaters_a.id as d1_id,
+              debaters_a.first_name as d1_first_name,
+              debaters_a.last_name as d1_last_name,
+              debaters_a.school as school,
+              debaters_b.id as d2_id,
+              debaters_b.first_name as d2_first_name,
+              debaters_b.last_name as d2_last_name
+              FROM
+              results
+              LEFT JOIN Debaters AS debaters_a ON results.id_1 = debaters_a.id
+              LEFT JOIN Debaters AS debaters_b ON results.id_2 = debaters_b.id
+              WHERE results.event = "{1}" AND
+                    (
+                    UPPER(d1_first_name) LIKE "%{0}%" OR
+                    UPPER(d1_last_name)  LIKE "%{0}%" OR
+                    UPPER(d2_first_name) LIKE "%{0}%" OR
+                    UPPER(d2_last_name)  LIKE "%{0}%"
+                    )
+              """.format( search_term.upper(), "LD" if ld else "PF" ))
+
+    teams = c.fetchall()
+
+    if len(teams) == 0:
+        return None
+    elif len(teams) == 1:
+        return str(teams[0]["ID"])
+
+    index = 1
+    index_map = dict()
+    for team in teams:
+        print "{:2s} {}".format(str(index), get_team_code(team, debug))
+        index_map[index] = str(team["ID"])
+        index += 1
+
+    resp = raw_input("Enter ID:   ")
+    return index_map[int(resp.strip())]
+
+
+
+def get_team_code_from_cantor(c, cantor, debug):
+    c.execute("""
+              SELECT
+              debaters_a.id as d1_id,
+              debaters_a.first_name as d1_first_name,
+              debaters_a.last_name as d1_last_name,
+              debaters_a.school as school,
+              debaters_b.id as d2_id,
+              debaters_b.first_name as d2_first_name,
+              debaters_b.last_name as d2_last_name
+              FROM
+              results
+              LEFT JOIN Debaters AS debaters_a ON results.id_1 = debaters_a.id
+              LEFT JOIN Debaters AS debaters_b ON results.id_2 = debaters_b.id
+              WHERE results.ids_cantor = ?
+              """, (cantor,))
+    return get_team_code( c.fetchone(), debug )
+
+
+def get_record(round):
+    record = ""
+    record += str(round["wins"])
+    record += "-"
+    record += str(round["losses"])
+
+    ties = round["ties"]
+    if ties > 0:
+        record += "-" + str(ties)
+
+    return record
+
+
+def get_round_info(c, round):
+    round_info = dict()
+
+    round_info["round"] = round["round_name"]
+    round_info["opp"]   = get_team_code_from_cantor(c, round["opp_cantor"],
+                                                    debug)
+
+    result = ""
+    if round["result"] == 1:
+        result = "W"
+    elif round["result"] == 0.5:
+        result = "T"
+    elif round["result"] == 0:
+        result = "L"
+    round_info["result"] = result
+
+    round_info["elo"] = (str('%.2f' % round["elo"]))
+
+    return round_info
+
+
+
+def get_results(c, ld, cantor, debug):
+    c.execute("""
+              SELECT
+              all_results.ids_cantor AS ids_cantor,
+              a.id as d1_id,
+              a.first_name AS d1_first_name,
+              a.last_name AS d1_last_name,
+              b.id as d2_id,
+              b.first_name AS d2_first_name,
+              b.last_name AS d2_last_name,
+              a.school AS school,
+              tournaments.event AS event,
+              tournaments.id AS tourney_id,
+              tournaments.name AS tournament,
+              rounds.id AS round_id,
+              rounds.name AS round_name,
+              all_results.opp_cantor AS opp_cantor,
+              all_results.result AS result,
+              tournaments.date AS date,
+              all_results.elo AS elo,
+              all_results.wins AS wins,
+              all_results.losses AS losses,
+              all_results.ties AS ties
+              FROM
+              all_results
+              INNER JOIN Rounds ON all_results.round = rounds.id
+              INNER JOIN Tournaments ON rounds.tournament = tournaments.id
+              AND tournaments.event = ?
+              LEFT JOIN Debaters AS a ON all_results.id_1 = a.id
+              LEFT JOIN Debaters AS b ON all_results.id_2 = b.id
+              WHERE
+              all_results.ids_cantor = ?
+              ORDER BY tournaments.date ASC, tournaments.id ASC
+              """, ("LD" if ld else "PF",cantor))
+
+    results = c.fetchall()
+
+    # print team code
+    print
+    print get_team_code(results[0], debug)
+
+    json_results = dict()
+    tourneys = list()
+    for round in results:
+        print "hi"
+        this_tourney = round["tournament"] + " " + round["date"]
+        if len(tourneys) == 0 or tourneys[-1] != this_tourney:
+            tourneys.append(this_tourney)
+        if this_tourney not in json_results.keys():
+            json_results[this_tourney] = list()
+
+        json_results[this_tourney].append(get_round_info(c, round))
+
+
+    print_human_readable = True
+    filename = "results.json" if not print_human_readable else "results.txt"
+    with open(filename, "w") as f:
+        if print_human_readable:
+            f.write("{}\n\n".format(get_team_code(results[0], debug)))
+            for tourney in tourneys:
+                f.write("***{}***\n\n".format(tourney))
+                for round in json_results[tourney]:
+                    f.write(round["round"])
+                    f.write("\n")
+                    f.write("Opponent: " + round["opp"])
+                    f.write("\n")
+                    f.write("Result: " + round["result"])
+                    f.write("\n")
+                    f.write("Post-Round Elo: " + round["elo"])
+                    f.write("\n")
+                    f.write("\n")
+                f.write("\n")
+        else: f.write(json.dumps(json_results))
+    print "Results in {}".format(filename)
+    print
+
+def usage(prgm):
+    print "Usage: python {} [ld, pf]".format(prgm)
+    exit(1)
+
+#################################################
+#############      MAIN PROGRAM     #############
+#################################################
+
+if len(sys.argv) < 2:
+    usage(sys.argv[0])
+
+ld = None
+if "ld" in sys.argv[1]:
+    ld = True
+elif "pf" in sys.argv[1]:
+    ld = False
+
+if ld is None:
+    usage(sys.argv[0])
+
+debug = True
+debug = False
+
+while (True):
+    with sqlite3.connect("rankings.db") as connection:
+        connection.row_factory = sqlite3.Row # for using records as dicts
+
+        c = connection.cursor()
+        id = get_cantor(c, ld, debug)
+        if id is QUIT:
+            exit(0)
+        if id is None:
+            continue
+        get_results(c, ld, id, debug)
+        break
+

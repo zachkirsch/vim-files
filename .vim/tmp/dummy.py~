@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+
+def factorial(n):
+    if n <= 1:
+        return 1
+    else:
+        return n * factorial(n-1)
+
+def all_zero_solution(num, M):
+    print num
+    print M
+    total = 1
+    for i in xrange(num):
+        total *= M+i
+    total /= factorial(num)
+    return total % (10**9 + 7)
+
+def solution(B, M):
+    if all(b == 0 for b in B):
+        return all_zero_solution(len(B), M)
+
+print solution([0,0], 10**5)

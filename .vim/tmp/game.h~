@@ -1,0 +1,57 @@
+/*******************************************************************************
+ * Game Class Interface                                                        *
+ * For Pacman Game (COMP 11 Project 1 | 2016 Spring)                           *
+ ******************************************************************************/
+
+#ifndef GAME_H_INCLUDED
+#define GAME_H_INCLUDED
+
+#include "constants.h"
+#include "pacman.h"
+#include "ghost.h"
+#include "dot.h"
+#include "boulder.h"
+
+class Game {
+        public:
+                /* Game(); */
+
+                // prints the manual and stalls until the user types a character
+                void print_manual();
+
+                // Runs the Pacman game!
+                // If 'true' is passed in, the game runs in stop motion where
+                // the user has to move for time to pass.
+                // If 'false' is passed in, every SPEED/10 seconds a move times
+                // out, and ghosts seem to move in real time.
+                void run(bool slow);
+        private:
+                char board[ROWS][COLS];
+                int level;
+
+                Pacman p;
+                Ghost ghosts[NUM_GHOSTS];
+                Dot dots[NUM_DOTS];
+                Boulder boulders[NUM_BOULDERS];
+
+                void initialize_dots();
+                void put_ghosts_in_corners();
+
+                void place_boulders(int num);
+                void place_dot(int index);
+                void place_pacman();
+                void move_ghost(int index);
+                void place_ghost(int index);
+
+                void mark_dot_eaten(int r, int c);
+                bool dots_remaining();
+
+                void prepare_board();
+                void clear_board();
+                void print_board();
+
+                void initialize_level();
+                bool run_level(bool slow);
+};
+
+#endif

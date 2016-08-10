@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+# you can write to stdout for debugging purposes, e.g.
+# print "this is a debug message"
+
+def solution(X, Y):
+    # write your code in Python 2.7
+    dict_by_x = {}
+    dict_by_y = {}
+    points = {}
+    for i in xrange(len(X)):
+        x = X[i]
+        y = Y[i]
+        points[(x,y)] = True
+        try:
+            dict_by_x[x] += [y]
+        except KeyError:
+            dict_by_x[x] = [y]
+        try:
+            dict_by_y[y] += [x]
+        except KeyError:
+            dict_by_y[y] = [x]
+
+    diamonds = set()
+
+    for (x1,y1) in points:
+        for (x2,y2) in points:
+            if x1 != x2 or y1 != y2:
+                third = (y2, x2 + 2*(x1 - x2))
+                fourth = (x1, y1 - 2*(y1 - y2))
+                try:
+                    points[third]
+                    points[fourth]
+                    item = frozenset([(x1,y1), (x2,y2), third, fourth])
+                    if len(item) == 4:
+                        diamonds.add(item)
+                except KeyError:
+                    pass
+
+                third = (x2, y2 + 2*(y1-y2))
+                fourth = (x1 - 2*(x1 - x2), y1)
+                try:
+                    points[third]
+                    points[fourth]
+                    item = frozenset([(x1,y1), (x2,y2), third, fourth])
+                    if len(item) == 4:
+                        diamonds.add(item)
+                except KeyError:
+                    pass
+
+    return len(diamonds)
+
+print solution([1,2,3,2],[4,3,4,5])

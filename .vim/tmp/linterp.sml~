@@ -1,0 +1,517 @@
+(* Tufts University COMP 105 | Spring 2016 | Lambda Calculus Assignment
+ * Interpreter edited by Zach Kirsch & Wesley Wei
+ * 30 April 2016 *)
+
+(***************** Problem 1: Basics of evaluation *****************)
+
+ (* part 1: representation of terms *)
+
+type name = string
+
+(* In lambda calculus, a term is either:
+        (1) a variable
+        (2) a function introduction
+        (3) a function application     *)
+datatype term = VAR of name
+              | LAM of name * term (*   parameter * body    *)
+              | APP of term * term (*   lambda * argument   *)
+
+(* converts a string to a VAR *)
+val var : string -> term = fn s => VAR s
+
+(* packages two terms t1 and t2 as an application of t1 onto t2 *)
+val app : term -> term -> term = fn f => fn arg => APP(f, arg)
+
+(* packages a string argument and a term body as a lambda *)
+val lam : string -> term -> term = fn str => fn body => LAM(str, body)
+
+(* takes a term t and three functions f, g, and h.
+        - If t is a lambda, applies f to t's components
+        - If t is an application, applies g to t's components
+        - If t is a variable, applies h to t's component *)
+fun cpsLambda (LAM (x, e)) f g h = f x e
+  | cpsLambda (APP(e, e')) f g h = g e e'
+  | cpsLambda (VAR s)      f g h = h s
+
+(* sanity type check *)
+val _ = cpsLambda :
+    term                   ->
+    (string -> term -> 'a) ->
+    (term -> term -> 'a)   ->
+    (string -> 'a)         -> 'a
+
+  (* part 2: conversion to uScheme syntax *)
+
+fun toString cpsLambda =
+    let fun parenIf str cond = if cond then "(" ^ str ^ ")" else str
+        fun isApp t = (cpsLambda t (fn _ => fn _ => "f") (fn _ => fn _ => "t")
+                                  (fn _ => "f")) = "t"
+        fun helper b t = cpsLambda t
+                        (fn name => fn trm =>
+                         parenIf ("\\" ^ name ^ "." ^ helper false trm) b)
+                        (fn t1 => fn t2 =>
+                      let val p1 = helper true t1
+                       val b2 = b andalso (not (isApp t2))
+                       val p2 = parenIf (helper b2 t2) (isApp t2)
+                      in p1 ^ " " ^ p2 end)
+                (fn name => name)
+    in  helper false
+    end
+
+
+(***************** Problem 2: substitution *****************)
+
+
+(* freeVars takes a term and returns a list of strings, which are the variables
+   that appear free in the term *)
+fun freeVars t =
+  let
+    (* if t is a lambda, then the free variables of the term are all the free
+       variables of the body except the parameter *)
+    fun lamFun par body = List.filter (fn n => not (n = par)) (freeVars body)
+
+    (* if t is an application of f onto arg, then the free variables of the term
+       are the union of the free variables of f and the free variables of arg *)
+    fun appFun f   arg  = (freeVars f) @ (freeVars arg)
+
+    (* if t is a variable x, then x is free *)
+    fun varFun x        = [x]
+  in
+    cpsLambda t (lamFun) (appFun) (varFun)
+  end
+
+(* sanity check *)
+val _ = freeVars : term -> string list
+
+(* checks if a name is present in a list of names *)
+fun isFreeIn n namelist = List.exists (fn x => x = n) namelist
+
+
+
+(*** Functions for generating fresh names ***)
+
+(* Function shamelessly lifted from ml.sml:682 *)
+local
+  val n = ref 1
+in
+  fun newFreshName _ = ("l" ^ Int.toString (!n) before n := !n + 1)
+end
+
+(* searches for a fresh name that doesn't appear in frees and returns the first
+   one it finds *)
+fun freshName frees =
+  let
+    val n = newFreshName 1
+  in
+    if isFreeIn n frees
+    then freshName frees
+    else n
+  end
+
+
+(* takes a subtitution [x -> M] and a term N, and substitutes x for M in N where
+   possible:
+
+   x [x -> M]     = M
+   y [y -> M]     = y
+   (YZ)[x -> M]   = (Y[x -> M])(Z[x -> M])
+   (\x.Y)[x -> M] = \x.Y
+   (\x.Z)[x -> M] = \y.Z[x -> M] if x is not free in Z or y is not free in M
+   (\x.Z)[x -> M] = \w.(Z[y -> w])[x -> M] where w is not free in Z or M
+*)
+fun subst (x, M) N =
+  let
+    (* if N is a lambda, perform the necessary substituions *)
+    fun lamFun y Z =
+      if x = y then LAM(y, Z)
+      else
+        let
+          val mFrees = freeVars M
+          val zFrees = freeVars Z
+        in
+          if not ((isFreeIn y mFrees) andalso (isFreeIn x zFrees))
+          then LAM(y, subst (x, M) Z)
+          else
+            let
+              val w = freshName (mFrees @ zFrees)
+              val newZ = subst (y, VAR(w)) Z
+            in
+              LAM(w, subst (x, M) newZ)
+            end
+        end
+
+    (* if N is an application, perform the necessary substituions *)
+    fun appFun Y   Z    = APP(subst (x, M) Y, subst (x, M) Z)
+
+    (* if N is a variable, perform the necessary substituions *)
+    fun varFun y        = if x = y then M else VAR(y)
+  in
+    cpsLambda N (lamFun) (appFun) (varFun)
+  end
+
+(* sanity check *)
+val _ = subst    : string * term -> term -> term
+
+
+
+
+
+
+
+(***************** Problem 3: reductions *****************)
+
+exception NormalForm (* raised by reduceN and reduceA *)
+
+(******************
+   Ways of reducing to normal form:
+        beta reduction: (\x.M)N --> M[x -> N]
+        eta reduction:  \x.Mx --> M if x is not free in M
+ ******************)
+
+(* Performs a reduction on a term in normal order. If the term is already in
+   normal form, then this raises NormalForm.
+   Normal order means that we choose the leftmost and outermost term first. *)
+fun reduceN (LAM(y, APP(M, VAR(x)))) = (* eta reduction *)
+      let
+        val mFrees = freeVars M
+      in
+        if (x = y) andalso (not (isFreeIn x mFrees))
+        then M
+        else LAM(y, reduceN (APP(M, VAR(x))))
+      end
+  | reduceN (APP(LAM(x, M), N)) = subst (x, N) M (* beta reduction *)
+  | reduceN (APP(a, b)) = (APP(reduceN a, b)
+                           handle NormalForm => APP(a, reduceN b))
+  | reduceN (LAM(a, b)) = LAM(a, reduceN b)
+  | reduceN _ = raise NormalForm
+
+val _ = reduceN : term -> term
+
+(* Performs a reduction on a term in applicative order. If the term is already
+   in normal form, then this raises NormalForm.
+   Applicative order means that given a beta-redex (\x.M) N, we do the beta
+   reduction only if N is in normal form (think arguments before bodies) *)
+fun reduceA (LAM(y, APP(M, VAR(x)))) = (* eta reduction *)
+      let
+        val mFrees = freeVars M
+      in
+        if (x = y) andalso (not (isFreeIn x mFrees))
+        then M
+        else LAM(y, reduceA (APP(M, VAR(x))))
+      end
+  | reduceA (APP(LAM(x, M), N)) = (APP(LAM(x, M),reduceA N) (* beta reduction *)
+                                   handle NormalForm => subst (x, N) M)
+  | reduceA (APP(a, b)) = (APP(a, reduceA b)
+                           handle NormalForm => APP(reduceA a, b))
+  | reduceA (LAM(a, b)) = LAM(a, reduceA b)
+  | reduceA _ = raise NormalForm
+
+val _ = reduceA : term -> term
+
+
+
+
+(* for testing, you may want to change these variables *)
+
+val reducer       = reduceN
+val defaultMax = 100000
+val maxReductions =
+  case OS.Process.getEnv "MAXRED"
+    of NONE => defaultMax
+     | SOME s => getOpt (Int.fromString s, defaultMax)
+
+
+(**************************************************)
+(*                                                *)
+(*       TO COMPLETE THE LAMBDA ASSIGNMENT,       *)
+(*         YOU SHOULD NOT NEED TO MODIFY          *)
+(*             ANYTHING PAST THIS LINE            *)
+(*                                                *)
+(**************************************************)
+
+val normalize : term -> term = Lhelp.normalize cpsLambda reducer maxReductions
+
+(**************************************************)
+(*                                                *)
+(*   PARSING                                      *)
+(*                                                *)
+(**************************************************)
+type name = string
+datatype toplevel = TERM   of term
+                  | LET    of {reduce:bool} * name * term
+                  | USE    of name
+
+datatype Token = TokLambda
+               | TokDot
+               | TokUse of string
+               | TokEq
+               | TokNoreduce (* the keyword 'noreduce' *)
+               | TokVar of string
+               | TokOpenParen
+               | TokCloseParen
+               | TokEOT
+               | TokEOF
+
+fun split pred =
+    let fun helper acc (x::xs) =
+            if pred x then (rev acc, x::xs) else helper (x::acc) xs
+          | helper acc [] = (rev acc, [])
+    in helper [] end
+
+fun tokenize nextline firstline =
+  let fun isFilenameChar #";" = false
+        | isFilenameChar c = Char.isGraph c
+      fun isVarChar c = not (Char.contains "\\./();=" c) andalso Char.isGraph c
+      fun getfilename s =
+            let val (x, rest)  = split (not o Char.isSpace)   s
+                val (n, rest') = split (not o isFilenameChar) rest
+            in  (String.implode n, rest')
+            end
+      fun helper (acc as (TokEOT::_)) [] = rev acc
+        | helper acc [] = helper acc (String.explode (nextline()))
+        | helper acc (#"\\"::rest) = helper (TokLambda::acc) rest
+        | helper acc (#"."::rest)  = helper (TokDot::acc) rest
+        | helper acc (#"/"::(#"/"::rest))  = helper acc []
+        | helper acc (#"("::rest)  = helper (TokOpenParen::acc) rest
+        | helper acc (#")"::rest)  = helper (TokCloseParen::acc) rest
+        | helper acc (#";"::rest)  = helper (TokEOT::acc) rest
+        | helper acc (#"="::rest)  = helper (TokEq::acc) rest
+        | helper acc (l as (c::rest)) =
+          let val (name, rest') = split (not o isVarChar) l
+          in case String.implode name
+              of ""    => helper acc rest
+               | "use" => let val (fname,rest'') = getfilename rest'
+                          in  helper (TokUse fname::acc) rest''
+                          end
+               | "noreduce" => helper (TokNoreduce::acc) rest'
+               | name  => helper (TokVar name::acc) rest'
+          end
+  in  helper [] (String.explode firstline)
+  end
+
+exception SyntaxError of string
+
+fun parseTerm toks =
+    let fun appchain NONE term = term
+          | appchain (SOME pterm) term = app pterm term
+        fun helper prev (TokLambda::(TokVar var)::TokDot::rest) =
+            let val (body, rest') = helper NONE rest
+            in (appchain prev (lam var body), rest') end
+          | helper prev (TokOpenParen::rest) =
+            let val (term, rest') = helper NONE rest
+            in helper (SOME (appchain prev term)) rest' end
+          | helper (SOME prev) (TokCloseParen::rest) = (prev, rest)
+          | helper prev ((TokVar name)::rest) =
+            helper (SOME (appchain prev (var name))) rest
+          | helper (SOME prev) (rest as (TokEOF::_)) = (prev, rest)
+          | helper (SOME prev) (TokEOT::rest) = (prev, rest)
+          | helper _ (TokNoreduce::_) =
+               raise (SyntaxError "'noreduce' is a reserved word")
+          | helper _ _ = raise (SyntaxError "Invalid Lambda Expression")
+    in helper NONE toks end
+
+fun parseTop (TokUse filename::TokEOT::rest) = USE filename :: parseTop rest
+  | parseTop (TokVar name::TokEq::rest) =
+    let val (trm, rest') = parseTerm rest
+    in LET ({reduce=true}, name, trm) :: parseTop rest' end
+  | parseTop (TokNoreduce::TokVar name::TokEq::rest) =
+    let val (trm, rest') = parseTerm rest
+    in LET ({reduce=false},name, trm) :: parseTop rest' end
+  | parseTop [] = []
+  | parseTop toks =
+    let val (trm, rest) = parseTerm toks
+    in TERM trm :: parseTop rest end
+
+(**************************************************)
+(*                                                *)
+(*   CONVERTING TERMS TO STRINGS                  *)
+(*                                                *)
+(**************************************************)
+
+val unparse = Lhelp.toString cpsLambda
+
+(**************************************************)
+(*                                                *)
+(*   ENVIRONMENTS                                 *)
+(*                                                *)
+(**************************************************)
+
+(* environments 186 *)
+type name = string
+type 'a env = (name * 'a) list
+val emptyEnv = []
+
+(* lookup and assignment of existing bindings *)
+exception NotFound of name
+fun find (name, []) = raise NotFound name
+  | find (name, (n, v)::tail) = if name = n then v else find(name, tail)
+
+fun isBound env name = (find (name, env); true) handle NotFound _ => false
+
+(* adding new bindings *)
+exception BindListLength
+fun bind(name, v, rho) = (name, v) :: rho
+fun bindList(n::vars, v::vals, rho) = bindList(vars, vals, bind(n, v, rho))
+  | bindList([], [], rho) = rho
+  | bindList _ = raise BindListLength
+(* type declararations for consistency checking *)
+val _ = op emptyEnv : 'a env
+val _ = op find     : name * 'a env -> 'a
+val _ = op bind     : name      * 'a      * 'a env -> 'a env
+val _ = op bindList : name list * 'a list * 'a env -> 'a env
+
+
+(**************************************************)
+(*                                                *)
+(*   READERS                                      *)
+(*                                                *)
+(**************************************************)
+
+exception EOF
+
+type reader = unit -> string (* raises EOF *)
+
+fun filereader fd () =
+  case TextIO.inputLine fd of SOME line => line | NONE => raise EOF
+
+fun stringsreader l =
+  let val buffer = ref l
+  in  fn () => case !buffer
+                 of [] => raise EOF
+                  | h :: t => h before buffer := t
+  end
+
+val _ = op filereader    : TextIO.instream -> reader
+val _ = op stringsreader : string list     -> reader
+
+type topreader = { buffer    : toplevel list ref
+                 , nextline  : unit -> string
+                 , firstline : unit -> string
+                 }
+fun readtop (r as { buffer, nextline, firstline }) =
+  case !buffer
+    of h::t => h before buffer := t
+     | []   => ( buffer := parseTop (tokenize nextline (firstline()))
+               ; readtop r
+               )
+
+fun topreader (getline, prompt) =
+  let fun promptIn prompt () = ( TextIO.output(TextIO.stdOut, prompt)
+                               ; TextIO.flushOut(TextIO.stdOut)
+                               ; getline ()
+                               )
+  in  if prompt then
+        { buffer = ref [], nextline = promptIn "   ", firstline = promptIn "-> "
+                                                                               }
+      else
+        { buffer = ref [], nextline = getline, firstline = getline }
+  end
+
+fun echoTag f x =
+  let val line = f x
+      val _ = if (String.substring (line, 0, 2) = ";#" handle _ => false) then
+                print line
+              else
+                ()
+  in  line
+  end
+
+fun echoBuf { buffer=b, nextline=n, firstline=f } =
+ { buffer=b, nextline=echoTag n, firstline=echoTag f }
+
+val topreader = fn args => echoBuf (topreader args)
+
+(**************************************************)
+(*                                                *)
+(*   IMPLEMENTATION OF [[USE]]                    *)
+(*                                                *)
+(**************************************************)
+
+(* implementation of [[use]] 193c *)
+fun use readEvalPrint filename rho =
+      let val fd = TextIO.openIn filename
+          fun writeln s = List.app print [s, "\n"]
+      in  readEvalPrint (topreader (filereader fd, false), writeln, writeln) rho
+          before TextIO.closeIn fd
+      end
+
+(**************************************************)
+(*                                                *)
+(*   EVALUATION                                   *)
+(*                                                *)
+(**************************************************)
+
+exception FreeVarInLet of name
+
+fun eval t rho set reduce =
+    let fun expand (v, t) =
+          if isBound rho v then app (lam v t) (find (v, rho))
+          else if not set  then t
+          else                  raise (FreeVarInLet v)
+        val t = foldr expand t (freeVars t)
+    in  if reduce then normalize t else t
+    end
+
+val _ = op eval : term -> term env -> bool -> bool -> term
+
+fun topeval (t, rho, echo) =
+  case t
+    of USE filename  => use readEvalPrint filename rho
+     | LET ({reduce}, name, t) =>
+         let val result = eval t rho true reduce
+             handle Lhelp.Diverged =>
+                 ( List.app print ["DIVERGENT DEFINITION ", name, "\n"]
+                 ; eval t rho true false
+                 )
+         in  bind (name, result, rho) before echo name
+         end
+     | TERM e =>
+         let val result = eval e rho false true
+             handle Lhelp.Diverged =>
+                 ( List.app print ["DIVERGENT TERM ", unparse e, "\n"]
+                 ; e
+                 )
+         in  bind ("it", result, rho) before echo (unparse result)
+         end
+
+and readEvalPrint (reader, echo, errmsg) rho =
+  let fun loop rho =
+        let fun continue msg = (errmsg msg; loop rho)
+            fun finish () = rho
+        in  loop (topeval (readtop reader, rho, echo))
+            handle
+                EOF => finish()
+              (* more read-eval-print handlers 194b *)
+              | IO.Io {name, ...} => continue ("I/O error: " ^ name)
+              | SyntaxError msg   => continue ("syntax error: " ^ msg)
+              | FreeVarInLet name =>
+                  continue ("error: unbound free variable in RHS of binding: "
+                            ^ name)
+              | NotFound n        => continue ("variable " ^ n ^ " not found")
+        end
+  in  loop rho end
+val _ = op topeval : toplevel * term env * (string->unit) -> term env
+val _ = op readEvalPrint : topreader * (string->unit) * (string->unit) ->
+                              term env -> term env
+
+fun runInterpreter noisy =
+  let fun writeln s = List.app print [s, "\n"]
+  in  ignore (readEvalPrint (topreader (filereader TextIO.stdIn, noisy),
+                             writeln, writeln) emptyEnv)
+      handle EOF => ()
+  end
+val _ = op runInterpreter : bool -> unit
+
+
+(**************************************************)
+(*                                                *)
+(*   COMMAND LINE                                 *)
+(*                                                *)
+(**************************************************)
+
+(* command line *)
+fun main ["-q"] = runInterpreter false
+  | main []     = runInterpreter true
+  | main _      =
+      TextIO.output(TextIO.stdErr, "Usage: " ^ CommandLine.name() ^ " [-q]\n")
+val _ = main (CommandLine.arguments())

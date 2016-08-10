@@ -1,0 +1,52 @@
+#!/bin/bash
+
+pwd
+
+output=output.txt
+
+failed=false
+touch $output
+set -x
+
+
+# takes a number n, and compares $output to test/n.plain. If they match, the
+# test passed
+compute_result()
+{
+        num=$1
+        out=$2
+
+        echo $out
+
+        echo $out > $output
+
+        if ! diff test/$num.plain $output; then
+                echo "Test $1 failed."
+                failed=true
+        else
+                echo "."
+        fi
+        rm $output
+}
+
+
+# takes test number and key length, runs test
+run_test()
+{
+        num=$1
+        len=$2
+        prgm="./codebreaker"
+        dict="dictionary.txt"
+        out=$($prgm $dict $dict $len < test/$num.enc)
+        $prgm $dict $dict $len < test/$num.enc
+        compute_result $num "$out"
+}
+
+
+run_test 1 3
+run_test 2 5
+run_test 3 8
+
+if [ "$failed" = false ]; then
+        echo "All tests passed."
+fi

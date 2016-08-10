@@ -1,0 +1,34 @@
+#!/bin/bash
+# Zach Kirsch - May 2015
+# This script goes through my Dropbox folder, finds each git repo, and reverts to the last commit
+
+# Color for output
+BLUE='\033[0;34m\e[1m'
+NC='\033[0m' # No Color
+
+echo "This will find all git repositiories in ~/Dropbox/Documents and attempt to checkout changes"
+echo
+find ~/Dropbox/Documents -type d -name .git | while read -r D
+do
+	cd "$D" # go to .git folder
+	cd .. # go to git repo
+
+	# D is now the actual repo (not the .git folder)
+	D=$(pwd)
+	
+	# ask for confirmation
+	printf "${BLUE}Directory:${NC} ${D}\n"
+	printf "${BLUE}Git Status:${NC}\n"
+	git status
+	printf "${BLUE}Revert entire git repo? This cannot be undone. (y/n)${NC}\n"
+	read -n 1 reply </dev/tty
+	echo # new line
+	echo # new line
+	if [[ $reply =~ ^[Yy]$ ]]
+	then
+		# checkout everything
+		git checkout -- . 
+	fi
+	echo "-----------------------------"
+	echo
+done

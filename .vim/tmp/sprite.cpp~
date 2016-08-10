@@ -1,0 +1,29 @@
+
+
+#include <iostream>
+using namespace std;
+
+#include "gameitem.h"
+
+
+GameItem::GameItem()
+{
+        row = 0;
+        col = 0;
+}
+
+void GameItem::set_location(int r, int c)
+{
+        row = r;
+        col = c;
+}
+
+void GameItem::set_row(int r)
+{
+        row = r;
+
+}
+void GameItem::set_col(int c)
+{
+        col = c;
+}

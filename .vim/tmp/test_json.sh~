@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if [[ "$#" -ne 1 ]]; then
+    echo "Usage: $0 <file.json>"
+    exit 1
+fi
+
+cat "$1" | python -m json.tool  >> /dev/null && exit 0 || echo "NOT valid JSON"; exit 1

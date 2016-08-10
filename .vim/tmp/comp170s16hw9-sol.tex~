@@ -1,0 +1,439 @@
+\documentclass[fleqn, 11pt]{article}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{fullpage}
+\renewcommand{\theenumi}{\roman{enumi}}
+\usepackage{color}
+\definecolor{Purple}{rgb}{.9,0,.9}
+\usepackage{graphicx}
+
+%\setlength{\parindent}{0cm} 
+\newcommand{\sub}[1]{\subsubsection*{#1}}
+\newcommand{\set}[1]{\ensuremath{\mathopen{ \{ }#1\mathclose{ \} }}}
+\newcommand{\str}[1]{\ensuremath{\mathopen{ \text{`} }#1\mathclose{ \text{'} }}}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\newcommand{\solution}[1]{\textcolor{Purple}{\\Solution: #1}}  %Solution
+\newcommand{\C}[1]{\ensuremath{\mathord{\rm #1}}}
+\newcommand{\pair}[1]{\ensuremath{\mathopen{\langle}#1\mathclose{\rangle}}}
+\newcommand{\lng}[1]{\ensuremath{\mathopen{|}#1\mathclose{|}}}
+\newcommand{\card}[1]{\ensuremath{\mathopen{|\!|}#1\mathclose{|\!|}}}
+\newcommand{\manyone}{\ensuremath{\leq_m}}
+\newcommand{\pmanyone}{\ensuremath{\leq_m^p}}
+
+
+\newcommand{\pmli}{\ensuremath{\leq_{m,\mathord{\rm li}}^p}}
+\newcommand{\ponem}{\ensuremath{\mathrel{\leq_m^{p/1}}}}
+\newcommand{\ponett}{\ensuremath{\mathrel{\leq_{1-\mathord{\rm tt}}^{p/1}}}}
+\newcommand{\ptt}{\ensuremath{\mathrel{\leq_{\mathord{\rm tt}}^p}}}
+\newcommand{\pktt}{\ensuremath{\mathrel{\leq_{k-\mathord{\rm tt}}^p}}}
+\newcommand{\pttk}[1]{\ensuremath{\mathrel}{\leq_{#1-\mathord{\rm
+        tt}}^p}}
+\newcommand{\pmhat}{\ensuremath{\mathrel{\leq_{\hat{m}}^p}}}
+\newcommand{\pmhatli}{\ensuremath{\mathrel{\leq_{\hat{m}\mathord{\rm
+          ,l.i.}}^p}}}
+\newcommand{\pmhathonest}{\ensuremath{\mathrel{\leq_{\hat{m},\mathord{\rm honest}}^p}}}
+\newcommand{\PNP}{\C{P}^{\C{NP}}}
+\newcommand{\pT}{\ensuremath{\mathrel{\leq_T^p}}}
+\newenvironment{proof}{\vspace*{1em}\noindent{\bf Proof.}}{\hfill$\Box$}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+
+
+%\title{COMP170 Problem Set 8 - Due April 7}
+%\author{}
+%\date{}
+
+\begin{document}
+%\maketitle
+
+
+
+
+\section*{COMP170 Spring 2016, Homework 9 - Due Monday April 18}
+
+
+\subsection*{Submit via provide using:} 
+
+\texttt {provide comp170 hw9 p1.pdf p2.pdf p3.pdf p4.pdf p5.pdf}
+
+
+\subsection*{Problem 1}
+
+\vspace{3mm}
+
+In a graph, $G = (V, E)$, two nodes are allowed to marry if they are not connected by an edge, this marriage joins the two nodes into one new node with edges from both nodes. 
+ 
+ \vspace{2mm}
+ 
+Specifically, given $u,v \in V$ and $(u,v) \notin E$, marry$(G, u, v)$ creates a new graph $G' = (V', E')$, where $V' = V \setminus \{u, v\} \cup \{w\}$ and $E' = E \setminus \{(u, x_i) \mid \forall x_i \in V\} \setminus \{(v, x_i) \mid \forall x_i \in V\} \cup \{(w, z_i) \mid \forall z_i \in \{ (\C{neighborhood}(u) \cup \C{neighborhood}(v)\}$.
+
+
+ \vspace{2mm}
+ 
+ 
+The following figure shows two consecutive marriages in a graph.
+
+
+
+\begin{figure}[h!]
+\centering
+
+
+ 
+    \includegraphics[width=0.75\textwidth]{graphmarry.pdf}   
+ 
+\end{figure}
+
+
+
+$\C{Graph Marriage Equality}$  = 
+
+$\{\pair{G, H} \mid  \exists \mbox{ a series of marriages which transform }$ $G  \mbox{ into } G', \mbox{ where } G'  \mbox{ is isomorphic to } H \}$
+
+\vspace{3mm}
+
+Prove that $\C{Graph Marriage Equality}$ is NP-complete. 
+
+Hint: You can do a reduction from 3-COLOR.
+
+\sub{Proof idea}
+We construct an $G''$ from a graph $G$ by adding a 3-clique disconnected from the rest of the graph to ensure that $G''$ contains a 3-clique.
+We let $H$ be a 3-clique.
+
+If $G$ is 3-colorable, then $G''$ is 3-colorable.
+By marrying all the nodes of the same color in $G''$, we arrive at $H$.
+Therefore, $\pair{G'', H} \in$ GraphMarriageEquality.
+
+If $G$ is not 3-colorable, then neither is $G''$.
+For any graph $I$ that can be married to a 3-clique, $I$ is 3-colorable.
+Therefore, $\pair{G'', H} \not\in$ GraphMarriageEquality.
+
+\newpage
+\begin{proof} 
+    GraphMarriageEquality $\in$ NP.
+    The following algorithm accepts in polynomial time if $\pair{G,H} \in$ GraphMarriageEquality:
+    \begin{enumerate}[itemsep=-.5ex]
+        \item Non-deterministically select a series of marriages.
+        \item Execute the marriages to construct $G'$.
+        \item Non-deterministically select a mapping from $G'$ to $H$ to check isomorphism.
+        \item If $G'$ is isomorphic to $H$, ACCEPT.
+    \end{enumerate}
+
+    For arbitrary graph $G = \pair{V,E}$, define the reduction from 3-COLOR to GraphMarriageEquality as follows:
+    \[ f(\pair{G}) = \pair{G'', H} \]
+    where $G'' = \pair{V',E'}$ such that $ V' = V \cup \set{a,b,c}$ for $a$, $b$, $c \not\in V$, and $E' = E \cup \set{\pair{a,b}, \pair{b,c}, \pair{a,c}}$.
+    $H = \pair{\set{v_1, v_2, v_3}, \set{\pair{v_1, v_2}, \pair{v_1, v_3}, \pair{v_2, v_3}}}$. So $G''$ is the same as $G$ with the exception that three vertices have been added to form a 3-clique subgraph, and $H$ is a 3-clique.
+    
+    Since $f$ merely adds three vertices to $V$, three edges to $E$, and appends $H$, it is computable in linear time- $O(n)$.
+    
+    \hfill\\
+    Suppose $\pair{G} \in$ 3-COLOR.
+    Then $G'' \in$ 3-COLOR.
+    Take a 3-coloring of $G''$ which uses red, green, and blue. 
+    By marrying every vertex of the same color, eventually a 3-clique is reached. 
+     
+    Given that $G''$ contains a 3-clique, and given that no vertices of the same color are connected by an edge, marrying all vertices of the same color must result in a 3-clique.. 
+    Suppose, without loss of generality, that we married all but the three vertices within the 3-clique subgraph of $G''$.
+    Then, by marrying the two remaining red vertices, there would be a red vertex which is connected to at least one green and at least one blue.
+    Since the same holds for marriages of the green and blue vertices, we are left with three vertices, each one connected to two others, or, a 3-clique.
+    
+    Therefore, there is a series of marriages which transform $G''$ into a $G'$ which is isomorphic to $H$, so $\pair{G'', H} \in$ GraphMarriageEquality.
+    
+    \hfill\\
+    Suppose $f(\pair{G}) = \pair{G'', H} \in$ GraphMarriageEquality.
+    Then there is some series of marriages which transforms $G''$ into $H$, where $G''$ is a graph which contains a 3-clique subgraph and $H$ is a 3-clique.
+    Let all those vertices that converge into the red vertex of $G'$ be colored red, those that converge to the blue vertex colored blue, and those that vertex to the green colored green. 
+    Since these vertices are all married, none of them are connected by an edge, so this is a valid 3-coloring.
+    
+    Since $G''$ is 3-colorable, so is $G$. Therefore, $\pair{G} \in$ 3-COLOR.
+    
+    \iffalse
+    We will show by induction that any graph $F$ from which $H$ can be derived through marriages is also 3-colorable.
+    
+    Suppose graph $E$ of $n$ vertices is 3-colorable and was derived from $F$ of $n+1$ vertices via marriage. 
+    The two married vertices, by definition, were not connected by an edge.
+    Let the extra vertex in $F$ be the same color as the resulting vertex in $E$ and color all other vertices the same as in $E$.
+    $F$ is, then, 3-colorable.
+    
+    Since $H$ is 3-colorable, $G''$ is 3-colorable and so is $G$.
+    Therefore, $\pair{G} \in$ 3-COLOR.
+    \fi
+\end{proof}
+
+
+\newpage
+\subsection*{Problem 2}
+
+The bin packing problem is given a set of $n$ items, each with a weight, $w_i$, and set of bins, $B$, each bin, has a fixed capacity, $c$, find the minimum number of bins needed to pack all items.
+
+\vspace{4mm}
+
+Formally rephrase this as a decision problem, and specify it as a set. Prove that this problem is NP-complete. Do a reduction from  $\C{SUBSET-SUM}$.
+
+\sub{Proof idea}
+We define sets BinPack and Partition.
+Partition is the set of sets which can be divided into two pieces such that the elements of each piece sum to the same number.
+
+By adding values to SUBSET-SUM, we guarantee that it sums to $2t$, and is in Partition if and only if there is a subset of the original $S$ which sums to $t$. 
+We then reduce Partition to BinPack, which is done by setting the values as weights, pairing each with a natural number.
+We then simulate the Partition problem on a set $A$ as a bin packing problem by setting the number of bins to two and setting their capacity to one half the sum of all elements of $A$.
+
+\begin{proof}
+Let BinPack be defined
+\begin{align*} \text{BinPack} = \set{\pair{W, c, b} &\mid \text{there is a minimum of } b \text{ disjoint } I_x \text{ such that } I_1 \cup I_2 \cup \ldots \cup I_n = W \\
+&\text{ and for each $I_x$, for all } \pair{i, w_i} \in I_x, \sum w_i \leq c  } 
+\end{align*}
+where each $i$ is an item and each $w_i$ is its weight.
+
+BinPack $\in$ NP.
+The following algorithm accepts in polynomial time if $\pair{W,c,b} \in$ BinPack.
+    \begin{enumerate}[itemsep=-.5ex]
+        \item Non-deterministically select $b$ disjoint $I$.
+        \item Check that, for each $I$, for all $\pair{i,w_i} \in I$, $\sum w_i \leq c$.        
+        \item Use the same procedure to determine if $W$ can be packed into $b-1$ bins of size $c$.\\
+        If so, REJECT. If not, ACCEPT.
+    \end{enumerate}
+
+Let Partition be defined
+\[ \text{Partition} = \set{\pair{A} \mid \text{there are disjoint } B,C \text{ such that } B \cup C = A \text{ and }\sum_{b \in B} b = \sum_{c \in C} c} \]
+SUBSET-SUM $\leq^p_m$ Partition.
+Construct \pair{A,u} from \pair{S,t} as follows.
+Let $n$ be the sum of all members of $S$.
+Let $A = S \cup \set{|n-2t|}$ (allowing for duplicates).
+Define the reduction from SUBSET-SUM to Partition as follows:
+\[ f(\pair{S,t}) = \pair{A} \quad \text{[$f$ is clearly $O(n^k)$}] \]
+
+Suppose $\pair{S,t} \in$ SUBSET-SUM.
+Then there is a subset $x$ whose elements add up to $t$ and a disjoint subset $y$ whose elements add up to $|n-t|$. 
+The elements of $y \cup \set{|n-2t|}$ add up to $t$.
+Therefore, $A$ can be partitioned into two equal parts, and $f(\pair{S,t}) = \pair{A,u} \in$ Partition.
+
+Suppose $\pair{S,t} \not\in$ SUBSET-SUM.
+Then there is no subset of $S$ whose elements add up to $t$.
+Regardless, the elements of $S \cup \set{|n-2t|}$ sum to $2t$.
+Since there is no subset of $S$ that sums to $t$, and $|n-2t|$ can be a included in only one side of the partition, there is no partition on $S \cup \set{|n-2t|}$ such that the elements of both sides sum to $t$. 
+Therefore, $f(\pair{S,t}) = \pair{A} \not\in$ Partition.
+
+\newpage
+Partition $\leq^p_m$ BinPack.
+Construct \pair{W,c,b} from \pair{A} as follows. 
+Enumerate each element $a_i$ of $A$ and pair each element with its corresponding integer: 
+\[ \pair{1, a_1}, \pair{2, a_2}, \ldots , \pair{m, a_m}\]
+Let $d = \sum_{x\in A} x$, $c = \lfloor d/2\rfloor$, and $b = 2$. 
+Define the reduction from Partition to Binpack:
+\[ g(\pair{A}) = \pair{W,c,b} \]
+Since $g$ simply expands \pair{A} and appends some extra information, it runs in $O(n^2)$ time.
+
+Suppose $\pair{A} \in$ Partition.
+Then there is a way to partition $A$ into two disjoint sets $B$ and $C$ such that $B \cup C = A$ and the sum of all elements in $B$ is equal to the sum in $C$, and each sum is equal to $d/2$. 
+So, given the values as weights, there is a way to pack them into two bins of size $\lfloor d/2 \rfloor$. 
+Therefore, $g(\pair{A}) \in$ BinPack.
+
+Suppose $\pair{A} \not\in$ Partition.
+Then there is no way to partition $A$ into two disjoint sets $B$ and $C$ such that $B \cup C = A$ and the sum of all elements in $B$ is equal to the sum in $C$, and each sum is equal to $d/2$. 
+So, given a bin size of $\lfloor d/2 \rfloor$, the weights of any $X \subseteq W$ will sum to $p$ such that $p > \lfloor d/2 \rfloor$ or $p < \lfloor d/2 \rfloor$. 
+If $p > \lfloor d/2 \rfloor$, then $X$ cannot be packed into a single bin.
+If $p < \lfloor d/2 \rfloor$, then $W - x$ cannot be packed into a single bin.
+Therefore, $g(\pair{A}) \not\in$ BinPack.
+\end{proof}
+
+\newpage
+\subsection*{Problem 3}
+
+One strategy for solving the bin packing problem is to do a first fit heuristic. Here you pack the items one at a time into the first bin that the item will fit into. If it doesn't fit into any of the current bins, you start a new bin.
+
+\vspace{2mm}
+
+Formally state this as an algorithm and show that it never uses more than 2 times the number of bins in the optimal solution.
+
+\sub{Formal algorithm}
+Given $W$ and $c$:
+\begin{enumerate}[itemsep=-.5ex]
+    \item $i := 1$
+    \item $\phi = I_1 = I_2 = \ldots$
+    \begin{enumerate}
+        \item For all $\pair{y, w_y} \in W$
+        \begin{enumerate}[itemsep=-.5ex]
+            \item For $j:=0$ to $j=i$
+            \begin{enumerate}
+                \item If, for all $\pair{x, w_x} \in I_j$, $\mathbf{\Sigma} w_x + w_y \leq c$, then $I_j := I_j \cup \pair{y,w_y}$ and break.
+                \item Else, if $j=i$, increment $i$.
+                \item Increment $j$.
+            \end{enumerate}
+        \end{enumerate}
+    \end{enumerate}
+\end{enumerate}
+
+\sub{Proof idea}
+If the algorithm used more than twice the number of bins used in the optimal solution, it would have to allow for multiple bins to be less than half full. 
+Since the algorithm does not allow this to happen, it can never exceed twice the amount.
+
+\begin{proof}
+Let $b$ be the number of bins in the optimal solution.
+Suppose the algorithm uses $2b + 1$ bins.
+Let $a$ be the average of all of the values held in all $2b+1$ bins. 
+Since all $\pair{i, w_i} \in W$ fit into $b$ bins of size $c$ in the optimal solution, $a < c/2$. 
+
+Suppose that there are two bins $I_j$ and $I_k$ whose elements sum to less than or equal to than $c/2$.
+Suppose that $j < k$ (it doesn't matter either way).
+Then, by definition of the algorithm, the elements of $I_k$ would have been stored in $I_j$ rather than in $I_k$.
+Therefore, there is only one bin, say $I_j$, whose elements sum to less than or equal to $c/2$.
+
+The remaining $2b$ bins all sum to some value greater than $c/2$.
+Since each sum is greater than $c/2$, the total of all $2b$ sums is greater than $2b(c/2)$:
+for all $I_z$ and all $\pair{i,w_i} \in I_z$,
+\begin{align*}
+    \sum w_i &> 2b(c/2)\\
+            &> (2bc/2) \\
+            &> bc
+\end{align*}
+Given that all $\pair{i, w_i} \in W$ fit into $b$ bins of size $c$ in the optimal solution, $\sum_{\pair{i,w_i}\in W} w_i \leq bc$.
+
+Therefore, the algorithm never uses more than $2b$ bins.
+\end{proof}
+
+\newpage
+\subsection*{Problem 4}
+
+In certain programming languages, comments appear between delimiters such as $/\#$ and $\#/$. Let $L$ be the language of all valid delimited comment strings. A member of $L$ must begin with $/\#$ and end with $\#/$ but have no intervening $\#/$. For simplicity, we'll say that the alphabet is $\{a, b, /, \#\}$. Give a DFA that recognizes $L$.
+
+\vspace{2mm}
+
+Note: You may hand draw this problem and scan it to submit. Please write neatly!
+
+\vspace{10mm}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.2]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (9,-24.7) circle (3);
+\draw (9,-24.7) node {$1$};
+\draw [black] (20.2,-24.7) circle (3);
+\draw (20.2,-24.7) node {$2$};
+\draw [black] (33,-24.7) circle (3);
+\draw (33,-24.7) node {$3$};
+\draw [black] (47.3,-24.7) circle (3);
+\draw (47.3,-24.7) node {$4$};
+\draw [black] (58.5,-24.7) circle (3);
+\draw (58.5,-24.7) node {$5$};
+\draw [black] (58.5,-24.7) circle (2.4);
+\draw [black] (74.9,-24.7) circle (3);
+\draw (74.9,-24.7) node {$6$};
+\draw [black] (12,-24.7) -- (17.2,-24.7);
+\fill [black] (17.2,-24.7) -- (16.4,-24.2) -- (16.4,-25.2);
+\draw (14.6,-24.2) node [above] {$/$};
+\draw [black] (23.2,-24.7) -- (30,-24.7);
+\fill [black] (30,-24.7) -- (29.2,-24.2) -- (29.2,-25.2);
+\draw (26.6,-24.2) node [above] {$\#$};
+\draw [black] (44.542,-25.867) arc (-72.84391:-107.15609:14.888);
+\fill [black] (44.54,-25.87) -- (43.63,-25.63) -- (43.92,-26.58);
+\draw (40.15,-27.03) node [below] {$\#$};
+\draw [black] (50.3,-24.7) -- (55.5,-24.7);
+\fill [black] (55.5,-24.7) -- (54.7,-24.2) -- (54.7,-25.2);
+\draw (52.9,-24.2) node [above] {$/$};
+\draw [black] (34.323,-27.38) arc (54:-234:2.25);
+\draw (33,-31.95) node [below] {$a,b,\mbox{ }/$};
+\fill [black] (31.68,-27.38) -- (30.8,-27.73) -- (31.61,-28.32);
+\draw [black] (35.556,-23.145) arc (113.77058:66.22942:11.398);
+\fill [black] (35.56,-23.15) -- (36.49,-23.28) -- (36.09,-22.37);
+\draw (40.15,-21.68) node [above] {$a,b$};
+\draw [black] (48.623,-27.38) arc (54:-234:2.25);
+\draw (47.3,-31.95) node [below] {$\#$};
+\fill [black] (45.98,-27.38) -- (45.1,-27.73) -- (45.91,-28.32);
+\draw [black] (2.6,-24.7) -- (6,-24.7);
+\fill [black] (6,-24.7) -- (5.2,-24.2) -- (5.2,-25.2);
+\draw [black] (61.5,-24.7) -- (71.9,-24.7);
+\fill [black] (71.9,-24.7) -- (71.1,-24.2) -- (71.1,-25.2);
+\draw (66.7,-24.2) node [above] {$a,b,\#,\mbox{ }/$};
+\end{tikzpicture}
+\end{center}
+
+*Any missing arrows are supposed to transition to state 6.
+
+\newpage
+\subsection*{Problem 5}
+
+Prove that for every $k > 1$, a language $A_k \subseteq \{0,1\}^*$ exists that can be recognized by a DFA with $k$ states, but not by one with $(k-1)$ states.
+
+\sub{Proof idea}
+We make $A_i$ languages of strings with fixed length.
+We then construct $A_{k+1}$ from $A_k$ by adding a node and transitions into $A_k$'s start state as shown: 
+\begin{center}
+\begin{tikzpicture}[scale=0.15]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (15,-28.4) circle (3);
+\draw (15,-28.4) node {$a$};
+\draw [black] (28.2,-28.7) circle (3);
+\draw (28.2,-28.7) node {$b$};
+\draw [black] (18,-28.47) -- (25.2,-28.63);
+\fill [black] (25.2,-28.63) -- (24.41,-28.11) -- (24.39,-29.11);
+\draw (21.62,-28.01) node [above] {$0,1$};
+\draw [black] (8.1,-28.4) -- (12,-28.4);
+\fill [black] (12,-28.4) -- (11.2,-27.9) -- (11.2,-28.9);
+\end{tikzpicture}
+\end{center}
+We prove by induction that, for any $A_n$ no machine with fewer than $n$ nodes can recognize $A_{n}$.
+
+\begin{proof}
+Let the series of languages be defined:
+\begin{align*} 
+       A_{k} &= \set{\underbrace{(0 \cup 1) \circ (0 \cup 1) \circ \ldots \circ (0 \cup 1)}_{k-2}} \quad \text{such that} \\
+        &A_2 = \set{\epsilon} \\
+        &A_3 = \set{(0 \cup 1)} \\
+        &A_4 = \set{(0 \cup 1)(0 \cup 1)} \\
+        &A_5 = \set{(0 \cup 1)(0 \cup 1)(0 \cup 1)} \\
+        &\vdots 
+\end{align*}    
+
+$A_2$ can be recognized by a two state DFA:
+\begin{center}
+\begin{tikzpicture}[scale=0.15]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (24.7,-23.4) circle (3);
+\draw (24.7,-23.4) node {$1$};
+\draw [black] (24.7,-23.4) circle (2.4);
+\draw [black] (39.6,-23.4) circle (3);
+\draw (39.6,-23.4) node {$2$};
+\draw [black] (18.2,-23.4) -- (21.7,-23.4);
+\fill [black] (21.7,-23.4) -- (20.9,-22.9) -- (20.9,-23.9);
+\draw [black] (27.7,-23.4) -- (36.6,-23.4);
+\fill [black] (36.6,-23.4) -- (35.8,-22.9) -- (35.8,-23.9);
+\draw (32.15,-22.9) node [above] {$0,1$};
+\draw [black] (42.28,-22.077) arc (144:-144:2.25);
+\draw (46.85,-23.4) node [right] {$0,1$};
+\fill [black] (42.28,-24.72) -- (42.63,-25.6) -- (43.22,-24.79);
+\end{tikzpicture}
+\end{center}
+Suppose $A_2$ could be recognized by a DFA $M$ with one state, $a$.
+Since there is at least one string in $A_2$, that state would have to be an accept state.
+Since $M$ is deterministic, it must have both 0- and 1-transitions which must loop back to $a$.
+Therefore, $M$ accepts everything and does not recognize $A_2$.
+
+Suppose $A_k$ can be recognized by a DFA with $k$ states but not one with $k-1$ states.
+By construction, 
+\[A_{k+1} = \set{(0 \cup 1) \circ \underbrace{(0 \cup 1)(0 \cup 1)\ldots(0 \cup 1)}_{k-2}}\]
+or $\set{(0 \cup 1) \circ s}$ for $s \in A_k$.
+Constuct machine $M_{k+1}$ to recognize $A_{k+1}$.
+
+The first transition of $M_{k+1}$ must transition from an initial state $i$ to some other state $j_1$ on input `0' or `1'. 
+If the initial state had self loops, then $M_k$ would accept any string of `0's and `1's followed by $s$.
+$M_k$ must then recognize $s$ using states $j_1, j_2, j_3, \ldots$ and $j_n$.
+
+By the inductive hypothesis, the smallest machine $M_k$ to recognize $s$ has $k$ states.
+If $n < k$, then we could construct a machine to recognize $A_k$ with fewer than $k$ states- $M_{k+1}$ without its initial state. 
+($i$ cannot be included in $j_1 \ldots j_n$. If it were, there would be a loop such that the machine would accept indefinitely long strings, some of which are not in $A_{k+1}$.)
+So, $n = k$.
+
+Therefore, $M_{k+1}$ has $k+1$ states.
+\end{proof}
+
+\end{document}
+
+

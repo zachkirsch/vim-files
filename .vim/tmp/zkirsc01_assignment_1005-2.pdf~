@@ -1,0 +1,52 @@
+<!--: spam
+Content-Type: text/html
+
+<body bgcolor="#f0f0f8"><font color="#f0f0f8" size="-5"> -->
+<body bgcolor="#f0f0f8"><font color="#f0f0f8" size="-5"> --> -->
+</font> </font> </font> </script> </object> </blockquote> </pre>
+</table> </table> </table> </table> </table> </font> </font> </font><body bgcolor="#f0f0f8">
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#6622aa">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>&lt;type 'exceptions.IOError'&gt;</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial">Python 2.6.6: /usr/bin/python<br>Sun May  1 11:55:19 2016</font></td></tr></table>
+    
+<p>A problem occurred in a Python script.  Here is the sequence of
+function calls leading up to the error, in the order they occurred.</p>
+<table width="100%" cellspacing=0 cellpadding=0 border=0>
+<tr><td bgcolor="#d8bbff"><big>&nbsp;</big><a href="file:///h/cgregg/public_html/grades/cgi-bin/downloadStudentExam.cgi">/h/cgregg/public_html/grades/cgi-bin/downloadStudentExam.cgi</a> in <strong><module></strong>()</td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;69</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;now+','+student+'\n')<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;70</small>&nbsp;<br>
+</tt></font></td></tr>
+<tr><td bgcolor="#ffccee"><tt><small>&nbsp;&nbsp;&nbsp;71</small>&nbsp;with&nbsp;open(dataDir+classesDir+studentDir+student+'_Full.pdf',"rb")&nbsp;as&nbsp;pdfFile:<br>
+</tt></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;72</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;1:<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;73</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chunk&nbsp;=&nbsp;pdfFile.read(4096)<br>
+</tt></font></td></tr>
+<tr><td><small><font color="#909090"><em>builtin</em> <strong>open</strong>&nbsp;= &lt;built-in function open&gt;, <strong>dataDir</strong>&nbsp;= '../data/', <strong>classesDir</strong>&nbsp;= 'classes/', <strong>studentDir</strong>&nbsp;= '2016-spring/COMP/170/assignment_1005/zkirsc01/', <strong>student</strong>&nbsp;= 'zkirsc01', pdfFile <em>undefined</em></font></small></td></tr></table><p><strong>&lt;type 'exceptions.IOError'&gt;</strong>: [Errno 2] No such file or directory: '../data/classes/2016-spring/COMP/170/assignment_1005/zkirsc01/zkirsc01_Full.pdf'
+<br><tt><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small>&nbsp;</tt>args&nbsp;=
+(2, 'No such file or directory')
+<br><tt><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small>&nbsp;</tt>errno&nbsp;=
+2
+<br><tt><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small>&nbsp;</tt>filename&nbsp;=
+'../data/classes/2016-spring/COMP/170/assignment_1005/zkirsc01/zkirsc01_Full.pdf'
+<br><tt><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small>&nbsp;</tt>message&nbsp;=
+''
+<br><tt><small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</small>&nbsp;</tt>strerror&nbsp;=
+'No such file or directory'
+
+
+<!-- The above is a description of an error in a Python program, formatted
+     for a Web browser because the 'cgitb' module was enabled.  In case you
+     are not reading this in a Web browser, here is the original traceback:
+
+Traceback (most recent call last):
+  File "downloadStudentExam.cgi", line 71, in &lt;module&gt;
+    with open(dataDir+classesDir+studentDir+student+'_Full.pdf',"rb") as pdfFile:
+IOError: [Errno 2] No such file or directory: '../data/classes/2016-spring/COMP/170/assignment_1005/zkirsc01/zkirsc01_Full.pdf'
+
+-->
+

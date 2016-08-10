@@ -1,0 +1,50 @@
+/*******************************************************************************
+ * Game Class Implementation                                                   *
+ * For Pacman Game (COMP 11 Project 1 | 2016 Spring)                           *
+ *****************************************************************************/
+
+#include <iostream>
+using namespace std;
+
+#include "game.h"
+#include "pacman.h"
+#include "ghost.h"
+#include "dot.h"
+#include "termfuncs.h"
+
+
+/* Constructor */
+Game::Game()
+{
+
+}
+
+/* print_manual()
+ * Purpose:   Prints the manual and stalls until the user types a character
+ * Arguments: None
+ * Returns:   None
+ */
+void Game::print_manual()
+{
+        screen_clear();
+        cout << "PACMAN GAME\n"
+                "            \n"
+                " Move left:    " << CMD_LFT << "\n"
+                " Move right:   " << CMD_RGT << "\n"
+                " Move up:      " << CMD_UP  << "\n"
+                " Move down:    " << CMD_DWN << "\n"
+                "\n"
+                " Collect all the dots. They look like: " << DOT << "\n"
+                " Avoid the ghosts.     They look like: " << GHOST << "\n"
+                "\n"
+                " Good luck!\n"
+                "\n"
+                " Press any key to continue...\n";
+
+        getachar();
+}
+
+void Game::run()
+{
+
+}

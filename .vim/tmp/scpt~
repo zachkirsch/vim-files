@@ -1,0 +1,23 @@
+#!/bin/bash
+# Zach Kirsch 10/2015
+# Copies files to a server using scp
+
+USER=zkirsc01
+SERVER=homework.cs.tufts.edu
+
+if [ "$#" -lt 2 ]; then
+        echo "This will copy files to $USER@$SERVER using scp"
+        echo "Usage:   scpt <files> <filepath on Tufts server>"
+        echo "Example: scpt file1.jpg file\\ 2.png ~/Desktop"
+        exit
+fi
+
+# dest is last argument
+DEST="${@: -1}"
+# Because ~ is automatically expanded to $HOME, replace it back with ~
+DEST="${DEST//$HOME/~}"
+
+set -x
+
+# copy all arguments except last to destination
+scp -r "${@:1:$(($#-1))}" "$USER@$SERVER:$DEST"

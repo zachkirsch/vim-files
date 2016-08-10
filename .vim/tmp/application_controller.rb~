@@ -1,0 +1,63 @@
+class ApplicationController < ActionController::Base
+  # Prevent CSRF attacks by raising an exception.
+  # For APIs, you may want to use :null_session instead.
+  protect_from_forgery with: :exception
+  skip_before_filter :verify_authenticity_token
+
+  # set locale
+  before_action :set_locale
+  def set_locale
+    locale = params[:locale] || I18n.default_locale
+
+    if I18n.available_locales.include? locale
+        I18n.locale = locale
+    else
+        I18n.locale = I18n.default_locale
+    end
+  end
+
+  helper_method :locale_to_country_code
+  def locale_to_country_code (locale)
+    locale = "#{locale.downcase}" # convert to string
+
+    case locale
+    when "en"
+        return "us"
+    when "ru"
+        return "ru"
+    when "zh-CN"
+        return "cn"
+    when "fr"
+        return "fr"
+    when "es"
+        return "es"
+    else
+        return ""
+    end
+  end
+
+  helper_method :locale_to_language
+  def locale_to_language (locale)
+    locale = "#{locale.downcase}" # convert to string
+
+    case locale
+    when "en"
+        return "English"
+    when "ru"
+        return "Pусский"
+    when "zh-CN"
+        return "中文"
+    when "fr"
+        return "Français"
+    when "es"
+        return "Español"
+    else
+        return ""
+    end
+  end
+
+  def default_url_options(options={})
+    { locale: I18n.locale }
+  end
+
+end

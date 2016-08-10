@@ -1,0 +1,93 @@
+HW 6: Universal Machine
+README
+Zach Kirsch & Dani Kupfer
+11/18/15
+
+
+Purpose
+=======
+The purpose of this program is to write a software implementation of a simple
+virtual machine.
+
+
+Architecture
+============
+Included Files:
+um.c
+um_info.h
+emulate.h & emulate.c
+run.h & run.c
+unpack.h & unpack.c
+instr.h
+memory.h & memory.c
+segment.h & segment.c
+
+um.c has main() and only calls emulate() (located in emulate.c).
+
+emulate() is responsible for nearly all the different functions of the UM, but
+it does not know how those functions are done because the specific
+implementations are "hidden secrets" in other files. Specifically, emulate()
+creates the memory, the registers and runs each instruction.
+
+run.c (and run.h) is responsble for running an instruction. Each instruction is
+in a bitpacked format and must be parsed - this role is delegated to unpack.c,
+which extracts each field (the format of an instruction is therefore a "secret"
+known only to unpack.c). After the instruction is parsed, run.c executes the
+corresponding operation.
+
+memory.c (and memory.h) describes the abstraction of memory that is used
+throughout this program. Externally, memory is known to be a collection of
+segments. Internally, each segment is represented as a Segment_T (defined in
+segment.c), and collected in a Hanson Sequence. Within segment.c, a Segment_T
+is represented as a UArray_T.
+
+Various specifics about the UM's implementation are defined in um_info.h (which
+is included in nearly every part of the UM) and instr.h (which defines
+instruction-specific information and is only included in run.c and unpack.c).
+
+
+Departures from Design
+======================
+Though most of our design was implemented, we decided to use a Hanson Sequence
+to store Segments (with ID's as indices) rather than a Hanson Table (with ID's
+as keys) because the Table implementation was about ten times slower.
+
+
+Performace
+=========
+Our program takes about one second to execute 500,000 instructions (using the
+time.um test). Extrapolating, it would take about 100 seconds to run 50 million
+instructions.
+
+
+Testing
+=======
+We tested our UM with different unit tests (listed in UMTESTS):
+        halt         - halts the program
+        goto         - skips to a later line in the instructions
+        cmove        - tests conditional move
+        io           - reads in a char and outputs that same char
+        digadd       - reads in a char and outputs the char that's one higher
+                       in ASCII value
+        digsub       - reads in a char and outputs the char that's one lower
+                       in ASCII value 
+        nandum       - inputs a number, outputs that number (using nand)
+        mult         - multiplies 2 and 5 and outputs the result
+        div          - divides 12 by 4 and outputs the result
+        segloadstore - stores a character in memory and immediately retrieves
+                       and outputs it
+        map          - repeatedly maps and unmaps segments
+        time         - loads a value 500,000 times to test time (should take 
+                       1 second)
+
+
+
+Except for working with each other and using Hanson's guide, we have not 
+collaborated with anybody else for this project.
+
+We believe that everything has been implemented correctly for this assignment
+and conforms to the interfaces and formatting guidelines specified.
+
+Hours spent analyzing problems this assignment:       ~4 hours.
+Hours spent prepraing the design for this assignment: ~10 hours.
+Hours spent programming on this assignment:           ~10 hours.

@@ -1,0 +1,2121 @@
+(* ml.sml 492a *)
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   \FOOTNOTESIZE SHARED: NAMES, ENVIRONMENTS, STRINGS, ERRORS, PRINTING, INTERACTION, STREAMS, \&\ INITIALIZATION *)
+(*                                                               *)
+(*****************************************************************)
+
+(* \footnotesize shared: names, environments, strings, errors, printing, interaction, streams, \&\ initialization 852a *)
+(* utility functions for string manipulation and printing 852d *)
+fun println  s = (print s; print "\n")
+fun eprint   s = TextIO.output (TextIO.stdErr, s)
+fun eprintln s = (eprint s; eprint "\n")
+(* utility functions for string manipulation and printing 853a *)
+fun basisError s = (eprint "while reading initial basis, "; eprintln s)
+(* utility functions for string manipulation and printing 853b *)
+fun stripNumericSuffix s =
+      let fun stripPrefix []         = s   (* don't let things get empty *)
+            | stripPrefix (#"-"::[]) = s
+            | stripPrefix (#"-"::cs) = implode (rev cs)
+            | stripPrefix (c   ::cs) = if Char.isDigit c then stripPrefix cs
+                                       else implode (rev (c::cs))
+      in  stripPrefix (rev (explode s))
+      end
+(* utility functions for string manipulation and printing 350a *)
+fun separate (zero, sep) = 
+  (* list with separator *)
+  let fun s []     = zero
+        | s [x]    = x
+        | s (h::t) = h ^ sep ^ s t
+  in  s
+end
+val spaceSep = separate ("", " ")  (* list separated by spaces *)
+(* type declarations for consistency checking *)
+val _ = op spaceSep :                    string list -> string
+val _ = op separate : string * string -> string list -> string
+(* for working with curried functions: [[id]], [[fst]], [[snd]], [[pair]], [[curry]], and [[curry3]] 872a *)
+fun id x = x
+fun fst (x, y) = x
+fun snd (x, y) = y
+fun pair x y = (x, y)
+fun curry  f x y   = f (x, y)
+fun curry3 f x y z = f (x, y, z)
+(* type declarations for consistency checking *)
+val _ = op fst    : ('a * 'b) -> 'a
+val _ = op snd    : ('a * 'b) -> 'b
+val _ = op pair   : 'a -> 'b -> 'a * 'b
+val _ = op curry  : ('a * 'b -> 'c) -> ('a -> 'b -> 'c)
+val _ = op curry3 : ('a * 'b * 'c -> 'd) -> ('a -> 'b -> 'c -> 'd)
+(* support for names and environments 342 *)
+type name = string
+(* support for names and environments 343 *)
+type 'a env = (name * 'a) list
+val emptyEnv = []
+
+(* lookup and check of existing bindings *)
+exception NotFound of name
+fun find (name, []) = raise NotFound name
+  | find (name, (n, v)::tail) = if name = n then v else find (name, tail)
+
+(* adding new bindings *)
+exception BindListLength
+fun bind (name, v, rho) = (name, v) :: rho
+fun bindList (n::vars, v::vals, rho) = bindList (vars, vals, bind (n, v, rho))
+  | bindList ([], [], rho) = rho
+  | bindList _ = raise BindListLength
+(* type declarations for consistency checking *)
+val _ = op emptyEnv : 'a env
+val _ = op find     : name * 'a env -> 'a
+val _ = op bind     : name      * 'a      * 'a env -> 'a env
+val _ = op bindList : name list * 'a list * 'a env -> 'a env
+(* support for representing errors as \ml\ values 854 *)
+datatype 'a error = OK of 'a | ERROR of string
+(* support for representing errors as \ml\ values 855a *)
+infix 1 >>=
+fun (OK x)      >>= k  =  k x
+  | (ERROR msg) >>= k  =  ERROR msg
+(* type declarations for consistency checking *)
+val _ = op >>= : 'a error * ('a -> 'b error) -> 'b error
+(* support for representing errors as \ml\ values 855b *)
+infix 1 >>=+
+fun e >>=+ k'  =  e >>= (OK o k')
+(* type declarations for consistency checking *)
+val _ = op >>=+ : 'a error * ('a -> 'b) -> 'b error
+(* support for representing errors as \ml\ values 855c *)
+fun errorList es =
+  let fun cons (OK x, OK xs) = OK (x :: xs)
+        | cons (ERROR m1, ERROR m2) = ERROR (m1 ^ "; " ^ m2)
+        | cons (ERROR m, OK _) = ERROR m
+        | cons (OK _, ERROR m) = ERROR m
+  in  foldr cons (OK []) es
+  end
+(* type declarations for consistency checking *)
+val _ = op errorList : 'a error list -> 'a list error
+(* support for detecting and signaling errors detected at run time 347d *)
+exception RuntimeError of string (* error message *)
+(* support for detecting and signaling errors detected at run time 348a *)
+fun duplicatename [] = NONE
+  | duplicatename (x::xs) =
+      if List.exists (fn x' => x' = x) xs then
+        SOME x
+      else
+        duplicatename xs
+(* type declarations for consistency checking *)
+val _ = op duplicatename : name list -> name option
+(* support for detecting and signaling errors detected at run time 348b *)
+fun errorIfDups (what, xs, context) =
+  case duplicatename xs
+    of NONE   => ()
+     | SOME x => raise RuntimeError (what ^ " " ^ x ^ " appears twice in " ^
+                                                                        context)
+(* type declarations for consistency checking *)
+val _ = op errorIfDups : string * name list * string -> unit
+(* type [[echo]] and function [[echoes]], for controlling whether definitions are echoed 353e *)
+datatype echo = ECHOES | NO_ECHOES
+fun echoes ECHOES     = true
+  | echoes NO_ECHOES  = false
+(* type declarations for consistency checking *)
+type echo = echo
+val _ = op echoes : echo -> bool
+(* simple implementations of set operations 853c *)
+type 'a set = 'a list
+val emptyset = []
+fun member x = 
+  List.exists (fn y => y = x)
+fun insert (x, ys) = 
+  if member x ys then ys else x::ys
+fun union (xs, ys) = foldl insert ys xs
+fun inter (xs, ys) =
+  List.filter (fn x => member x ys) xs
+fun diff  (xs, ys) = 
+  List.filter (fn x => not (member x ys)) xs
+(* type declarations for consistency checking *)
+type 'a set = 'a set
+val _ = op emptyset : 'a set
+val _ = op member   : ''a -> ''a set -> bool
+val _ = op insert   : ''a     * ''a set  -> ''a set
+val _ = op union    : ''a set * ''a set  -> ''a set
+val _ = op inter    : ''a set * ''a set  -> ''a set
+val _ = op diff     : ''a set * ''a set  -> ''a set
+(* suspensions 860 *)
+datatype 'a action
+  = PENDING  of unit -> 'a
+  | PRODUCED of 'a
+
+type 'a susp = 'a action ref
+
+fun delay f = ref (PENDING f)
+fun demand cell =
+  case !cell
+    of PENDING f =>  let val result = f ()
+                     in  (cell := PRODUCED result; result)
+                     end
+     | PRODUCED v => v
+(* type declarations for consistency checking *)
+val _ = op delay  : (unit -> 'a) -> 'a susp
+val _ = op demand : 'a susp -> 'a
+(* streams 861a *)
+datatype 'a stream 
+  = EOS
+  | :::       of 'a * 'a stream
+  | SUSPENDED of 'a stream susp
+infixr 3 :::
+(* streams 861b *)
+fun streamGet EOS = NONE
+  | streamGet (x ::: xs)    = SOME (x, xs)
+  | streamGet (SUSPENDED s) = streamGet (demand s)
+(* streams 861c *)
+fun streamOfList xs = 
+  foldr (op :::) EOS xs
+(* type declarations for consistency checking *)
+val _ = op streamGet : 'a stream -> ('a * 'a stream) option
+(* type declarations for consistency checking *)
+val _ = op streamOfList : 'a list -> 'a stream
+(* streams 861d *)
+fun listOfStream xs =
+  case streamGet xs
+    of NONE => []
+     | SOME (x, xs) => x :: listOfStream xs
+(* streams 861e *)
+fun delayedStream action = 
+  SUSPENDED (delay action)
+(* type declarations for consistency checking *)
+val _ = op listOfStream : 'a stream -> 'a list
+(* type declarations for consistency checking *)
+val _ = op delayedStream : (unit -> 'a stream) -> 'a stream
+(* streams 861f *)
+fun streamOfEffects action =
+  delayedStream (fn () => case action () of NONE   => EOS
+                                          | SOME a => a ::: streamOfEffects
+                                                                         action)
+(* type declarations for consistency checking *)
+val _ = op streamOfEffects : (unit -> 'a option) -> 'a stream
+(* streams 862a *)
+type line = string
+fun filelines infile = 
+  streamOfEffects (fn () => TextIO.inputLine infile)
+(* type declarations for consistency checking *)
+type line = line
+val _ = op filelines : TextIO.instream -> line stream
+(* streams 862b *)
+fun streamRepeat x =
+  delayedStream (fn () => x ::: streamRepeat x)
+(* type declarations for consistency checking *)
+val _ = op streamRepeat : 'a -> 'a stream
+(* streams 862c *)
+fun streamOfUnfold next state =
+  delayedStream (fn () => case next state
+                            of NONE => EOS
+                             | SOME (a, state') => a ::: streamOfUnfold next
+                                                                         state')
+(* type declarations for consistency checking *)
+val _ = op streamOfUnfold : ('b -> ('a * 'b) option) -> 'b -> 'a stream
+(* streams 862d *)
+val naturals = 
+  streamOfUnfold (fn n => SOME (n, n+1)) 0   (* 0 to infinity *)
+(* type declarations for consistency checking *)
+val _ = op naturals : int stream
+(* streams 863a *)
+fun preStream (pre, xs) = 
+  streamOfUnfold (fn xs => (pre (); streamGet xs)) xs
+(* streams 863b *)
+fun postStream (xs, post) =
+  streamOfUnfold (fn xs => case streamGet xs
+                             of NONE => NONE
+                              | head as SOME (x, _) => (post x; head)) xs
+(* type declarations for consistency checking *)
+val _ = op preStream : (unit -> unit) * 'a stream -> 'a stream
+(* type declarations for consistency checking *)
+val _ = op postStream : 'a stream * ('a -> unit) -> 'a stream
+(* streams 863c *)
+fun streamMap f xs =
+  delayedStream (fn () => case streamGet xs
+                            of NONE => EOS
+                             | SOME (x, xs) => f x ::: streamMap f xs)
+(* type declarations for consistency checking *)
+val _ = op streamMap : ('a -> 'b) -> 'a stream -> 'b stream
+(* streams 863d *)
+fun streamFilter p xs =
+  delayedStream (fn () => case streamGet xs
+                            of NONE => EOS
+                             | SOME (x, xs) => if p x then x ::: streamFilter p
+                                                                              xs
+                                               else streamFilter p xs)
+(* type declarations for consistency checking *)
+val _ = op streamFilter : ('a -> bool) -> 'a stream -> 'a stream
+(* streams 864a *)
+fun streamFold f z xs =
+  case streamGet xs of NONE => z
+                     | SOME (x, xs) => streamFold f (f (x, z)) xs
+(* type declarations for consistency checking *)
+val _ = op streamFold : ('a * 'b -> 'b) -> 'b -> 'a stream -> 'b
+
+(* streams 864b *)
+fun streamZip (xs, ys) =
+  delayedStream
+  (fn () => case (streamGet xs, streamGet ys)
+              of (SOME (x, xs), SOME (y, ys)) => (x, y) ::: streamZip (xs, ys)
+               | _ => EOS)
+(* streams 864c *)
+fun streamConcat xss =
+  let fun get (xs, xss) =
+        case streamGet xs
+          of SOME (x, xs) => SOME (x, (xs, xss))
+           | NONE => case streamGet xss
+                       of SOME (xs, xss) => get (xs, xss)
+                        | NONE => NONE
+  in  streamOfUnfold get (EOS, xss)
+  end
+(* type declarations for consistency checking *)
+val _ = op streamZip : 'a stream * 'b stream -> ('a * 'b) stream
+(* type declarations for consistency checking *)
+val _ = op streamConcat : 'a stream stream -> 'a stream
+(* streams 864d *)
+fun streamConcatMap f xs = streamConcat (streamMap f xs)
+(* type declarations for consistency checking *)
+val _ = op streamConcatMap : ('a -> 'b stream) -> 'a stream -> 'b stream
+(* streams 864e *)
+infix 5 @@@
+fun xs @@@ xs' = streamConcat (streamOfList [xs, xs'])
+(* type declarations for consistency checking *)
+val _ = op @@@ : 'a stream * 'a stream -> 'a stream
+(* streams 865a *)
+fun streamTake (0, xs) = []
+  | streamTake (n, xs) =
+      case streamGet xs
+        of SOME (x, xs) => x :: streamTake (n-1, xs)
+         | NONE => []
+(* type declarations for consistency checking *)
+val _ = op streamTake : int * 'a stream -> 'a list
+(* streams 865b *)
+fun streamDrop (0, xs) = xs
+  | streamDrop (n, xs) =
+      case streamGet xs
+        of SOME (_, xs) => streamDrop (n-1, xs)
+         | NONE => EOS
+(* type declarations for consistency checking *)
+val _ = op streamDrop : int * 'a stream -> 'a stream
+(* stream transformers and their combinators 869b *)
+type ('a, 'b) xformer = 
+  'a stream -> ('b error * 'a stream) option
+(* type declarations for consistency checking *)
+type ('a, 'b) xformer = ('a, 'b) xformer
+(* stream transformers and their combinators 871a *)
+fun pure y = fn xs => SOME (OK y, xs)
+(* type declarations for consistency checking *)
+val _ = op pure : 'b -> ('a, 'b) xformer
+(* stream transformers and their combinators 871b *)
+infix 3 <*>
+fun tx_f <*> tx_b =
+  fn xs => case tx_f xs
+             of NONE => NONE
+              | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
+              | SOME (OK f, xs) =>
+                  case tx_b xs
+                    of NONE => NONE
+                     | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
+                     | SOME (OK y, xs) => SOME (OK (f y), xs)
+(* type declarations for consistency checking *)
+val _ = op <*> : ('a, 'b -> 'c) xformer * ('a, 'b) xformer -> ('a, 'c) xformer
+(* stream transformers and their combinators 871c *)
+infixr 4 <$>
+fun f <$> p = pure f <*> p
+(* type declarations for consistency checking *)
+val _ = op <$> : ('b -> 'c) * ('a, 'b) xformer -> ('a, 'c) xformer
+(* stream transformers and their combinators 872b *)
+infix 1 <|>
+fun t1 <|> t2 = (fn xs => case t1 xs of SOME y => SOME y | NONE => t2 xs) 
+(* type declarations for consistency checking *)
+val _ = op <|> : ('a, 'b) xformer * ('a, 'b) xformer -> ('a, 'b) xformer
+(* stream transformers and their combinators 872c *)
+fun anyParser ts = 
+  foldr op <|> (fn _ => NONE) ts
+(* type declarations for consistency checking *)
+val _ = op anyParser : ('a, 'b) xformer list -> ('a, 'b) xformer
+(* stream transformers and their combinators 873a *)
+infix 3 <* *>
+fun p1 <*  p2 = curry fst <$> p1 <*> p2
+fun p1  *> p2 = curry snd <$> p1 <*> p2
+
+infixr 4 <$
+fun v <$ p = (fn _ => v) <$> p
+(* type declarations for consistency checking *)
+val _ = op <*  : ('a, 'b) xformer * ('a, 'c) xformer -> ('a, 'b) xformer
+val _ = op  *> : ('a, 'b) xformer * ('a, 'c) xformer -> ('a, 'c) xformer
+val _ = op <$  : 'b               * ('a, 'c) xformer -> ('a, 'b) xformer
+(* stream transformers and their combinators 873b *)
+fun one xs = case streamGet xs
+               of NONE => NONE
+                | SOME (x, xs) => SOME (OK x, xs)
+(* type declarations for consistency checking *)
+val _ = op one : ('a, 'a) xformer
+(* stream transformers and their combinators 873c *)
+fun eos xs = case streamGet xs
+               of NONE => SOME (OK (), EOS)
+                | SOME _ => NONE
+(* type declarations for consistency checking *)
+val _ = op eos : ('a, unit) xformer
+(* stream transformers and their combinators 874a *)
+fun peek tx xs =
+  case tx xs of SOME (OK y, _) => SOME y
+              | _ => NONE
+(* type declarations for consistency checking *)
+val _ = op peek : ('a, 'b) xformer -> 'a stream -> 'b option
+(* stream transformers and their combinators 874b *)
+fun rewind tx xs =
+  case tx xs of SOME (ey, _) => SOME (ey, xs)
+              | NONE => NONE
+(* type declarations for consistency checking *)
+val _ = op rewind : ('a, 'b) xformer -> ('a, 'b) xformer
+(* stream transformers and their combinators 874c *)
+fun sat p tx xs =
+  case tx xs
+    of answer as SOME (OK y, xs) => if p y then answer else NONE
+     | answer => answer
+(* type declarations for consistency checking *)
+val _ = op sat : ('b -> bool) -> ('a, 'b) xformer -> ('a, 'b) xformer
+(* stream transformers and their combinators 874d *)
+fun oneEq x = sat (fn x' => x = x') one
+(* type declarations for consistency checking *)
+val _ = op oneEq : ''a -> (''a, ''a) xformer
+(* stream transformers and their combinators 875a *)
+infixr 4 <$>?
+fun f <$>? tx =
+  fn xs => case tx xs
+             of NONE => NONE
+              | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
+              | SOME (OK y, xs) =>
+                  case f y
+                    of NONE => NONE
+                     | SOME z => SOME (OK z, xs)
+(* type declarations for consistency checking *)
+val _ = op <$>? : ('b -> 'c option) * ('a, 'b) xformer -> ('a, 'c) xformer
+(* stream transformers and their combinators 875b *)
+infix 3 <&>
+fun t1 <&> t2 = fn xs =>
+  case t1 xs
+    of SOME (OK _, _) => t2 xs
+     | SOME (ERROR _, _) => NONE    
+     | NONE => NONE
+(* type declarations for consistency checking *)
+val _ = op <&> : ('a, 'b) xformer * ('a, 'c) xformer -> ('a, 'c) xformer
+(* stream transformers and their combinators 875c *)
+fun notFollowedBy t xs =
+  case t xs
+    of NONE => SOME (OK (), xs)
+     | SOME _ => NONE
+(* type declarations for consistency checking *)
+val _ = op notFollowedBy : ('a, 'b) xformer -> ('a, unit) xformer
+(* stream transformers and their combinators 875d *)
+fun many t = 
+  curry (op ::) <$> t <*> (fn xs => many t xs) <|> pure []
+(* type declarations for consistency checking *)
+val _ = op many  : ('a, 'b) xformer -> ('a, 'b list) xformer
+(* stream transformers and their combinators 876a *)
+fun many1 t = 
+  curry (op ::) <$> t <*> many t
+(* type declarations for consistency checking *)
+val _ = op many1 : ('a, 'b) xformer -> ('a, 'b list) xformer
+(* stream transformers and their combinators 876b *)
+fun optional t = 
+  SOME <$> t <|> pure NONE
+(* type declarations for consistency checking *)
+val _ = op optional : ('a, 'b) xformer -> ('a, 'b option) xformer
+(* stream transformers and their combinators 877a *)
+infix 2 <*>!
+fun tx_ef <*>! tx_x =
+  fn xs => case (tx_ef <*> tx_x) xs
+             of NONE => NONE
+              | SOME (OK (OK y),      xs) => SOME (OK y,      xs)
+              | SOME (OK (ERROR msg), xs) => SOME (ERROR msg, xs)
+              | SOME (ERROR msg,      xs) => SOME (ERROR msg, xs)
+infixr 4 <$>!
+fun ef <$>! tx_x = pure ef <*>! tx_x
+(* type declarations for consistency checking *)
+val _ = op <*>! : ('a, 'b -> 'c error) xformer * ('a, 'b) xformer -> ('a, 'c)
+                                                                         xformer
+val _ = op <$>! : ('b -> 'c error)             * ('a, 'b) xformer -> ('a, 'c)
+                                                                         xformer
+(* support for source-code locations and located streams 865d *)
+type srcloc = string * int
+fun srclocString (source, line) =
+  source ^ ", line " ^ Int.toString line
+(* support for source-code locations and located streams 866a *)
+datatype error_format = WITH_LOCATIONS | WITHOUT_LOCATIONS
+val toplevel_error_format = ref WITH_LOCATIONS
+(* support for source-code locations and located streams 866b *)
+fun synerrormsg (source, line) strings =
+  if !toplevel_error_format = WITHOUT_LOCATIONS andalso source =
+                                                                "standard input"
+  then
+    concat ("syntax error: " :: strings)
+  else    
+    concat ("syntax error in " :: srclocString (source, line) :: ": " :: strings
+                                                                               )
+
+(* support for source-code locations and located streams 866c *)
+fun errorAt msg loc = 
+  ERROR (synerrormsg loc [msg])
+(* support for source-code locations and located streams 866d *)
+type 'a located = srcloc * 'a
+(* type declarations for consistency checking *)
+type srcloc = srcloc
+val _ = op srclocString : srcloc -> string
+(* type declarations for consistency checking *)
+val _ = op errorAt : string -> srcloc -> 'a error
+(* type declarations for consistency checking *)
+type 'a located = 'a located
+(* support for source-code locations and located streams 866e *)
+fun locatedStream (streamname, inputs) =
+  let val locations = streamZip (streamRepeat streamname, streamDrop (1,
+                                                                      naturals))
+  in  streamZip (locations, inputs)
+  end
+(* type declarations for consistency checking *)
+val _ = op locatedStream : string * line stream -> line located stream
+(* streams that track line boundaries 881a *)
+datatype 'a eol_marked
+  = EOL of int (* number of the line that ends here *)
+  | INLINE of 'a
+
+fun drainLine EOS = EOS
+  | drainLine (SUSPENDED s)     = drainLine (demand s)
+  | drainLine (EOL _    ::: xs) = xs
+  | drainLine (INLINE _ ::: xs) = drainLine xs
+(* support for lexical analysis 877b *)
+type 'a lexer = (char, 'a) xformer
+(* type declarations for consistency checking *)
+type 'a lexer = 'a lexer
+(* support for lexical analysis 877c *)
+fun isDelim c =
+  Char.isSpace c orelse Char.contains "();" c
+(* type declarations for consistency checking *)
+val _ = op isDelim : char -> bool
+(* support for lexical analysis 879a *)
+val whitespace = many (sat Char.isSpace one)
+(* type declarations for consistency checking *)
+val _ = op whitespace : char list lexer
+(* support for lexical analysis 879b *)
+fun intChars isDelim = 
+  (curry (op ::) <$> oneEq #"-" <|> pure id) <*> many1 (sat Char.isDigit one) <*
+                                                                                
+  notFollowedBy (sat (not o isDelim) one)
+(* type declarations for consistency checking *)
+val _ = op intChars : (char -> bool) -> char list lexer
+(* support for lexical analysis 879c *)
+fun intFromChars (#"-" :: cs) = 
+      intFromChars cs >>=+ Int.~
+  | intFromChars cs =
+      (OK o valOf o Int.fromString o implode) cs
+      handle Overflow => ERROR
+                        "this interpreter can't read arbitrarily large integers"
+(* type declarations for consistency checking *)
+val _ = op intFromChars : char list -> int error
+(* support for lexical analysis 879d *)
+fun intToken isDelim =
+  intFromChars <$>! intChars isDelim
+(* type declarations for consistency checking *)
+val _ = op intToken : (char -> bool) -> int lexer
+(* shared utility functions for initializing interpreters 358b *)
+datatype interactivity = INTERACTIVE | NONINTERACTIVE
+(* shared utility functions for initializing interpreters 358c *)
+fun override_if_testing () =                           (*OMIT*)
+  if isSome (OS.Process.getEnv "NOERRORLOC") then      (*OMIT*)
+    toplevel_error_format := WITHOUT_LOCATIONS         (*OMIT*)
+  else                                                 (*OMIT*)
+    ()                                                 (*OMIT*)
+fun setup_error_format INTERACTIVE    = toplevel_error_format :=
+                                                               WITHOUT_LOCATIONS
+      before override_if_testing () (*OMIT*)
+  | setup_error_format NONINTERACTIVE = toplevel_error_format := WITH_LOCATIONS
+      before override_if_testing () (*OMIT*)
+exception LeftAsExercise of string
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   COMMON SUPPORT FOR LANGUAGES WITH TYPE INFERENCE            *)
+(*                                                               *)
+(*****************************************************************)
+
+(* common support for languages with type inference 852c *)
+exception TypeError of string
+exception BugInTypeInference of string
+(* shared utility functions on sets of type variables 414a *)
+val infiniteTyvars = streamMap (fn n => "'a-" ^ Int.toString n) naturals
+(* type declarations for consistency checking *)
+val _ = op naturals       : int stream
+val _ = op infiniteTyvars : name stream
+(* shared utility functions on sets of type variables 433b *)
+fun freshName (alpha, avoid) =
+  let val basename = stripNumericSuffix alpha
+      val candidates = streamMap (fn n => basename ^ "-" ^ Int.toString n)
+                                                                        naturals
+      fun ok beta = not (member beta avoid)
+  in  case streamGet (streamFilter ok candidates)
+        of SOME (beta, _) => beta
+         | NONE => let exception ThisCan'tHappen in raise ThisCan'tHappen end
+  end
+(* type declarations for consistency checking *)
+val _ = op freshName : name * name set -> name
+
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   HINDLEY-MILNER TYPES WITH NAMED TYPE CONSTRUCTORS           *)
+(*                                                               *)
+(*****************************************************************)
+
+(* Hindley-Milner types with named type constructors 481e *)
+(* representation of Hindley-Milner types with named type constructors 449 *)
+datatype ty = TYVAR  of name                (* type variable alpha *)
+            | TYCON  of name                (* type constructor mu *)
+            | CONAPP of ty * ty list        (* type-level application *)
+
+datatype type_scheme = FORALL of name list * ty
+(* sets of free type variables in Hindley-Milner types 478a *)
+fun freetyvars t =
+  let fun f (TYVAR v,          ftvs) = insert (v, ftvs)
+        | f (TYCON _,          ftvs) = ftvs
+        | f (CONAPP (ty, tys), ftvs) = foldl f (f (ty, ftvs)) tys
+  in  rev (f (t, emptyset))
+  end  
+(* type declarations for consistency checking *)
+val _ = op freetyvars : ty -> name set
+(* definition of [[typeString]] for Hindley-Milner types with named type constructors 919 *)
+local
+  (* precedences *)
+  val CONp   = 3
+  val STARp  = 2
+  val ARROWp = 1
+  val NONEp  = 0
+  
+  fun parens s = "(" ^ s ^ ")"
+  fun bracket (s, context, prec) = if prec <= context then parens s else s
+  fun p (context, CONAPP (TYCON "function", [arg, ret])) = 
+          bracket (p (ARROWp, arg) ^ " -> " ^ p (ARROWp, ret), context, ARROWp)
+    | p (context, CONAPP (TYCON "argtuple", ts)) = bracket (ptuple ts, context,
+                                                                          STARp)
+    | p (context, CONAPP (TYCON "tuple",    ts)) = bracket (ptuple ts, context,
+                                                                          STARp)
+    | p (context, CONAPP (n, []))  = p (context, n)
+    | p (context, CONAPP (n, [t])) = p (CONp, t) ^ " " ^ p (CONp, n)
+    | p (context, CONAPP (n, ts)) = 
+          "(" ^ separate ("", ", ") (map typeString ts) ^ ") " ^ p (CONp, n)
+    | p (context, TYCON n) = n
+    | p (context, TYVAR v) = v
+  and ptuple ts = separate ("unit", " * ") (map (fn t => p (STARp, t)) ts)
+  and typeString ty = p (NONEp, ty)
+in 
+  val typeString = typeString
+end
+(* shared utility functions on Hindley-Milner types 451 *)
+type subst = ty env
+fun varsubst theta = 
+  (fn a => find (a, theta) handle NotFound _ => TYVAR a)
+(* type declarations for consistency checking *)
+type subst = subst
+val _ = op varsubst : subst -> (name -> ty)
+(* shared utility functions on Hindley-Milner types 452a *)
+fun tysubst theta =
+  let fun subst (TYVAR a) = varsubst theta a
+        | subst (TYCON c) = TYCON c
+        | subst (CONAPP (tau, taus)) = CONAPP (subst tau, map subst taus)
+(* type declarations for consistency checking *)
+val _ = op tysubst : subst -> (ty -> ty)
+val _ = op subst   :           ty -> ty
+  in  subst
+  end
+(* shared utility functions on Hindley-Milner types 452b *)
+fun dom theta = map (fn (a, _) => a) theta
+fun compose (theta2, theta1) =
+  let val domain  = union (dom theta2, dom theta1)
+      val replace = tysubst theta2 o varsubst theta1
+  in  map (fn a => (a, replace a)) domain
+  end
+(* type declarations for consistency checking *)
+val _ = op dom     : subst -> name set
+val _ = op compose : subst * subst -> subst
+(* shared utility functions on Hindley-Milner types 452c *)
+fun instantiate (FORALL (formals, tau), actuals) =
+  tysubst (bindList (formals, actuals, emptyEnv)) tau
+  handle BindListLength => raise BugInTypeInference
+                                              "number of types in instantiation"
+(* type declarations for consistency checking *)
+val _ = op instantiate : type_scheme * ty list -> ty
+(* shared utility functions on Hindley-Milner types 452d *)
+val idsubst = emptyEnv
+(* shared utility functions on Hindley-Milner types 453a *)
+infix 7 |-->
+fun a |--> (TYVAR a') = if a = a' then idsubst else bind (a, TYVAR a', emptyEnv)
+  | a |--> tau        = if member a (freetyvars tau) then
+                          raise BugInTypeInference "non-idempotent substitution"
+                        else
+                          bind (a, tau, emptyEnv)
+(* type declarations for consistency checking *)
+val _ = op idsubst : subst
+(* type declarations for consistency checking *)
+val _ = op |--> : name * ty -> subst
+(* shared utility functions on Hindley-Milner types 453b *)
+fun typeSchemeString (FORALL ([], ty)) =
+      typeString ty
+  | typeSchemeString (FORALL (a::a's, ty)) =
+      let fun commaFollow (var, vars) = vars ^ ", " ^ var
+      in  "forall " ^ foldl commaFollow a a's ^ " . " ^ typeString ty
+      end
+(* type declarations for consistency checking *)
+val _ = op typeString       : ty          -> string
+val _ = op typeSchemeString : type_scheme -> string
+(* shared utility functions on Hindley-Milner types 453c *)
+fun eqType (TYCON c, TYCON c') = c = c'
+  | eqType (CONAPP (tau, taus), CONAPP (tau', taus')) =
+      eqType (tau, tau') andalso eqTypes (taus, taus')
+  | eqType (TYVAR a, TYVAR a') = a = a'
+  | eqType _ = false
+and eqTypes (t::taus, t'::taus') = eqType (t, t') andalso eqTypes (taus, taus')
+  | eqTypes ([], []) = true
+  | eqTypes _ = false
+(* shared utility functions on Hindley-Milner types 478b *)
+local
+  val n = ref 1
+in
+  fun freshtyvar _ = TYVAR ("'t" ^ Int.toString (!n) before n := !n + 1)
+(* type declarations for consistency checking *)
+val _ = op freshtyvar : 'a -> ty
+end
+(* shared utility functions on Hindley-Milner types 479a *)
+fun canonicalize (FORALL (bound, ty)) =
+  let fun canonicalTyvarName n =
+        if n < 26 then "'" ^ str (chr (ord #"a" + n))
+        else "'v" ^ Int.toString (n - 25)
+      val free = diff (freetyvars ty, bound)
+      fun unusedIndex n =
+        if member (canonicalTyvarName n) free then unusedIndex (n+1) else n
+      fun newBoundVars (index, [])                = []
+        | newBoundVars (index, oldvar :: oldvars) =
+            let val n = unusedIndex index
+            in  canonicalTyvarName n :: newBoundVars (n+1, oldvars)
+            end
+      val newBound = newBoundVars (0, bound)
+(* type declarations for consistency checking *)
+val _ = op canonicalize : type_scheme -> type_scheme
+val _ = op newBoundVars : int * name list -> name list
+  in  FORALL (newBound, tysubst (bindList (bound, map TYVAR newBound, emptyEnv))
+                                                                             ty)
+  end
+(* shared utility functions on Hindley-Milner types 479b *)
+fun generalize (tau, tyvars) =
+  canonicalize (FORALL (diff (freetyvars tau, tyvars), tau))
+(* type declarations for consistency checking *)
+val _ = op generalize : ty * name set -> type_scheme
+(* shared utility functions on Hindley-Milner types 479c *)
+fun freshInstance (FORALL (bound, tau)) =
+  instantiate (FORALL (bound, tau), map freshtyvar bound)
+(* type declarations for consistency checking *)
+val _ = op freshInstance : type_scheme -> ty
+(* functions that create Hindley-Milner types with named type constructors 454 *)
+val inttype  = TYCON "int"
+val booltype = TYCON "bool"
+val symtype  = TYCON "sym"
+val tyvarA   = TYVAR "'a"
+val alpha    = TYVAR "a"
+val beta     = TYVAR "b"
+fun tupletype taus  = CONAPP (TYCON "tuple", taus)
+fun pairtype (x, y) = tupletype [x, y]
+val unittype        = tupletype []
+fun listtype ty     = CONAPP (TYCON "list", [ty])
+fun funtype (args, result) = 
+  CONAPP (TYCON "function", [CONAPP (TYCON "argtuple", args), result])
+(* type declarations for consistency checking *)
+val _ = op eqType : ty * ty -> bool
+(* type declarations for consistency checking *)
+val _ = op inttype   : ty
+val _ = op booltype  : ty
+val _ = op symtype   : ty
+val _ = op unittype  : ty
+val _ = op listtype  : ty -> ty
+val _ = op tupletype : ty list -> ty
+val _ = op pairtype  : ty * ty -> ty
+val _ = op funtype   : ty list * ty -> ty
+val _ = op alpha     : ty
+val _ = op beta      : ty
+(* specialized environments for type schemes 481a *)
+type type_env = type_scheme env * name set
+(* specialized environments for type schemes 481b *)
+val emptyTypeEnv = 
+      (emptyEnv, emptyset)
+fun findtyscheme (x, (Gamma, free)) = find (x, Gamma)
+(* type declarations for consistency checking *)
+val _ = op emptyTypeEnv : type_env
+val _ = op findtyscheme : name * type_env -> type_scheme
+(* specialized environments for type schemes 481c *)
+fun bindtyscheme (x, sigma as FORALL (bound, tau), (Gamma, free)) = 
+  (bind (x, sigma, Gamma), union (diff (freetyvars tau, bound), free))
+(* specialized environments for type schemes 481d *)
+fun freetyvarsGamma (_, free) = free
+
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   ABSTRACT SYNTAX AND VALUES FOR \NML                         *)
+(*                                                               *)
+(*****************************************************************)
+
+(* abstract syntax and values for \nml 445b *)
+(* definitions of [[exp]] and [[value]] for \nml 444a *)
+datatype exp = LITERAL of value
+             | VAR     of name
+             | IFX     of exp * exp * exp
+             | BEGIN   of exp list
+             | APPLY   of exp * exp list
+             | LETX    of let_kind * (name * exp) list * exp
+             | LAMBDA  of name list * exp
+and let_kind = LET | LETREC | LETSTAR
+and (* definition of [[value]] for \nml 444c *)
+    value = NIL
+          | BOOLV     of bool
+          | NUM       of int
+          | SYM       of name
+          | PAIR      of value * value
+          | CLOSURE   of lambda * (unit -> value env)
+          | PRIMITIVE of primop
+    withtype primop = value list -> value (* raises RuntimeError *)
+         and lambda = name list * exp
+(* definition of [[def]] for \nml 444b *)
+datatype def  = VAL    of name * exp
+              | VALREC of name * exp
+              | EXP    of exp
+              | DEFINE of name * (name list * exp)
+(* definition of [[unit_test]] for languages with Hindley-Milner types 445a *)
+datatype unit_test = CHECK_EXPECT      of exp * exp
+                   | CHECK_ERROR       of exp
+                   | CHECK_TYPE        of exp * type_scheme
+                   | CHECK_TYPE_ERROR  of exp
+(* definition of [[xdef]] (shared) 345c *)
+datatype xdef = DEF    of def
+              | USE    of name
+              | TEST   of unit_test
+(* definition of [[valueString]] for \uscheme, \tuscheme, and \nml 346b *)
+fun valueString (NIL)     = "()"
+  | valueString (BOOLV b) = if b then "#t" else "#f"
+  | valueString (NUM n)   = String.map (fn #"~" => #"-" | c => c) (Int.toString
+                                                                              n)
+  | valueString (SYM v)   = v
+  | valueString (PAIR (car, cdr))  = 
+      let fun tail (PAIR (car, cdr)) = " " ^ valueString car ^ tail cdr
+            | tail NIL = ")"
+            | tail v = " . " ^ valueString v ^ ")"
+      in  "(" ^ valueString car ^ tail cdr
+      end
+  | valueString (CLOSURE   _) = "<procedure>"
+  | valueString (PRIMITIVE _) = "<procedure>"
+(* type declarations for consistency checking *)
+val _ = op valueString : value -> string
+(* definition of [[expString]] for \nml 925c *)
+fun expString e =
+  let fun bracket s = "(" ^ s ^ ")"
+      val bracketSpace = bracket o spaceSep
+      fun exps es = map expString es
+      fun withBindings (keyword, bs, e) =
+        bracket (spaceSep [keyword, bindings bs, expString e])
+      and bindings bs = bracket (spaceSep (map binding bs))
+      and binding (x, e) = bracket (x ^ " " ^ expString e)
+      val letkind = fn LET => "let" | LETSTAR => "let*" | LETREC => "letrec"
+  in  case e
+        of LITERAL v => valueString v
+         | VAR name => name
+         | IFX (e1, e2, e3) => bracketSpace ("if" :: exps [e1, e2, e3])
+         | BEGIN es => bracketSpace ("begin" :: exps es)
+         | APPLY (e, es) => bracketSpace (exps (e::es))
+         | LETX (lk, bs, e) => bracketSpace [letkind lk, bindings bs, expString
+                                                                              e]
+         | LAMBDA (xs, body) => bracketSpace ("lambda" :: xs @ [expString body])
+  end
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   UTILITY FUNCTIONS ON \USCHEME, \TUSCHEME, AND \NML\ VALUES  *)
+(*                                                               *)
+(*****************************************************************)
+
+(* utility functions on \uscheme, \tuscheme, and \nml\ values 897 *)
+fun cycleThrough xs =
+  let val remaining = ref xs
+      fun next () = case !remaining
+                      of [] => (remaining := xs; next ())
+                       | x :: xs => (remaining := xs; x)
+  in  if null xs then
+        let exception InternalError in raise InternalError end
+      else
+        next
+  end
+val unspecified =
+  cycleThrough [BOOLV true, NUM 39, SYM "this value is unspecified", NIL,
+                PRIMITIVE (fn _ => let exception Unspecified in raise
+                                                               Unspecified end)]
+(* type declarations for consistency checking *)
+val _ = op cycleThrough : 'a list -> (unit -> 'a)
+val _ = op unspecified  : unit -> value
+(* utility functions on \uscheme, \tuscheme, and \nml\ values 346a *)
+fun embedList []     = NIL
+  | embedList (h::t) = PAIR (h, embedList t)
+fun bool (BOOLV b) = b
+  | bool _         = true
+(* type declarations for consistency checking *)
+val _ = op embedList      : value list -> value
+val _ = op bool           : value -> bool
+(* utility functions on \uscheme, \tuscheme, and \nml\ values 347a *)
+fun equalatoms (NIL,      NIL    )  = true
+  | equalatoms (NUM  n1,  NUM  n2)  = (n1 = n2)
+  | equalatoms (SYM  v1,  SYM  v2)  = (v1 = v2)
+  | equalatoms (BOOLV b1, BOOLV b2) = (b1 = b2)
+  | equalatoms  _                   = false
+(* type declarations for consistency checking *)
+val _ = op equalatoms : value * value -> bool
+(* utility functions on \uscheme, \tuscheme, and \nml\ values 347b *)
+fun equalpairs (PAIR (car1, cdr1), PAIR (car2, cdr2)) =
+      equalpairs (car1, car2) andalso equalpairs (cdr1, cdr2)
+  | equalpairs (v1, v2) = equalatoms (v1, v2)
+(* type declarations for consistency checking *)
+val _ = op equalpairs : value * value -> bool
+(* utility functions on \uscheme, \tuscheme, and \nml\ values 347c *)
+val testEqual = equalpairs
+(* type declarations for consistency checking *)
+val _ = op testEqual : value * value -> bool
+(* utility functions on \uscheme, \tuscheme, and \nml\ values 415b *)
+val unitVal = NIL
+(* type declarations for consistency checking *)
+val _ = op unitVal : value
+
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   TYPE INFERENCE FOR \NML                                     *)
+(*                                                               *)
+(*****************************************************************)
+
+(* type inference for \nml 483d *)
+(* representation of type constraints 482a *)
+datatype con = ~  of ty  * ty
+             | /\ of con * con
+             | TRIVIAL
+infix 4 ~
+infix 3 /\
+(* utility functions on type constraints 482b *)
+fun freetyvarsConstraint (t ~  t') = union (freetyvars t, freetyvars t')
+  | freetyvarsConstraint (c /\ c') = union (freetyvarsConstraint c,
+                                             freetyvarsConstraint c')
+  | freetyvarsConstraint TRIVIAL    = emptyset
+(* utility functions on type constraints 482c *)
+fun consubst theta =
+  let fun subst (tau1 ~ tau2) = tysubst theta tau1 ~ tysubst theta tau2
+        | subst (c1 /\ c2)    = subst c1 /\ subst c2
+        | subst TRIVIAL       = TRIVIAL
+  in  subst
+  end
+(* type declarations for consistency checking *)
+val _ = op bindtyscheme : name * type_scheme * type_env -> type_env
+(* type declarations for consistency checking *)
+val _ = op freetyvarsGamma : type_env -> name set
+(* type declarations for consistency checking *)
+val _ = op consubst : subst -> con -> con
+(* utility functions on type constraints 482d *)
+fun conjoinConstraints []      = TRIVIAL
+  | conjoinConstraints [c]     = c
+  | conjoinConstraints (c::cs) = c /\ conjoinConstraints cs
+(* type declarations for consistency checking *)
+val _ = op conjoinConstraints : con list -> con
+(* utility functions on type constraints 482e *)
+(* definitions of [[constraintString]] and [[untriviate]] 920a *)
+fun constraintString (c /\ c') = constraintString c ^ " /\\ " ^ constraintString
+                                                                              c'
+  | constraintString (t ~  t') = typeString t ^ " ~ " ^ typeString t'
+  | constraintString TRIVIAL = "TRIVIAL"
+
+fun untriviate (c /\ c') = (case (untriviate c, untriviate c')
+                              of (TRIVIAL, c) => c
+                               | (c, TRIVIAL) => c
+                               | (c, c') => c /\ c')
+  | untriviate atomic = atomic
+(* type declarations for consistency checking *)
+val _ = op constraintString : con -> string
+val _ = op untriviate       : con -> con
+(* utility functions on type constraints 483c *)
+fun isSolved TRIVIAL = true
+  | isSolved (tau ~ tau') = eqType (tau, tau')
+  | isSolved (c /\ c') = isSolved c andalso isSolved c'
+fun solves (theta, c) = isSolved (consubst theta c)
+(* type declarations for consistency checking *)
+val _ = op isSolved : con -> bool
+val _ = op solves : subst * con -> bool
+(* constraint solving 483a *)
+fun unsatisfiableEquality (t1, t2) =
+  case canonicalize (FORALL (union (freetyvars t1, freetyvars t2), tupletype [t1
+                                                                         , t2]))
+    of FORALL (_, CONAPP (TYCON _, [t1, t2])) => 
+         raise TypeError ("cannot make " ^ typeString t1 ^ " equal to " ^
+                                                                  typeString t2)
+     | _ => let exception ThisCan'tHappen in raise ThisCan'tHappen end
+(* constraint solving ((prototype)) 483b *)
+exception LeftAsExercise of string
+    
+fun solve (TYVAR t1 ~ t2) = 
+          if member t1 (freetyvars t2)
+            then if not (eqType ((TYVAR t1), t2))
+                   then unsatisfiableEquality (TYVAR t1, t2)
+                 else t1 |--> t2
+          else t1 |--> t2 
+  | solve (t1 ~ (TYVAR n2)) = solve ((TYVAR n2) ~ t1)
+  | solve ((TYCON n1) ~ (TYCON n2)) = if n1 = n2 then 
+                                        idsubst
+                                      else
+                                        unsatisfiableEquality ((TYCON n1),
+                                          (TYCON n2))
+  | solve ((CONAPP (tau1, taus1)) ~ (CONAPP (tau2, taus2))) =
+          let val taus = ((tau1, tau2)::(ListPair.zip (taus1, taus2)))
+              val constraints = conjoinConstraints (map (fn (a, b) => a ~ b) taus)
+          in
+            if not (length taus1 = length taus2) then
+              unsatisfiableEquality (CONAPP (tau1, taus1), CONAPP (tau2, taus2))
+            else
+              solve constraints
+          end
+  | solve (t1 ~ t2) = unsatisfiableEquality (t1, t2)
+  | solve (con1 /\ con2) = let val theta1 = solve con1
+                                val theta2 = solve (consubst theta1 con2)
+                           in
+                              compose (theta2, theta1)
+                           end
+  | solve TRIVIAL = idsubst
+
+fun isStandard pairs =
+        let fun distinct a' (a, tau) = a <> a' andalso not (member a' (freetyvars tau))
+            fun good (prev', (a, tau)::next) =
+                  List.all (distinct a) prev' andalso List.all (distinct a) next
+                  andalso good ((a, tau)::prev', next)
+              | good (_, []) = true
+        in  good ([], pairs)
+        end
+
+    val solve =
+        fn c => let val theta = solve c
+                in  if isStandard theta then theta
+                    else raise BugInTypeInference "non-standard substitution"
+                end
+
+(* type declarations for consistency checking *)
+val _ = op solve : con -> subst
+(* definitions of [[typeof]] and [[elabdef]] for \nml 484a *)
+fun typeof (e, Gamma) =
+  let
+(* shared definition of [[typesof]], to infer the types of a list of expressions 484b *)
+      fun typesof ([],    Gamma) = ([], TRIVIAL)
+        | typesof (e::es, Gamma) =
+            let val (tau,  c)  = typeof  (e,  Gamma)
+                val (taus, c') = typesof (es, Gamma)
+            in  (tau :: taus, c /\ c')
+            end
+
+(* function [[literal]], to infer the type of a literal constant ((prototype)) 484d *)
+      fun literal NIL = (freshInstance (FORALL (["'a"], listtype tyvarA)), TRIVIAL)
+        | literal (BOOLV _) = (booltype, TRIVIAL)
+        | literal (NUM _) = (inttype, TRIVIAL)
+        | literal (SYM _) = (symtype, TRIVIAL)
+        | literal (PAIR (v1, NIL)) =
+          let val (tau, c) = literal v1
+          in
+            (listtype tau, c)
+          end
+        | literal (PAIR (v1, v2)) = 
+          let val ((tau1, c1), (tau2, c2)) = (literal v1, literal v2)
+          in
+              (tau2, conjoinConstraints([tau2 ~ listtype tau1, c1, c2]))
+          end
+        | literal (CLOSURE _) = raise BugInTypeInference "Closure"
+        | literal (PRIMITIVE _) = raise BugInTypeInference "Primitive"
+
+(* function [[ty]], to infer the type of a \nml\ expression, given [[Gamma]] 484c *)
+      fun ty (LITERAL n) = literal n
+        | ty (VAR x) = (freshInstance (findtyscheme (x, Gamma)), TRIVIAL)
+        (* more alternatives for [[ty]] 485a *)
+        | ty (APPLY (f, actuals)) = 
+             (case typesof (f :: actuals, Gamma)
+                of ([], _) => let exception ThisCan'tHappen in raise
+                                                             ThisCan'tHappen end
+                 | (funty :: actualtypes, c) =>
+                      let val rettype = freshtyvar ()
+                      in  (rettype, c /\ (funty ~ funtype (actualtypes, rettype)
+                                                                              ))
+                      end)
+        (* more alternatives for [[ty]] 485b *)
+        | ty (LETX (LETSTAR, [], body)) = ty body
+        | ty (LETX (LETSTAR, (b :: bs), body)) = 
+            ty (LETX (LET, [b], LETX (LETSTAR, bs, body)))
+        (* more alternatives for [[ty]] ((prototype)) 485c *)
+        | ty (IFX (e1, e2, e3))        = 
+            (case typesof (e1 :: e2 :: e3 :: [], Gamma)
+                of ((t1 :: t2 :: t3 :: _), c) =>   (t2, (c /\ t1 ~ booltype) /\ t2 ~ t3)
+                | _ => raise BugInTypeInference "Can't happen")
+
+        | ty (BEGIN es)                = 
+            (case typesof (es, Gamma)
+                of ([], _) => (unittype, TRIVIAL)
+                | (taus, c) => (List.last taus, c))
+        | ty (LAMBDA (formals, body))  = 
+            let val alphas = map freshtyvar formals
+                val Gamma' = 
+                      foldl (fn ((x, a), gam) => bindtyscheme (x, FORALL ([], a), gam)) 
+                            Gamma 
+                            (ListPair.zip(formals, alphas))
+                val (tau, c) = typeof (body, Gamma')
+            in  
+              (funtype (alphas, tau), c)
+            end
+        | ty (LETX (LET, bs, body))    =
+          let 
+              val (names, exps) = ListPair.unzip bs 
+              val (taus, c) = typesof (exps, Gamma)
+              val theta = solve c
+              val c' = conjoinConstraints (map (fn (x) => TYVAR x ~ varsubst theta x) 
+                                            (inter (dom theta, freetyvarsGamma Gamma)))
+              val frees = union (freetyvarsConstraint c', freetyvarsGamma Gamma)
+              val sigmas = map (fn (t) => generalize (tysubst theta t, frees)) taus
+              val Gamma' = foldl (fn ((x, s), gam) => bindtyscheme (x, s, gam))
+                           Gamma
+                           (ListPair.zip(names, sigmas))
+              val (tau, cb) = typeof (body, Gamma')
+          in 
+              (tau, c' /\ cb)
+          end 
+        | ty (LETX (LETREC, bs, body)) = 
+          let
+              val (names, exps) = ListPair.unzip bs
+              val alphas = map freshtyvar names
+              val Gamma' = 
+                      foldl (fn ((x, a), gam) => bindtyscheme (x, FORALL ([], a), gam)) 
+                            Gamma 
+                            (ListPair.zip(names, alphas))
+              val (taus, cr) = typesof (exps, Gamma')
+              val c = cr /\ conjoinConstraints (map (fn (t, a) => t ~ a) 
+                                                    (ListPair.zip (taus, alphas)))
+              val theta = solve c
+              val c' = conjoinConstraints (map (fn (x) => TYVAR x ~ varsubst theta x) 
+                                            (inter (dom theta, freetyvarsGamma Gamma)))
+              val frees = union (freetyvarsConstraint c', freetyvarsGamma Gamma)
+              val sigmas = map (fn (t) => generalize (tysubst theta t, frees)) taus
+              val Gamma'' = foldl (fn ((x, s), gam) => bindtyscheme (x, s, gam))
+                           Gamma
+                           (ListPair.zip(names, sigmas))
+              val (tau, cb) = typeof (body, Gamma'')
+          in 
+              (tau, c' /\ cb)
+          end 
+
+(* type declarations for consistency checking *)
+val _ = op typeof  : exp      * type_env -> ty      * con
+val _ = op typesof : exp list * type_env -> ty list * con
+val _ = op literal : value -> ty * con
+val _ = op ty      : exp   -> ty * con
+  in  ty e
+  end
+(* definitions of [[typeof]] and [[elabdef]] for \nml 485d *)
+fun elabdef (d, Gamma) =
+  case d
+    of VAL    (x, e)      =>
+                            (* infer and bind type for [[VAL    (x, e)]] 486a *)
+                             let val (tau, c) = typeof (e, Gamma)
+                                 val theta    = solve c
+                                 val sigma    = generalize (tysubst theta tau,
+                                                          freetyvarsGamma Gamma)
+                             in  (bindtyscheme (x, sigma, Gamma),
+                                                         typeSchemeString sigma)
+                             end
+     | VALREC (x, e)      =>
+                            (* infer and bind type for [[VALREC (x, e)]] 486b *)
+                             let val alpha    = freshtyvar ()
+                                 val Gamma'   = bindtyscheme (x, FORALL ([],
+                                                                  alpha), Gamma)
+                                 val (tau, c) = typeof (e, Gamma')
+                                 val theta    = solve (c /\ alpha ~ tau)
+                                 val sigma    = generalize (tysubst theta alpha,
+                                                          freetyvarsGamma Gamma)
+                             in  (bindtyscheme (x, sigma, Gamma),
+                                                         typeSchemeString sigma)
+                             end
+     | EXP e              => elabdef (VAL ("it", e), Gamma)
+     | DEFINE (x, lambda) => elabdef (VALREC (x, LAMBDA lambda), Gamma)
+(* type declarations for consistency checking *)
+val _ = op elabdef : def * type_env -> type_env * string
+(* type declarations for consistency checking *)
+val _ = op typeof  : exp * type_env -> ty * con
+val _ = op elabdef : def * type_env -> type_env * string
+
+(*****************************************************************)
+(*                                                               *)
+(*   LEXICAL ANALYSIS AND PARSING FOR \NML, WHICH PROVIDE [[FILEXDEFS]] AND [[STRINGSXDEFS]] *)
+(*                                                               *)
+(*****************************************************************)
+
+(* lexical analysis and parsing for \nml, which provide [[filexdefs]] and [[stringsxdefs]] 920b *)
+(* definitions of type [[token]] and functions [[tokenString]] and [[isLiteral]], for \uscheme\ and related languages 892a *)
+datatype token = BRACKET of char (* ( or ) *)
+               | QUOTE
+               | INT     of int
+               | SHARP   of bool
+               | NAME    of string
+(* definitions of type [[token]] and functions [[tokenString]] and [[isLiteral]], for \uscheme\ and related languages 892b *)
+fun tokenString (BRACKET c) = str c
+  | tokenString (QUOTE)     = "'"
+  | tokenString (INT  n)    = Int.toString n
+  | tokenString (SHARP b)   = if b then "#t" else "#f"
+  | tokenString (NAME x)    = x
+
+fun isLiteral s t = tokenString t = s
+(* common parsing code that depends on [[token]], [[tokenString]], and [[isLiteral]] 869a *)
+(* combinators and utilities for parsing token streams 880 *)
+(* token, isLiteral, and
+   tokenString can be defined
+   differently in each language *)
+(* type declarations for consistency checking *)
+type token = token
+val _ = op isLiteral : string -> token -> bool
+val _ = op tokenString : token -> string
+(* combinators and utilities for parsing token streams 881b *)
+type 'a parser = (token located eol_marked, 'a) xformer
+(* combinators and utilities for parsing token streams 882a *)
+local 
+  fun asEol (EOL n) = SOME n
+    | asEol (INLINE _) = NONE
+  fun asInline (INLINE x) = SOME x
+    | asInline (EOL _)    = NONE
+in
+  fun eol    xs = (asEol <$>? one) xs
+  fun inline xs = (many eol *> asInline <$>? one) xs
+end
+
+val token    =         snd <$> inline  : token parser
+val srcloc   = rewind (fst <$> inline) : srcloc parser
+val noTokens = notFollowedBy token : unit parser
+(* type declarations for consistency checking *)
+type 'a eol_marked = 'a eol_marked
+val _ = op drainLine : 'a eol_marked stream -> 'a eol_marked stream
+(* type declarations for consistency checking *)
+type 'a parser = 'a parser
+(* type declarations for consistency checking *)
+val _ = op eol      : ('a eol_marked, int) xformer
+val _ = op inline   : ('a eol_marked, 'a)  xformer
+val _ = op token    : token parser
+val _ = op srcloc   : srcloc parser
+val _ = op noTokens : unit parser
+(* combinators and utilities for parsing token streams 882b *)
+fun @@ p = pair <$> srcloc <*> p
+(* type declarations for consistency checking *)
+val _ = op @@ : 'a parser -> 'a located parser
+(* combinators and utilities for parsing token streams 882c *)
+
+infix 0 <?>
+fun p <?> what = p <|> errorAt ("expected " ^ what) <$>! srcloc
+(* type declarations for consistency checking *)
+val _ = op <?> : 'a parser * string -> 'a parser
+(* combinators and utilities for parsing token streams 883a *)
+infix 4 <!>
+fun p <!> msg =
+  fn tokens => (case p tokens
+                  of SOME (OK _, unread) =>
+                       (case peek srcloc tokens
+                          of SOME loc => SOME (errorAt msg loc, unread)
+                           | NONE => NONE)
+                   | _ => NONE)
+(* combinators and utilities for parsing token streams 883b *)
+fun literal s =
+  ignore <$> sat (isLiteral s) token
+(* type declarations for consistency checking *)
+val _ = op <!> : 'a parser * string -> 'b parser
+(* type declarations for consistency checking *)
+val _ = op literal : string -> unit parser
+(* combinators and utilities for parsing token streams 883c *)
+infix  6 --<
+infixr 7 >-- 
+    (* if we want to mix these operators, they can't have equal precedence *)
+fun (a >-- p) = literal a *> p
+fun (p --< a) = p <* literal a
+(* type declarations for consistency checking *)
+val _ = op >-- : string    * 'a parser -> 'a parser
+val _ = op --< : 'a parser * string    -> 'a parser
+(* combinators and utilities for parsing token streams 884a *)
+
+fun bracket (keyword, expected, p) = 
+  "(" >-- literal keyword *> (p --< ")" <|>
+                              errorAt ("expected " ^ expected) <$>!
+                                                               scanToCloseParen)
+and scanToCloseParen tokens = 
+  let val loc = getOpt (peek srcloc tokens, ("end of stream", 9999))
+      fun scan lpcount tokens =
+        (* lpcount is the number of unmatched left parentheses *)
+        case tokens
+          of EOL _         ::: tokens => scan lpcount tokens
+           | INLINE (_, t) ::: tokens =>
+                                  if isLiteral "(" t then scan (lpcount+1)
+                                                                          tokens
+                                  else if isLiteral ")" t then
+                                      if lpcount = 0 then SOME (OK loc, tokens)
+                                      else scan (lpcount-1) tokens
+                                  else scan lpcount tokens
+           | EOS         => SOME (errorAt "unmatched (" loc, EOS)
+           | SUSPENDED s => scan lpcount (demand s)
+  in  scan 0 tokens
+  end
+(* type declarations for consistency checking *)
+val _ = op bracket          : string * string * 'a parser -> 'a parser
+val _ = op scanToCloseParen : srcloc parser
+(* combinators and utilities for parsing token streams 884b *)
+fun anyBracket rows = anyParser (map bracket rows)
+(* combinators and utilities for parsing token streams 885a *)
+fun nodups (what, context) (loc, names) =
+  let fun dup [] = OK names
+        | dup (x::xs) = if List.exists (fn y : string => y = x) xs then
+                          errorAt (what ^ " " ^ x ^ " appears twice in " ^
+                                                                    context) loc
+                        else
+                          dup xs
+  in  dup names
+  end
+(* type declarations for consistency checking *)
+val _ = op anyBracket : (string * string * 'a parser) list -> 'a parser
+(* type declarations for consistency checking *)
+val _ = op nodups : string * string -> srcloc * name list -> name list error
+(* code used to debug parsers 885b *)
+val safeTokens : token located eol_marked stream -> token list =
+  let fun tokens (seenEol, seenSuspended) =
+            let fun get (EOL _         ::: ts) = if seenSuspended then []
+                                                 else tokens (true, false) ts
+                  | get (INLINE (_, t) ::: ts) = t :: get ts
+                  | get  EOS                   = []
+                  | get (SUSPENDED (ref (PRODUCED ts))) = get ts
+                  | get (SUSPENDED s) = if seenEol then []
+                                        else tokens (false, true) (demand s)
+            in   get
+            end
+  in  tokens (false, false)
+  end
+(* type declarations for consistency checking *)
+val _ = op safeTokens : token located eol_marked stream -> token list
+(* code used to debug parsers 886a *)
+fun wrap what p tokens =
+  let fun t tok = " " ^ tokenString tok
+      val _ = app print ["Looking for ", what, " at"]
+      val _ = app (print o t) (safeTokens tokens)
+      val _ = print "\n"
+      val answer = p tokens
+      val _ = app print [case answer of NONE => "Didn't find " | SOME _ =>
+                                                                       "Found ",
+                         what, "\n"]
+  in  answer
+  end handle e => ( app print ["Search for ", what, " raised ", exnName e, "\n"]
+                  ; raise e)
+(* type declarations for consistency checking *)
+val _ = op wrap : string -> 'a parser -> 'a parser
+(* streams that issue two forms of prompts 886b *)
+fun echoTagStream lines = 
+  let fun echoIfTagged line =
+        if (String.substring (line, 0, 2) = ";#" handle _ => false) then
+          print line
+        else
+          ()
+  in  postStream (lines, echoIfTagged)
+  end
+(* type declarations for consistency checking *)
+val _ = op echoTagStream : line stream -> line stream 
+(* streams that issue two forms of prompts 887a *)
+fun stripAndReportErrors xs =
+  let fun next xs =
+        case streamGet xs
+          of SOME (ERROR msg, xs) => (eprintln msg; next xs)
+           | SOME (OK x, xs) => SOME (x, xs)
+           | NONE => NONE
+  in  streamOfUnfold next xs
+  end
+(* type declarations for consistency checking *)
+val _ = op stripAndReportErrors : 'a error stream -> 'a stream
+(* streams that issue two forms of prompts 887b *)
+fun lexLineWith lexer =
+  stripAndReportErrors o streamOfUnfold lexer o streamOfList o explode
+(* type declarations for consistency checking *)
+val _ = op lexLineWith : token lexer -> line -> token stream
+(* streams that issue two forms of prompts 887c *)
+fun parseWithErrors parser =
+  let fun adjust (SOME (ERROR msg, tokens)) = SOME (ERROR msg, drainLine tokens)
+        | adjust other = other
+  in  streamOfUnfold (adjust o parser)
+  end
+(* type declarations for consistency checking *)
+val _ = op parseWithErrors : 'a parser -> token located eol_marked stream -> 'a
+                                                                    error stream
+(* streams that issue two forms of prompts 887d *)
+type prompts   = { ps1 : string, ps2 : string }
+val stdPrompts = { ps1 = "-> ", ps2 = "   " }
+val noPrompts  = { ps1 = "", ps2 = "" }
+(* type declarations for consistency checking *)
+type prompts = prompts
+val _ = op stdPrompts : prompts
+val _ = op noPrompts  : prompts
+(* streams that issue two forms of prompts 888 *)
+fun 'a interactiveParsedStream (lexer, parser) (name, lines, prompts) =
+  let val { ps1, ps2 } = prompts
+      val thePrompt = ref ps1
+      fun setPrompt ps = fn _ => thePrompt := ps
+
+      val lines = preStream (fn () => print (!thePrompt), echoTagStream lines)
+
+      fun lexAndDecorate (loc, line) =
+        let val tokens = postStream (lexLineWith lexer line, setPrompt ps2)
+        in  streamMap INLINE (streamZip (streamRepeat loc, tokens)) @@@
+            streamOfList [EOL (snd loc)]
+        end
+
+      val xdefs_with_errors : 'a error stream = 
+        (parseWithErrors parser o streamConcatMap lexAndDecorate o locatedStream
+                                                                               )
+        (name, lines)
+(* type declarations for consistency checking *)
+val _ = op interactiveParsedStream : token lexer * 'a parser -> string * line
+                                                   stream * prompts -> 'a stream
+val _ = op lexAndDecorate : srcloc * line -> token located eol_marked stream
+  in  
+      stripAndReportErrors (preStream (setPrompt ps1, xdefs_with_errors))
+  end 
+(* lexical analysis for \uscheme\ and related languages 892c *)
+local
+  (* functions used in the lexer for \uscheme 892d *)
+  fun atom "#t" = SHARP true
+    | atom "#f" = SHARP false
+    | atom x    = NAME x
+  (* functions used in the lexer for \uscheme 893a *)
+  fun noneIfLineEnds chars =
+    case streamGet chars
+      of NONE => NONE (* end of line *)
+       | SOME (#";", cs) => NONE (* comment *)
+       | SOME (c, cs) => 
+           let val msg = "invalid initial character in `" ^
+                         implode (c::listOfStream cs) ^ "'"
+           in  SOME (ERROR msg, EOS)
+           end
+  (* type declarations for consistency checking *)
+  val _ = op noneIfLineEnds : 'a lexer
+in
+  val schemeToken =
+    whitespace *> (   BRACKET <$> oneEq #"("
+                  <|> BRACKET <$> oneEq #")"
+                  <|> QUOTE   <$  oneEq #"'"
+                  <|> INT     <$> intToken isDelim
+                  <|> (atom o implode) <$> many1 (sat (not o isDelim) one)
+                  <|> noneIfLineEnds
+                  )
+(* type declarations for consistency checking *)
+val _ = op schemeToken : token lexer
+val _ = op atom : string -> token
+end
+(* parsers for Hindley-Milner types 922 *)
+val name    = (fn (NAME  n) => SOME n  | _ => NONE) <$>? token
+val name    = sat (fn n => n <> "->") name  (* an arrow is not a name *)
+val booltok = (fn (SHARP b) => SOME b  | _ => NONE) <$>? token
+val int     = (fn (INT   n) => SOME n  | _ => NONE) <$>? token
+val quote   = (fn (QUOTE)   => SOME () | _ => NONE) <$>? token
+
+val tyvar = quote *> (curry op ^ "'" <$> name <?>
+                                               "type variable (got quote mark)")
+val arrow   = (fn (NAME "->") => SOME () | _ => NONE) <$>? token
+  
+fun checkedForall tyvars tau =
+  nodups ("quantified type variable", "forall") tyvars >>=+ (fn a's =>
+  FORALL (a's, tau))
+
+fun nestedForall tyvars tau =
+  ERROR "nested 'forall' type is not a Hindley-Milner type"
+
+fun arrows []              [] = ERROR "empty type ()"
+  | arrows (tycon::tyargs) [] = OK (CONAPP (tycon, tyargs))
+  | arrows args            [rhs] =
+      (case rhs of [result] => OK (funtype (args, result))
+                 | []       => ERROR "no result type after function arrow"
+                 | _        => ERROR
+                                   "multiple result types after function arrow")
+  | arrows args (_::_::_) = ERROR "multiple arrows in function type"
+
+fun deprecated what x = x before eprintln ("warning: " ^ what)
+
+fun tyscheme tokens = (
+     bracket ("forall", "(forall (tyvars) type)",
+              checkedForall <$> "(" >-- @@ (many tyvar) --< ")" <*>! ty)
+ <|> curry FORALL [] <$> ty
+ <?> "type"
+ ) tokens
+and ty tokens = (
+     TYCON <$> name
+ <|> TYVAR <$> tyvar
+ <|> bracket ("forall", "(forall (tyvars) type)",
+                (nestedForall <$> "(" >-- @@ (many tyvar) --< ")" <*>! ty))
+ <|> arrows <$> "(" >-- many ty <*>! many (arrow *> many ty) --< ")"
+) tokens
+(* type declarations for consistency checking *)
+val _ = op tyvar : string parser
+val _ = op ty    : ty     parser
+(* parsers and [[xdef]] streams for \nml 920c *)
+fun letDups LETSTAR (loc, bindings) = OK bindings
+  | letDups kind    (loc, bindings) =
+      let val names    = map (fn (n, _) => n) bindings
+          val kindName = case kind of LET => "let" | LETREC => "letrec" | _ =>
+                                                                            "??"
+      in  nodups ("bound name", kindName) (loc, names) >>=+ (fn _ => bindings)
+      end
+fun noExp kind _ _ =
+  ERROR ("uML does not include '" ^ kind ^ "' expressions")
+(* parsers and [[xdef]] streams for \nml 921a *)
+
+val formals = "(" >-- many name --< ")"
+
+fun exptable exp =
+  let val binding  = ("(" >-- (pair <$> name <*> exp --< ")" <?>
+                                                           "(x e) in bindings"))
+      val bindings = ("(" >-- (many binding --< ")" <?>
+                                                 "(... (x e) ...) in bindings"))
+      fun letx kind bs exp = LETX (kind, bs, exp)
+(* type declarations for consistency checking *)
+val _ = op exp : exp parser
+val _ = op exptable : exp parser -> exp parser
+  in anyBracket
+     [ ("if",     "(if e1 e2 e3)",            curry3 IFX     <$> exp  <*> exp
+                                                                        <*> exp)
+     , ("begin",  "(begin e1 ...)",                  BEGIN   <$> many exp)
+     , ("lambda", "(lambda (names) body)",    curry  LAMBDA  <$> formals <*> exp
+                                                                               )
+     , ("let",    "(let (bindings) body)",    letx   LET     <$> bindings <*>
+                                                                            exp)
+     , ("letrec", "(letrec (bindings) body)", letx   LETREC  <$> bindings <*>
+                                                                            exp)
+     , ("let*",   "(let* (bindings) body)",   letx   LETSTAR <$> bindings <*>
+                                                                            exp)
+     (* rows added to \nml's [[exptable]] in exercises 921b *)
+     (* add syntactic extensions here, each preceded by a comma *)
+     ]
+  end
+
+val atomicExp =  VAR               <$> name
+             <|> LITERAL <$> NUM   <$> int
+             <|> LITERAL <$> BOOLV <$> booltok
+
+fun exp tokens = (
+     atomicExp
+ <|> LITERAL          <$> (quote *> sexp)
+ <|> exptable exp
+ <|> "(" >-- literal ")" <!> "empty application"
+ <|> curry APPLY <$> "(" >-- exp <*> many exp --< ")"
+) tokens
+
+and sexp tokens = (
+     SYM <$> (notDot <$>! name)
+ <|> NUM          <$> int
+ <|> BOOLV        <$> booltok
+ <|> (fn v => embedList [SYM "quote", v]) <$> (quote *> sexp)
+ <|> embedList    <$> "(" >-- many sexp --< ")"
+) tokens
+and notDot "." = ERROR
+                      "this interpreter cannot handle . in quoted S-expressions"
+  | notDot s   = OK s
+(* parsers and [[xdef]] streams for \nml 923a *)
+fun define f formals body =
+  nodups ("formal parameter", "definition of function " ^ f) formals >>=+
+  (fn xs => DEFINE (f, (xs, body)))
+
+fun dfn name formals exp = DEFINE (name, (formals, exp))
+
+val testtable = anyBracket
+  [ ("check-expect", "(check-expect e1 e2)", curry CHECK_EXPECT <$> exp <*> exp)
+  , ("check-error",  "(check-error e)",            CHECK_ERROR  <$> exp)
+  , ("check-type",   "(check-type e tau)",   curry CHECK_TYPE   <$> exp <*>
+                                                                       tyscheme)
+  , ("check-type-error", "(check-type-error e)",   CHECK_TYPE_ERROR <$> exp)
+  ]
+
+val deftable = anyBracket
+  [ ("define",  "(define f (args) body)", dfn          <$> name <*> formals <*>
+                                                                            exp)
+  , ("val",     "(val x e)",              curry VAL    <$> name <*> exp)
+  , ("val-rec", "(val-rec x e)",          curry VALREC <$> name <*> exp)
+  ]
+
+
+val xdeftable = anyBracket
+  [ ("use", "(use filename)", USE <$> name)
+  (* rows added to \nml's [[xdeftable]] in exercises 923b *)
+  (* add syntactic extensions here, each preceded by a comma *)
+  ]
+
+val xdef  =  TEST <$> testtable
+         <|> DEF  <$> deftable
+         <|>          xdeftable
+         <|> literal ")" <!> "unexpected right parenthesis"
+         <|> DEF <$> EXP <$> exp
+         <?> "definition"
+(* parsers and [[xdef]] streams for \nml 923c *)
+val xdefstream = interactiveParsedStream (schemeToken, xdef)
+(* shared definitions of [[filexdefs]] and [[stringsxdefs]] 865c *)
+fun filexdefs (filename, fd, prompts) = xdefstream (filename, filelines fd,
+                                                                        prompts)
+fun stringsxdefs (name, strings) = xdefstream (name, streamOfList strings,
+                                                                      noPrompts)
+(* type declarations for consistency checking *)
+val _ = op xdefstream   : string * line stream     * prompts -> xdef stream
+val _ = op filexdefs    : string * TextIO.instream * prompts -> xdef stream
+val _ = op stringsxdefs : string * string list               -> xdef stream
+
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   EVALUATION, TESTING, AND THE READ-EVAL-PRINT LOOP FOR \NML  *)
+(*                                                               *)
+(*****************************************************************)
+
+(* evaluation, testing, and the read-eval-print loop for \nml 486c *)
+(* definitions of [[eval]], [[evaldef]], [[topenvs]], and [[processDef]] for \nml 487a *)
+fun eval (e, rho) =
+  let fun ev (LITERAL n)        = n
+        | ev (VAR x)            = find (x, rho)
+        | ev (IFX (e1, e2, e3)) = ev (if bool (ev e1) then e2 else e3)
+        | ev (LAMBDA l)         = CLOSURE (l, fn _ => rho)
+        | ev (BEGIN es) =
+            let fun b (e::es, lastval) = b (es, ev e)
+                  | b (   [], lastval) = lastval
+            in  b (es, BOOLV false)
+            end
+        | ev (APPLY (f, args)) = 
+           (case ev f
+              of PRIMITIVE prim => prim (map ev args)
+               | CLOSURE clo =>
+                             (* apply closure [[clo]] to [[args]] ((ml)) 487b *)
+                                let val ((formals, body), mkRho) = clo
+                                    val actuals = map ev args
+                                in  eval (body, bindList (formals, actuals,
+                                                                      mkRho ()))
+                                    handle BindListLength => 
+                                        raise BugInTypeInference
+                                          "Wrong number of arguments to closure"
+                                end
+               | _ => raise BugInTypeInference "Applied non-function"
+               )
+        (* more alternatives for [[ev]] for \nml 487c *)
+        | ev (LETX (LET, bs, body)) =
+            let val (names, values) = ListPair.unzip bs
+            in  eval (body, bindList (names, map ev values, rho))
+            end
+        (* more alternatives for [[ev]] for \nml 487d *)
+        | ev (LETX (LETSTAR, bs, body)) =
+            let fun step ((n, e), rho) = bind (n, eval (e, rho), rho)
+            in  eval (body, foldl step rho bs)
+            end
+        (* more alternatives for [[ev]] for \nml 488a *)
+        | ev (LETX (LETREC, bs, body)) =
+            let fun makeRho' () =
+                  let fun step ((n, e), rho) =
+                            (case e
+                               of LAMBDA l => bind (n, CLOSURE (l, makeRho'),
+                                                                            rho)
+                                | _ => raise RuntimeError "non-lambda in letrec"
+                                                                               )
+                  in  foldl step rho bs
+                  end
+            in  eval (body, makeRho'())
+            end
+  in  ev e
+  end
+(* type declarations for consistency checking *)
+val _ = op eval : exp * value env -> value
+(* definitions of [[eval]], [[evaldef]], [[topenvs]], and [[processDef]] for \nml 488b *)
+fun evaldef (d, rho) =
+  case d
+    of VAL    (name, e)      =>
+          let val v   = eval (e, rho)
+              val rho = bind (name, v, rho)
+          in  (rho, showVal name v)
+          end
+     | VALREC (name, LAMBDA lambda) => 
+          let fun makeRho' () = bind (name, CLOSURE (lambda, makeRho'), rho)
+              val v           = CLOSURE (lambda, makeRho')
+          in  (makeRho'(), showVal name v)
+          end
+     | VALREC _ => raise RuntimeError "expression in val-rec must be lambda"
+     | EXP e    => 
+          let val v   = eval (e, rho)
+              val rho = bind ("it", v, rho)
+          in  (rho, valueString v)
+          end
+     | DEFINE (name, lambda) => evaldef (VALREC (name, LAMBDA lambda), rho)
+and showVal name v =
+      case v
+        of CLOSURE   _ => name
+         | PRIMITIVE _ => name
+         | _ => valueString v
+(* type declarations for consistency checking *)
+val _ = op evaldef : def * value env -> value env * string
+(* definitions of [[eval]], [[evaldef]], [[topenvs]], and [[processDef]] for \nml 490d *)
+type topenvs = type_env * value env
+fun processDef (d, envs as (Gamma, rho), echoLevel) =
+  let val (Gamma, tystring)  = elabdef (d, Gamma)
+      val (rho,   valstring) = evaldef (d, rho)
+      val _ = if echoes echoLevel andalso size valstring > 0 then
+                println (valstring ^ " : " ^ tystring)
+              else
+                ()
+(* type declarations for consistency checking *)
+val _ = op processDef : def * topenvs * echo -> topenvs
+  in  (Gamma, rho)
+  end
+(* shared unit-testing utilities 857c *)
+fun failtest strings = (app eprint strings; eprint "\n"; false)
+(* shared unit-testing utilities 857d *)
+fun reportTestResults (npassed, ntests) =
+  case (npassed, ntests)
+    of (_, 0) => ()  (* no report *)
+     | (0, 1) => println "The test failed."
+     | (1, 1) => println "The test passed."
+     | (0, 2) => println "Both tests failed."
+     | (1, 2) => println "One of two tests passed."
+     | (2, 2) => println "Both tests passed."
+     | _ => if npassed = ntests then
+               app print ["All ", Int.toString ntests, " tests passed.\n"]
+            else if npassed = 0 then
+               app print ["All ", Int.toString ntests, " tests failed.\n"]
+            else
+               app print [Int.toString npassed, " of ", Int.toString ntests,
+                          " tests passed.\n"]
+(* definition of [[testIsGood]] for \nml\ and \uml 924a *)
+fun testIsGood (test, (Gamma, rho)) =
+  let fun ty e = typeof (e, Gamma)
+                 handle NotFound x => raise TypeError ("name " ^ x ^
+                                                              " is not defined")
+
+(* definitions of [[checkExpectChecks]], [[checkErrorChecks]], and [[checkTypeChecks]] that use type inference 924b *)
+      fun checkExpectChecks (e1, e2) = 
+        let val (tau1, c1) = ty e1
+            val (tau2, c2) = ty e2
+            val c = tau1 ~ tau2
+            val theta = solve (c1 /\ c2 /\ c)
+        in  true
+        end handle TypeError msg =>
+            failtest ["In (check-expect ", expString e1, " ", expString e2,
+                                                                     "), ", msg]
+
+(* definitions of [[checkExpectChecks]], [[checkErrorChecks]], and [[checkTypeChecks]] that use type inference 924c *)
+      fun checkErrorChecks e =
+        let val (tau, c) = ty e
+            val theta = solve c
+        in  true
+        end handle TypeError msg => failtest ["In (check-error ", expString e,
+                                                                     "), ", msg]
+
+(* definitions of [[checkExpectChecks]], [[checkErrorChecks]], and [[checkTypeChecks]] that use type inference 924d *)
+      fun checkTypeChecks (e, sigma) = 
+        let val (tau, c) = ty e
+            val theta  = solve c
+        in  true
+        end handle TypeError msg =>
+            failtest ["In (check-type ", expString e, " " ^ typeSchemeString
+                                                              sigma, "), ", msg]
+      fun checks (CHECK_EXPECT (e1, e2)) = checkExpectChecks (e1, e2)
+        | checks (CHECK_ERROR e)         = checkErrorChecks e
+        | checks (CHECK_TYPE (e, tau))   = checkTypeChecks (e, tau)
+        | checks (CHECK_TYPE_ERROR e)    = true
+
+      fun outcome e = OK (eval (e, rho))
+                      handle _ => ERROR "evaluation failed"
+
+(* shared definitions of [[checkExpectPasses]] and [[checkErrorPasses]], which call [[outcome]] 856 *)
+      fun whatWasExpected (LITERAL v, _) = 
+            valueString v
+        | whatWasExpected (e, OK v) =
+            valueString v ^ " (from evaluating " ^ expString e ^ ")"
+        | whatWasExpected (e, ERROR _) = "the result of evaluating " ^ expString
+                                                                               e
+      (* type declarations for consistency checking *)
+      val _ = op whatWasExpected : exp * value error -> string
+
+(* shared definitions of [[checkExpectPasses]] and [[checkErrorPasses]], which call [[outcome]] 857a *)
+      val cxfailed = "check-expect failed: "
+      fun checkExpectPasses (checkx, expectx) =
+        case (outcome checkx, outcome expectx)
+          of (OK check, OK expect) => 
+               testEqual (check, expect) orelse
+               failtest [cxfailed, " expected ", expString checkx,
+                                                             " to evaluate to ",
+                         whatWasExpected (expectx, OK expect), ", but it's ",
+                         valueString check, "."]
+           | (ERROR _, tried) =>
+               failtest [cxfailed, " expected ", expString checkx,
+                                                             " to evaluate to ",
+                         whatWasExpected (expectx, tried), ", but evaluating ",
+                         expString checkx, " caused an error."]
+           | (_, ERROR msg) =>
+               failtest [cxfailed, " expected ", expString checkx,
+                                                             " to evaluate to ",
+                         whatWasExpected (expectx, ERROR msg),
+                                                            ", but evaluating ",
+                         expString expectx, " caused an error."]
+      (* type declarations for consistency checking *)
+      val _ = op checkExpectPasses : exp * exp -> bool
+      val _ = op outcome : exp -> value error
+      val _ = op failtest : string list -> bool
+
+(* shared definitions of [[checkExpectPasses]] and [[checkErrorPasses]], which call [[outcome]] 857b *)
+      val cefailed = "check-error failed: "
+      fun checkErrorPasses checkx =
+            case outcome checkx
+              of ERROR _ => true
+               | OK check =>
+                   failtest [cefailed, " expected evaluating ", expString checkx
+                                                                               ,
+                             " to cause an error, but evaluation produced ",
+                             valueString check]
+      (* type declarations for consistency checking *)
+      val _ = op checkErrorPasses : exp -> bool
+
+(* definitions of [[checkTypePasses]] and [[checkTypeErrorPasses]] that use type inference 925a *)
+      fun checkTypePasses (e, sigma) =
+        let val (tau, c) = ty e
+            val theta    = solve c
+            val sigma'   = generalize (tysubst theta tau, freetyvarsGamma Gamma)
+
+            fun eqTypeScheme (FORALL (alphas, tau), FORALL (alphas', tau')) =
+              (eqType (tau, tysubst (bindList (alphas', map TYVAR alphas,
+                                                                emptyEnv)) tau')
+               handle BindListLength => false)
+
+        in  if eqTypeScheme (sigma, sigma') then
+              true
+            else
+              failtest ["check-type failed: expected ", expString e,
+                                                               " to have type ",
+                        typeSchemeString sigma, ", but it has type ",
+                                                        typeSchemeString sigma']
+        end handle TypeError msg =>
+            failtest ["In (check-type ", expString e, " ", typeSchemeString
+                                                              sigma, "), ", msg]
+
+(* definitions of [[checkTypePasses]] and [[checkTypeErrorPasses]] that use type inference 925b *)
+      fun checkTypeErrorPasses e =
+        let val (tau, c) = ty e
+            val theta    = solve c
+            val sigma'   = generalize (tysubst theta tau, freetyvarsGamma Gamma)
+        in  failtest ["check-type-error failed: expected ", expString e,
+                      " not to have a type, but it has type ", typeSchemeString
+                                                                         sigma']
+        end handle TypeError msg => true
+      fun passes (CHECK_EXPECT (c, e)) = checkExpectPasses (c, e)
+        | passes (CHECK_ERROR c)       = checkErrorPasses  c
+        | passes (CHECK_TYPE (c, tau)) = checkTypePasses   (c, tau)
+        | passes (CHECK_TYPE_ERROR c)  = checkTypeErrorPasses c
+
+  in  checks test andalso passes test
+  end
+(* shared definition of [[processTests]] 858 *)
+fun numberOfGoodTests (tests, rho) =
+  foldr (fn (t, n) => if testIsGood (t, rho) then n + 1 else n) 0 tests
+fun processTests (tests, rho) =
+      reportTestResults (numberOfGoodTests (tests, rho), length tests)
+(* type declarations for consistency checking *)
+val _ = op processTests : unit_test list * topenvs -> unit
+(* shared read-eval-print loop 356 *)
+fun readEvalPrintWith errmsg (xdefs, envs, echo) =
+  let val unitTests = ref []
+
+(* definition of [[processXDef]], which can modify [[unitTests]] and call [[errmsg]] 357a *)
+      fun processXDef (xd, envs) =
+        let fun useFile filename =
+              let val fd = TextIO.openIn filename
+              in  readEvalPrintWith errmsg (filexdefs (filename, fd, noPrompts),
+                                                                     envs, echo)
+                  before TextIO.closeIn fd
+              end
+            fun continue msg = (errmsg msg; envs)
+      (* type declarations for consistency checking *)
+      val _ = op errmsg     : string -> unit
+      val _ = op processDef : def * topenvs * echo -> topenvs
+        in  (case xd
+               of USE filename => useFile filename
+                | TEST t       => (unitTests := t :: !unitTests; envs)
+                | DEF def      => processDef (def, envs, echo)
+            ) handle IO.Io {name, ...} => continue ("I/O error: " ^ name)
+              (* more read-eval-print handlers ((type-inference)) 491a *)
+              | TypeError          msg => continue ("type error: " ^ msg)
+              | BugInTypeInference msg => continue ("bug in type inference: " ^
+                                                                            msg)
+              (* more read-eval-print handlers 357b *)
+              | Div               => continue "Division by zero"
+              | Overflow          => continue "Arithmetic overflow"
+              | RuntimeError msg  => continue ("run-time error: " ^ msg)
+              | NotFound x        => continue ("variable " ^ x ^ " not found")
+        end 
+      val envs = streamFold processXDef envs xdefs
+      val _    = processTests (!unitTests, envs)
+(* type declarations for consistency checking *)
+val _ = op readEvalPrintWith : (string -> unit) -> xdef stream * topenvs * echo
+                                                                      -> topenvs
+val _ = op processXDef : xdef * topenvs -> topenvs
+  in  envs
+  end
+
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   IMPLEMENTATIONS OF \NML\ PRIMITIVES AND DEFINITION OF [[INITIALENVS]] *)
+(*                                                               *)
+(*****************************************************************)
+
+(* implementations of \nml\ primitives and definition of [[initialEnvs]] 491b *)
+(* shared utility functions for building primitives in languages with type inference 489a *)
+fun binaryOp f = (fn [a, b] => f (a, b) | _ => raise BugInTypeInference
+                                                                      "arity 2")
+fun unaryOp  f = (fn [a]    => f  a     | _ => raise BugInTypeInference
+                                                                      "arity 1")
+(* type declarations for consistency checking *)
+val _ = op unaryOp  : (value         -> value) -> (value list -> value)
+val _ = op binaryOp : (value * value -> value) -> (value list -> value)
+(* shared utility functions for building primitives in languages with type inference 489b *)
+fun arithOp f =
+      binaryOp (fn (NUM n1, NUM n2) => NUM (f (n1, n2)) 
+                 | _ => raise BugInTypeInference "arithmetic on non-numbers")
+val arithtype = funtype ([inttype, inttype], inttype)
+(* type declarations for consistency checking *)
+val _ = op arithOp   : (int * int -> int) -> (value list -> value)
+val _ = op arithtype : ty
+(* utility functions for building \nml\ primitives 489d *)
+fun predOp f     = unaryOp  (BOOLV o f)
+fun comparison f = binaryOp (BOOLV o f)
+fun intcompare f = 
+      comparison (fn (NUM n1, NUM n2) => f (n1, n2)
+                   | _ => raise BugInTypeInference "comparing non-numbers")
+fun predtype x = funtype ([x],    booltype)
+fun comptype x = funtype ([x, x], booltype)
+(* type declarations for consistency checking *)
+val _ = op predOp     : (value         -> bool) -> (value list -> value)
+val _ = op comparison : (value * value -> bool) -> (value list -> value)
+val _ = op intcompare : (int   * int   -> bool) -> (value list -> value)
+val _ = op predtype   : ty -> ty
+val _ = op comptype   : ty -> ty
+val initialEnvs =
+  let fun addPrim ((name, prim, tau), (Gamma, rho)) = 
+        ( bindtyscheme (name, generalize (tau, freetyvarsGamma Gamma), Gamma)
+        , bind (name, PRIMITIVE prim, rho)
+        )
+      val envs  = foldl addPrim (emptyTypeEnv, emptyEnv) (
+                                          (* primitives for \nml\ [[::]] 489c *)
+                                                          ("+", arithOp op +,
+                                                                   arithtype) ::
+                                                          ("-", arithOp op -,
+                                                                   arithtype) ::
+                                                          ("*", arithOp op *,
+                                                                   arithtype) ::
+                                                          ("/", arithOp op div,
+                                                                   arithtype) ::
+
+                                          (* primitives for \nml\ [[::]] 490a *)
+                                                          ("<", intcompare op <,
+                                                            comptype inttype) ::
+                                                          (">", intcompare op >,
+                                                            comptype inttype) ::
+                                                          ("=", comparison
+                                                  equalatoms, comptype alpha) ::
+                                                          ("null?", predOp (fn
+                        NIL => true | _ => false), predtype (listtype alpha)) ::
+                      ("pair", binaryOp (fn (a, b) => PAIR (a, b)), 
+                          funtype ([alpha, beta], pairtype (alpha, beta)))    ::
+                      ("fst", unaryOp (fn (PAIR (a, _))=> a
+                                        | _ => raise BugInTypeInference 
+                                                    "fst applied to non-pair"),
+                          funtype ([pairtype (alpha, beta)], alpha))::
+                      ("snd", unaryOp (fn (PAIR (_, b)) => b
+                                        | _ => raise BugInTypeInference
+                                                     "snd applied to non-pair"),
+                          funtype ([pairtype (alpha, beta)], beta))::
+                                          (* primitives for \nml\ [[::]] 490b *)
+                                                          ("cons", binaryOp (fn
+                                                         (a, b) => PAIR (a, b)),
+
+                           funtype ([alpha, listtype alpha], listtype alpha)) ::
+                                                          ("car",  unaryOp  (fn
+                                                          (PAIR (car, _)) => car
+                                                                              |
+                           NIL => raise RuntimeError "car applied to empty list"
+                                                                              |
+                     _   => raise BugInTypeInference "car applied to non-list"),
+
+                                           funtype ([listtype alpha], alpha)) ::
+                                                          ("cdr",  unaryOp  (fn
+                                                          (PAIR (_, cdr)) => cdr
+                                                                              |
+                           NIL => raise RuntimeError "cdr applied to empty list"
+                                                                              |
+                     _   => raise BugInTypeInference "cdr applied to non-list"),
+
+                                  funtype ([listtype alpha], listtype alpha)) ::
+
+                                          (* primitives for \nml\ [[::]] 490c *)
+                                                          ("print", unaryOp (fn
+                                        x => (print (valueString x ^ "\n"); x)),
+                                                                       funtype (
+                                                          [alpha], unittype)) ::
+                                                          ("error", unaryOp (fn
+                                       x => raise RuntimeError (valueString x)),
+                                                                       funtype (
+                                                         [alpha], beta)) :: nil)
+      val basis =
+                (* ML representation of initial basis (generated by a script) *)
+
+                   [ "(define list1 (x) (cons x '()))"
+                   , "(define bind (x y alist)"
+                   , "  (if (null? alist)"
+                   , "    (list1 (pair x y))"
+                   , "    (if (= x (fst (car alist)))"
+                   , "      (cons (pair x y) (cdr alist))"
+                   , "      (cons (car alist) (bind x y (cdr alist))))))"
+                   , "(define isbound? (x alist)"
+                   , "  (if (null? alist) "
+                   , "    #f"
+                   , "    (if (= x (fst (car alist)))"
+                   , "      #t"
+                   , "      (isbound? x (cdr alist)))))"
+                   , "(define find (x alist)"
+                   , "  (if (null? alist) "
+                   , "    (error 'not-found)"
+                   , "    (if (= x (fst (car alist)))"
+                   , "      (snd (car alist))"
+                   , "      (find x (cdr alist)))))"
+                   , "(define caar (l) (car (car l)))"
+                   , "(define cadr (l) (car (cdr l)))"
+                   , "(define cdar (l) (cdr (car l)))"
+                   , "(define length (l)"
+                   , "  (if (null? l) 0"
+                   , "    (+ 1 (length (cdr l)))))"
+                   , "(define and (b c) (if b  c  b))"
+                   , "(define or  (b c) (if b  b  c))"
+                   , "(define not (b)   (if b #f #t))"
+                   , "(define append (xs ys)"
+                   , "  (if (null? xs)"
+                   , "     ys"
+                   , "     (cons (car xs) (append (cdr xs) ys))))"
+                   , "(define revapp (xs ys)"
+                   , "  (if (null? xs)"
+                   , "     ys"
+                   , "     (revapp (cdr xs) (cons (car xs) ys))))"
+                   , "(define o (f g) (lambda (x) (f (g x))))"
+                   , "(define curry   (f) (lambda (x) (lambda (y) (f x y))))"
+                   , "(define uncurry (f) (lambda (x y) ((f x) y)))"
+                   , "(define filter (p? l)"
+                   , "  (if (null? l)"
+                   , "    '()"
+                   , "    (if (p? (car l))"
+                   , "      (cons (car l) (filter p? (cdr l)))"
+                   , "      (filter p? (cdr l)))))"
+                   , "(define map (f l)"
+                   , "  (if (null? l)"
+                   , "    '()"
+                   , "    (cons (f (car l)) (map f (cdr l)))))"
+                   , "(define exists? (p? l)"
+                   , "  (if (null? l)"
+                   , "    #f"
+                   , "    (if (p? (car l)) "
+                   , "      #t"
+                   , "      (exists? p? (cdr l)))))"
+                   , "(define all? (p? l)"
+                   , "  (if (null? l)"
+                   , "    #t"
+                   , "    (if (p? (car l))"
+                   , "      (all? p? (cdr l))"
+                   , "      #f)))"
+                   , "(define foldr (op zero l)"
+                   , "  (if (null? l)"
+                   , "    zero"
+                   , "    (op (car l) (foldr op zero (cdr l)))))"
+                   , "(define foldl (op zero l)"
+                   , "  (if (null? l)"
+                   , "    zero"
+                   , "    (foldl op (op (car l) zero) (cdr l))))"
+                   , "(define <= (x y) (not (> x y)))"
+                   , "(define >= (x y) (not (< x y)))"
+                   , "(define != (x y) (not (= x y)))"
+                   , "(define max (x y) (if (> x y) x y))"
+                   , "(define min (x y) (if (< x y) x y))"
+                   , "(define mod (m n) (- m (* n (/ m n))))"
+                   , "(define gcd (m n) (if (= n 0) m (gcd n (mod m n))))"
+                   , "(define lcm (m n) (* m (/ n (gcd m n))))"
+                   , "(define min* (l) (foldr min (car l) (cdr l)))"
+                   , "(define max* (l) (foldr max (car l) (cdr l)))"
+                   , "(define gcd* (l) (foldr gcd (car l) (cdr l)))"
+                   , "(define lcm* (l) (foldr lcm (car l) (cdr l)))"
+                   , "(define list1 (x)               (cons x '()))"
+                   , "(define list2 (x y)             (cons x (list1 y)))"
+                   , "(define list3 (x y z)           (cons x (list2 y z)))"
+                   , "(define list4 (x y z a)         (cons x (list3 y z a)))"
+                   , "(define list5 (x y z a b)       (cons x (list4 y z a b)))"
+                   ,
+                   "(define list6 (x y z a b c)     (cons x (list5 y z a b c)))"
+                   ,
+                 "(define list7 (x y z a b c d)   (cons x (list6 y z a b c d)))"
+                   ,
+               "(define list8 (x y z a b c d e) (cons x (list7 y z a b c d e)))"
+                   , "(define takewhile (p? l)"
+                   , "  (if (null? l)"
+                   , "     '()"
+                   , "     (if (p? (car l))"
+                   , "         (cons (car l) (takewhile p? (cdr l)))"
+                   , "         '())))"
+                   , "(define dropwhile (p? l)"
+                   , "  (if (null? l)"
+                   , "     '()"
+                   , "     (if (p? (car l))"
+                   , "         (dropwhile p? (cdr l))"
+                   , "         l)))"
+                    ]
+      val xdefs = stringsxdefs ("initial basis", basis)
+  in  readEvalPrintWith basisError (xdefs, envs, NO_ECHOES)
+  end
+(* type declarations for consistency checking *)
+val _ = op initialEnvs : type_env * value env
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   FUNCTION [[RUNAS]], WHICH EVALUATES STANDARD INPUT GIVEN [[INITIALENVS]] *)
+(*                                                               *)
+(*****************************************************************)
+
+(* function [[runAs]], which evaluates standard input given [[initialEnvs]] 358d *)
+fun runAs mode = 
+  let val _ = setup_error_format mode
+      val prompts = case mode of INTERACTIVE => stdPrompts
+                               | NONINTERACTIVE => noPrompts
+      val xdefs = filexdefs ("standard input", TextIO.stdIn, prompts)
+  in  ignore (readEvalPrintWith eprintln (xdefs, initialEnvs, ECHOES))
+  end 
+(* type declarations for consistency checking *)
+val _ = op runAs : interactivity -> unit
+
+
+(*****************************************************************)
+(*                                                               *)
+(*   CODE THAT LOOKS AT COMMAND-LINE ARGUMENTS AND CALLS [[RUNAS]] TO RUN THE INTERPRETER *)
+(*                                                               *)
+(*****************************************************************)
+
+(* code that looks at command-line arguments and calls [[runAs]] to run the interpreter 359a *)
+val _ = case CommandLine.arguments ()
+          of []     => runAs INTERACTIVE
+           | ["-q"] => runAs NONINTERACTIVE
+           | _      => eprintln ("Usage: " ^ CommandLine.name () ^ " [-q]")

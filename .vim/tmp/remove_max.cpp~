@@ -1,0 +1,169 @@
+/*
+ * This file contains the declaration and definition of a LinkedList class. The
+ * declation is in this file (instead of a header file) because of the rules of
+ * submitting this. The class contains a function remove_max() which removes the
+ * first instance of the list's maximum from the list.
+ *
+ * I know that only the only required method is remove_max() - I have some of
+ * the other methods here because that made it easier to test remove_max().
+ *
+ * Zach Kirsch | COMP 11 2016 Fall TA Application | July 2016
+ * Question 1
+ *
+ * A linked list can be represented just using Node structs, with the client
+ * keeping a reference to the first Node (the head) and each Node pointing to
+ * the next one in the list. However, I chose to make a class because I think
+ * it's a cleaner solution. remove_max() as a non-class function thatt takes a
+ * pointer to the start of the list as an argument would also need access to the
+ * client's storage of the head of the list, in case the list's maximum was at
+ * the start. I think implementing the linked list as class has better
+ * encapsulation and abstraction.
+ *
+ * Another solution to this problem could be to find the maximum of the list,
+ * and then call a remove() function to remove that value from the list. Though
+ * this would probably be simpler code, it would require two walks through the
+ * list, where mine only requires one walkthrough. Though they are both
+ * O(n)-time solutions, doing the single walkthrough cuts the time in half.
+ *
+ * Another solution could also be to use a recursive function, something like:
+ *
+ *   int remove_max_recursive(Node *iter, Node *before_max)
+ *   {
+ *           Node *current_max = before_max != NULL ? before_max->next : head
+ *           if (iter == NULL)
+ *                   // remove current_max from the list and return its value
+ *           if (iter->next != NULL && iter->next->value > current_max->value)
+ *                   before_max = iter;
+ *           return remove_max_recursive(iter->next, current_max);
+ *   }
+ *
+ *   int remove_max()
+ *   {
+ *           assert(head != NULL);
+ *           return remove_max_recursive(head, NULL);
+ *   }
+ *
+ * However, recursive solutions are vulnerable to stack overflow. Though this
+ * function is tail recursive so the recursion would probably be optimized out
+ * by the compiler to be iterative, I still prefer to write iterative solutions
+ * when it's simple to do so as a guarantee that there won't be a stack
+ * overflow.
+ */
+
+/******************************************************************************/
+/******************************************************************************/
+
+#include <iostream>
+#include <cassert>
+
+using namespace std;
+
+/******************************************************************************/
+/******************************************************************************/
+
+/* Definition of Node structure */
+struct Node {
+        int value;
+        Node *next;
+};
+
+/* Declaration of LinkedList class */
+class LinkedList {
+        public:
+                LinkedList();
+                ~LinkedList();
+
+                bool is_empty();
+
+                /* prepends to the list */
+                void insert(int);
+
+                /* removes first instance of the given integer. returns true if
+                 * the element was deleted and false if it wasn't in the list */
+                bool remove(int);
+
+                /* removes first instance of the maximum value of the list. It
+                 * is a checked runtime error if remove_max() is called on an
+                 * empty list */
+                int remove_max();
+
+                void print();
+        private:
+                Node *head;
+};
+
+/******************************************************************************/
+/******************************************************************************/
+
+/* LinkedList Constructor */
+LinkedList::LinkedList()
+{
+        head = NULL;
+}
+
+/* LinkedList Destructor */
+LinkedList::~LinkedList()
+{
+        while (!is_empty()) {
+                Node *temp = head;
+                head = head->next;
+                delete temp;
+        }
+}
+
+/* is_empty() returns whether the list is empty */
+bool LinkedList::is_empty()
+{
+        return head == NULL;
+}
+
+/* insert() takes an integer and prepends it to the front of the list */
+void LinkedList::insert(int val)
+{
+        Node *n = new Node();
+        n->value = val;
+        n->next = head;
+        head = n;
+}
+
+/* prints the linked list, with values separated by spaces */
+void LinkedList::print()
+{
+        Node *temp = head;
+        while (temp != NULL) {
+                string delimiter = temp->next != NULL ? ", " : "\n";
+                cout << temp->value << delimiter;
+                temp = temp->next;
+        }
+}
+
+/*
+ * remove_max() removes the first instance of the maximum value of the list. It
+ * is a checked runtime error if remove_max() is called on an empty list
+ */
+int LinkedList::remove_max()
+{
+        assert(!is_empty());
+
+        /* before_max is the node before the current max (or NULL if the current
+           max is the head of the list) */
+        Node *before_max = NULL, *current_max = head, *iter = head;
+
+        while (iter != NULL && iter->next != NULL) {
+                if (iter->next->value > current_max->value) {
+                        before_max = iter;
+                        current_max = iter->next;
+                }
+                iter = iter->next;
+        }
+
+        if (before_max != NULL) {
+                before_max->next = current_max->next;
+        } else { // special case: head is the max value
+                head = head->next;
+        }
+
+        int max_value = current_max->value;
+        delete current_max;
+        return max_value;
+}

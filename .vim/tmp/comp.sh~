@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# echo a comp sci folder based on course name and year
+# Zach Kirsch
+# 29 January 2016
+
+BASE="$HOME/Documents/School/Tufts"
+case $1 in
+        11)        folder="$BASE/Fall 2014/Computer Science 11/comp11"
+                   ;;
+        11-15f)    folder="$BASE/TA/COMP 11/comp11_15f"
+                   ;;
+        11-16s)    folder="$BASE/TA/COMP 11/comp11_16s"
+                   ;;
+        11-16f)    folder="$BASE/TA/COMP 11/comp11_16f"
+                   ;;
+        15)        folder="$BASE/Spring 2015/Data Structures/comp15"
+                   ;;
+        20)        folder="$BASE/Spring 2015/Web Programming"
+                   ;;
+        40)        folder="$BASE/Fall 2015/Comp 40/comp40"
+                   ;;
+        105)       folder="$BASE/Spring 2016/COMP 105/comp105"
+                   ;;
+        116)       folder="$BASE/Fall 2015/Comp 116"
+                   ;;
+        120)       folder="$BASE/Spring 2016/COMP 120"
+                   ;;
+        160)       folder="$BASE/Fall\ 2016/COMP\ 160"
+                   ;;
+        170)       folder="$BASE/Spring 2016/COMP 170/comp170"
+                   ;;
+        170-16f)   folder="$BASE/TA/COMP 170/comp170_16f"
+                   ;;
+esac
+echo "$folder"

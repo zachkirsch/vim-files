@@ -1,0 +1,185 @@
+/*******************************************************************************
+ * Cipher Class Implementation                                                 *
+ * For Columbar Transposition Cipher                                           *
+ *                                                                             *
+ * Zach Kirsch | 22 Feb 2016                                                   *
+ * COMP 11 Final Project 2016 Spring                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+#include <iostream>
+#include <string>
+#include <cassert>
+
+using namespace std;
+
+#include "cipher.h"
+#include "cipher_private.h"
+
+/* helper for breaking up ciphertext into columns */
+string ith_col(std::string ciphertext, int i, int col_height);
+
+
+/******************************************************************************/
+
+
+/* Constructors */
+Cipher::Cipher(int w, int h)
+{
+        priv = new CipherPrivate(w, h);
+}
+
+CipherPrivate::CipherPrivate(int w, int h)
+{
+        cols = new string[w];
+        for (int i = 0; i < w; i++)
+                cols[i] = "";
+
+        width  = w;
+        height = h;
+}
+
+/* Destructors */
+Cipher::~Cipher()
+{
+        delete priv;
+}
+
+CipherPrivate::~CipherPrivate()
+{
+        delete [] cols;
+}
+
+/* for inserting the ciphertext into the Cipher as a string */
+void CipherPrivate::insert_ciphertext(string ciphertext)
+{
+        assert( (int) ciphertext.length() == width * height );
+
+        ciphertext = replace_spaces(ciphertext);
+
+        for (int i = 0; i < width; i++) {
+                string text = ith_col(ciphertext, i, height);
+                cols[i] = text;
+        }
+}
+
+/* for a cipher text broken up into chunks of size "height", this returns
+ * the i'th chunk */
+string ith_col(string ciphertext, int i, int col_height)
+{
+        return ciphertext.substr(col_height * i, col_height);
+}
+
+
+/* for inserting the plaintext into the Cipher as a string */
+void CipherPrivate::insert_plaintext(string plaintext)
+{
+        int len = plaintext.length();
+        assert( len <= width * height );
+
+        for (int i = 0; i < (width * height); i++) {
+                if (plaintext[i] == ' ')
+                        plaintext[i] = SPACE;
+                if (i < len)
+                        cols[i % width] += plaintext[i];
+                else
+                        cols[i % width] += PADDING;
+        }
+}
+
+/******************************************************************************/
+
+char CipherPrivate::get_letter(int col, int row) {
+        assert (col < width and col >= 0 and row < height and row >= 0);
+        char let = cols[col][row];
+        if (let == SPACE)
+                return ' ';
+        else return let;
+}
+
+/******************************************************************************/
+
+string Cipher::decrypt(string ciphertext, string key)
+{
+        priv->insert_ciphertext(ciphertext);
+        int len = key.length();
+        assert(len == priv->width);
+
+        char DUMMY = ' ';
+        Cipher in_order(priv->width, priv->height);
+
+        /* go through the key */
+        for (int i = 0; i < len; i++) {
+
+                /* for each letter in the key, find its position in the sorted
+                   cipher (i.e. find the i'th column of the original cipher */
+                int pos = 0;
+                for (int j = 0; j < len; j++) {
+                        if (key[j] < key[i] or (key[j] == key[i] and j < i))
+                                if (key[j] != DUMMY)
+                                        pos++;
+                }
+
+                /* update the i'th column of the in-order cipher */
+                in_order.priv->cols[i] = priv->cols[pos];
+        }
+
+        return in_order.priv->to_string();
+}
+
+/******************************************************************************/
+
+string Cipher::encrypt(string plaintext, string key)
+{
+        priv->insert_plaintext(plaintext);
+        int len = key.length();
+        assert(len == priv->width);
+
+        char DUMMY = ' ';
+        string ciphertext = "";
+
+        for (int i = 0; i < len; i++) {
+                /* get the first column alphabetically */
+                int first = 0;
+                for (int j = 1; j < len; j++) {
+                        if (key[first] == DUMMY or key[j] < key[first])
+                                if (key[j] != DUMMY)
+                                        first = j;
+                }
+                key[first] = DUMMY;
+                ciphertext += priv->cols[first];
+        }
+
+        return ciphertext;
+}
+
+/******************************************************************************/
+
+
+/* convert the cipher to a string - as it looks if reading in row-major order.
+   does not ignore padding */
+string CipherPrivate::text()
+{
+        string s = "";
+        for (int row = 0; row < height; row++) {
+                for (int col = 0; col < width; col++)
+                        s += get_letter(col, row);
+        }
+        return s;
+}
+
+/* convert the cipher to a string - as it looks if reading in row-major order.
+   ignores padding */
+string CipherPrivate::to_string()
+{
+        string s = text();
+
+        int i = 0;
+        while (i < (int) s.length()) {
+                if (s[i] == PADDING) {
+                        s.erase(i, 1);
+                }
+                else i++;
+        }
+        return s;
+}

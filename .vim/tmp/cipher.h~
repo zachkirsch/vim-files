@@ -1,0 +1,70 @@
+/*******************************************************************************
+ * Cipher Class Interface                                                      *
+ * For Columbar Transposition Cipher                                           *
+ * COMP 11 Final Project 2016 Spring                                           *
+ ******************************************************************************/
+
+#ifndef CIPHER_H_INCLUDED
+#define CIPHER_H_INCLUDED
+
+/* In the plaintext or ciphertext, spaces can be represented either as normal
+ * spaces or whatever the SPACE constant is set to */
+const char SPACE = '_';
+
+/* If the text doesn't fit into a rectangle, it is padded with this character */
+const char PADDING = '+';
+
+class CipherPrivate;
+class Cipher {
+        public:
+                /* Constructor for the cipher, where width and height are the
+                 * dimensions of the cipher */
+                Cipher (int width, int height);
+
+                /* Destructor deallocates memory */
+                ~Cipher();
+
+                /* encrypt() encrypts plaintext using a columnar transposition
+                 * cipher and a key.
+                 * Arguments:
+                 *      - plaintext as a string. Spaces can be replaced by the
+                 *        SPACE constant above, but it is not required
+                 *      - key as a string
+                 * Returns:
+                 *      The encrypted ciphertext as a string
+                 * Notes:
+                 *      - It is an error for the length of the key to be
+                 *        different than the width of the cipher
+                 *      - It is an error for the length of the plaintext to be
+                 *        greater than width * height (i.e. the plaintext must
+                 *        be able to fit in the cipher)
+                 *      - If the plaintext does not fit into the cipher fully,
+                 *        padding is added to the plaintext so that it fits
+                 *        (using the PADDING constant above)
+                 */
+                std::string encrypt (std::string plaintext, std::string key);
+
+
+                /* decrypt() decrypts() ciphertext using a columnar
+                 * transposition cipher and a key.
+                 * Argument:
+                 *      - ciphertext as a string. Spaces can be replaced by the
+                 *        SPACE constant above, but it is not required
+                 *      - key as a string
+                 * Returns:
+                 *      The decrypted ciphertext as a string
+                 * Note:
+                 *      - It is an error for the length of the key to be
+                 *        different than the width of the cipher
+                 *      - It is an error for the length of the ciphertext to be
+                 *        different than width * height (i.e. the ciphertext
+                 *        must fit in the cipher perfectly)
+                 *      - The padding (as defined as a constant above) is
+                 *        removed from the plaintext before it is returned
+                 */
+                std::string decrypt (std::string ciphertext, std::string key);
+        private:
+                CipherPrivate *priv;
+};
+
+#endif

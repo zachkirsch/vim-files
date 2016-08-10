@@ -1,0 +1,48 @@
+Zach Kirsch | COMP 11 2016 Fall TA Application | July 2016
+Question 3
+
+A: What steps would you take to help the student identify and solve the
+   problem(s)?
+
+I would ask the student to describe the problem to me (it will be something like
+"the total is always some super random number and I don't know why").  I would
+ask the student to walk me through the code, and keep track of the values of
+each variable created in boxes on a sheet of paper. I'll remind the student
+that variables are just boxes in memory that always hold a value. I would also
+explain that usually issues with "super random numbers" is usually a result of
+using a variable that contains a dead squirrel, and explain what dead squirrels
+and uninitialized memory are if the student doesn't know. After the first line,
+the student will write down "total" on the piece of paper as one of the
+variables. The student will probably notice that the value of "total" starts out
+as a dead squirrel (and I would hint "What's the value of total?" if the student
+didn't realize).
+
+
+
+B: What is your first question to the student? What do you anticipate the flow
+   of the conversation to be?
+
+"Where are you comments?" "Why is main so long?" I would ask the student to
+comment the code/functions, to split up main() into smaller functions, and to
+make sure the variables are named descriptively. Often that process is enough
+for the student to figure out the bug on his or her own.
+
+If the student is still having trouble, I would ask the student to create sample
+data (cities.txt), to walk me through the code, starting from the top of main
+and stepping into each function, and to keep track of the values of all the
+variables in boxes on a sheet of paper (basically, just acting like a human
+GDB). Since the program crashes with a segmentation fault, I would say to the
+student that a seg fault is usually the result of dereferencing NULL or
+accessing an array out of bounds, so we should make sure to check every pointer
+we dereference and the index every time we use an array.
+
+I would anticipate we would make it through most of the code smoothly, and while
+going through the final loop it would be clear that we are indexing out of
+bounds in DB.states after i=num. This would be a good time to say that
+maybe "num" isn't the best variable name, and that this would be been easier to
+catch if the variable name was more descriptive (e.g. "num_states"). Once the
+student understood where the error was coming from, I would ask how he or she
+would fix it, and leave the student alone for a few minutes for he or she to fix
+it and test it. If the student was having trouble devising a solution, I would
+give suggestions or advice about ways of getting around the bug (like a break
+statement to exit the loop after ).

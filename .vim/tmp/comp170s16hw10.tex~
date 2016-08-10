@@ -1,0 +1,519 @@
+\documentclass[11pt]{article}
+\usepackage{tikz}
+\usetikzlibrary{automata,positioning}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{fullpage}
+\usepackage{{mathtools}}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{graphicx,subcaption}
+
+\setlength{\parindent}{0cm}
+\renewcommand{\theenumi}{\roman{enumi}}
+
+\newcommand{\C}[1]{\ensuremath{\mathord{\rm #1}}}
+\newcommand{\pair}[1]{\ensuremath{\mathopen{\langle}#1\mathclose{\rangle}}}
+\newcommand{\card}[1]{\ensuremath{\mathopen{|\!|}#1\mathclose{|\!|}}}
+\newcommand{\manyone}{\ensuremath{\leq_m}}
+\newcommand{\pmanyone}{\ensuremath{\leq_m^p}}
+\newenvironment{proof}{\vspace*{1em}\noindent{\bf Proof.}}{\hfill$\Box$}
+
+% margins
+\usepackage[top=3cm, bottom=4cm, left=2cm, right=2cm,headsep=16pt]{geometry}
+
+
+%%% header and footer %%%
+
+\setlength{\headheight}{15.2pt}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0.4pt}  % line in header,
+\renewcommand{\footrulewidth}{0pt}       % no line in footer
+
+% Text in header
+\fancyhead[L]{\textsc{Tufts University Comp 170}}
+\fancyhead[C]{\textsc{Homework 10}}
+\fancyhead[R]{\textsc{Zach Kirsch}}
+
+\begin{document}
+
+\subsection*{Problem 12}
+Do this as practice for an exam question, it's subtle, but you should be able to
+do it.
+
+$$L = \{ \pair{G,T} \mid  G \mbox{ is a graph and } T  \mbox{ is a tree, and } G
+\mbox{ contains a spanning tree isomorphic to } T \}$$
+
+Prove that $L$ is $\C{NP}$-complete. (The reduction is from HAMPATH).
+
+\bigskip
+\noindent\hrule
+\bigskip
+
+Note: all edges in this problem are undirected.
+
+\bigskip
+
+Consider the function $f$ on input $\pair{G,a,b}$
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+    \item Decode $\pair{G,a,b}$ as a graph $G$ and vertices $a$ and $b$
+    \item If $a$ is not a vertex in $G$ or $b$ is not a vertex in $G$ or
+          $a = b$:
+    \begin{enumerate}
+        \item Let $G_{empty}$ be an empty graph
+        \item Let $T_{1}$ be a tree with one node
+        \item Return $\pair{G_{empty},T_{1}}$
+    \end{enumerate}
+    \item Define $G'$ as a copy of $G$
+    \item Add nodes $v_1$ and $v_2$ to $G'$
+    \item Add edge $(a, v_1)$ to $G'$
+    \item Add edge $(b, v_2)$ to $G'$
+    \item Define $T$ as an empty tree
+    \item $i := 0$
+    \item While $i$ is less than the number of vertices in $G'$:
+    \begin{enumerate}
+        \item Add a node $n_i$ to $T$
+        \item If $i > 0$:
+        \begin{enumerate}
+            \item Connect $n_{i-1}$ to $n_i$
+        \end{enumerate}
+        \item $i := i + 1$
+    \end{enumerate}
+    \item Return $\pair{G',T}$
+\end{enumerate}
+
+\clearpage
+
+\textbf{Claim:} $f$ operates in polynomial time.
+
+\begin{proof}
+
+Step 1 decodes $\pair{G}$ and operates in $O(n)$ time, where $n$ is the length
+of input.
+
+Step 2 searches through the vertices in $G$ ($O(n)$ time, where $n$ is
+the number of vertices in $G$), compares $a$ and $b$ ($O(1)$ time), creates an
+empty graph ($O(1)$ time), creates a tree with one node ($O(1)$ time) and
+returns the two ($O(1)$ time).
+
+Step 3 creates a copy $G'$ of $G$, which operates in $O(n)$ time, where $n$ is
+the size of $G$.
+
+Steps 4, 5, 6, 7, and 8 operates in $O(1)$ time.
+
+Step 9 iterates through the number of vertices in $G'$ ($O(n)$ time, where $n$
+is the number of vertices in $G$), and performs constant-time alterations to
+$T$.
+
+Step 10 returns $\pair{G',T}$, which operates in $O(n + \card{V})$, where $n$ is
+the size of $G$ and $\card{V}$ is the number of vertices in $G$.
+
+\medskip
+
+Because each step and substep of $f$ operates in polynomial time, $f$ operates
+in polynomial time.
+\end{proof}
+
+\bigskip
+\bigskip
+\bigskip
+
+\textbf{Claim:} $L \in \C{NP}$.
+
+\begin{proof}
+The following algorithm accepts members of $L$ in polynomial time:
+
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+        \item Non-deterministically remove zero or more edges from $G$: $O(n)$
+        \item Non-deterministically choose an ordering of the vertices in $G$:
+              $O(n)$
+        \item If the adjacency matrix of $G$ is equal to the adjacency matrix of
+              $T$, ACCEPT:\ $O(n^2)$
+        \item Else: REJECT:\ $O(1)$
+\end{enumerate}
+
+\bigskip
+
+If $\pair{G, T} \in L$, there is a spanning tree in $G$ that is isomorphic to
+$T$. A spanning tree is a tree in $G$ that contains all the vertices in $G$ and
+a subset of the edges in $G$. Therefore, if $\pair{G,T} \in L$, by removing some
+edges from $G$ we will produce a graph that is isomorphic to $T$. If $\pair{G,T}
+\notin L$, we will never produce a graph by removing edges from $G$. Therefore,
+if $\pair{G,T} \in L$, some branch of the machine accepts, and if $\pair{G,T}
+\notin L$, no branch of the machine accepts. Therefore, this machine is a
+polynomial-time non-deterministic recognizer for $L$ and thus $L \in \C{NP}$.
+\end{proof}
+
+\clearpage
+
+\textbf{Claim:} $f$ is a reduction from $\C{HAMPATH}$ to $L$.
+
+\begin{proof}
+For a graph $G$ and two vertices $a$ and $b$, there are two cases: $\pair{G,a,b}
+\in \C{HAMPATH}$ and $\pair{G,a,b} \notin \C{HAMPATH}$.
+
+\textbf{Case 1: $\boldsymbol{\pair{G,a,b} \in \C{HAMPATH}}$:} There is a path
+from $a$ to $b$ in $G$ that contains each vertex in $G$ exactly once.
+Equivalently, there is a path $P$ from $a$ to $b$ of size $n$ that touches every
+vertex exactly once, where $n$ is the number of vertices in $G$.
+
+Because $a$ is a vertex in $G$ and $b$ is a vertex in $G$ and $a \neq b$, $f$
+does not return $\pair{G_{empty}, T_1}$ in step 2.
+
+$f$ copies $G$ to $G'$. Because $G'$ is an exact copy of $G$, there is a path
+$P$ from $a$ to $b$ of size $n$ in $G'$ that touches every vertex exactly once,
+where $n$ is the number of vertices in $G$.
+
+$f$ adds vertices $v_1$ and $v_2$ to $G'$ and edges from $a$ to $v_1$ and $b$ to
+$v_2$. There is now a path of length $m$ in $G'$, where $m$ is the number of
+vertices in $G'$: $(v_1, a) \cup P \cup (b, v_2)$. This is essentially a linked
+list with $m$ nodes where no node is repeated.
+
+$f$ creates a tree $T$, which contains $m$ nodes (where $m$ is the number of
+vertices in $G'$), where each node is connected just to the previous. This is
+essentially a linked list with $n$ nodes where no nodes is repeated.
+
+Therefore, there exists a path in $G'$ ($(v_1, a) \cup P \cup (b, v_2)$) that is
+isomorphic to $T$. Because this contains all vertices in $G'$ exactly once, this
+path is a spanning tree of $G'$. Therefore, there is a spanning tree in $G'$
+that is isomorphic to $T$.
+
+$\therefore \pair{G',T} = f(\pair{G,a,b}) \in L$.
+
+\clearpage
+
+\textbf{Case 2: $\boldsymbol{\pair{G,a,b} \notin \C{HAMPATH}}$:} There is no
+path from $a$ to $b$ in $G$ that contains each vertex in $G$ exactly once.
+Equivalently, there is no path $P$ from $a$ to $b$ of size $n$ that touches
+every vertex exactly once, where $n$ is the number of vertices in $G$.
+
+If $a$ or $b$ is not in $G$ or $a = b$, $f$ returns $\pair{G_{empty}, T_1}$,
+which is not in $L$ because an empty graph cannot contain a non-empty tree as a
+subgraph.
+
+$f$ copies $G$ to $G'$. Because $G'$ is an exact copy of $G$, there is no path
+$P$ from $a$ to $b$ of size $n$ that touches every vertex exactly once, where
+$n$ is the number of vertices in $G$.
+
+$f$ adds vertices $v_1$ and $v_2$ to $G'$ and edges from $a$ to $v_1$ and $b$ to
+$v_2$.
+
+$f$ creates a tree $T$, which contains $m$ nodes (where $m$ is the number of
+vertices in $G'$), where each node is connected just to the previous. This is
+essentially a linked list with $m$ nodes where no nodes is repeated.
+
+Assume, for the sake of contradiction, that $\pair{G',T} \in L$.
+
+Therefore, because of the structure of $T$, it can be viewed as a path $P$ in
+$G'$ of the same length $m$. Because $T$ is a tree, there are no cycles. Because
+$P$ is isomorphic to $T$, there are no cycles in $P$ and no vertex appears twice
+in the path.  Because $m$ is the number of vertices in $G'$, $P$ contains every
+vertex in $G'$.
+
+Because $P$ contains every vertex in $G'$, it includes $v_1$ and $v_2$. $v_1$
+only has one edge, so it must be the end of the path and its edge $(v_1, a)$
+must be a part of the path. Similarly, $v_2$ only has one edge, so it must be
+the end of the path and its edge $(b, v_2)$ must be a part of the path.
+Therefore, $P$ is of the form $(v_1 - P_2 - v_2)$, where $P_2$ is a path from
+$a$ to $b$ that contains each remaining vertex in $G'$ but no vertex appears
+twice. The remaining vertices are all the vertices in $G'$ except $v_1$ and
+$v_2$, so the remaining vertices are all the vertices in $G$.
+
+Therefore, $P_2$ must be a path from $a$ to $b$ that contains each vertex in $G$
+but no vertex appears twice.
+
+We have arrived at a contradiction, because there is no path from $a$ to $b$
+that contains each vertex exactly once. Therefore, our initial assumption was
+incorrect.
+
+$\therefore \pair{G',T} = f(\pair{G,a,b}) \notin L$.
+
+\bigskip
+
+$f(\pair{G,a,b}) \in L \iff \pair{G,a,b} \in \C{HAMPATH}$.
+
+Therefore, $f$ is a reduction and $\C{HAMPATH}$ is reducible to $L$.
+
+\end{proof}
+
+\vfill
+
+\textbf{Claim:} L is NP-Complete.
+
+\begin{proof}
+$L \in \C{NP}$. $\C{HAMPATH}$ is NP-Complete. There is a polynomial time
+reduction from $\C{HAMPATH}$ to $L$. Therefore, $L$ is NP-Complete.
+\end{proof}
+
+\clearpage
+\subsection*{Problem 2}
+Show that, if $M$ is a DFA that recognizes language $B$, swapping the accept and
+non-accept states in $M$ yields a new DFA that recognizes the complement of $B$.
+(Having shown this, we can conclude that the class of regular languages is
+closed under complement.)
+
+\bigskip
+\noindent\hrule
+\bigskip
+
+\textbf{Definition:} A DFA recognizer for $A$ is a DFA that accepts on an input
+$x$ if and only if $x \in A$.
+
+\medskip
+
+Let $M$ be a DFA that recognizes some language $B$.
+
+Let $Q_1$ be the set of accepting states of $M$ and let $Q_2$ be the set of
+non-accepting states. Then, $Q_1 \cap Q_2 = \emptyset$ and $Q_1 \cup Q_2 = Q$,
+where $Q$ is the set of states of $M$.
+
+By definition of a DFA recognizer for $B$, $M$ on input $x$ accepts when $x \in
+B$ and does not accept when $x \notin B$.
+
+Equivalently, $M$ on input $x$ exits in an accepting state when $x \in B$ and
+exits in a non-accepting state when $x \notin B$.
+
+Equivalently, $M$ on input $x$ exits in state $q$. If $x \in B$, then $q \in
+Q_1$. If $x \notin B$, then $q \in Q_2$. This is true regardless of which states
+are accepting or non-accepting states, because that designation does not affect
+the flow of the DFA.\ The flow of the DFA is dependent only on the transition
+function $\delta$, the total set of states $Q$, the start state $q_0$ and the
+input $x$.
+
+Let $M'$ be constructed as a copy of $M$, except each accepting state in $M$ is
+a non-accepting state in $M'$ and each non-accepting state in $M$ is a accepting
+state in $M'$. Therefore, in $M'$, each state in $Q_1$ is a non-accepting state
+and each state in $Q_2$ is an accepting state.
+
+As previously stated, these alterations do not affect the control flow of $M$,
+so $M'$ has the same control flow as $M$: for an input $x$ and an exit state
+$q$, if $x \in B$, then $q \in Q_1$, and if $x \notin B$, then $q \in Q_2$.
+Therefore, if $x \in B$, then $M'$ exits in a non-accepting state $q$, and if $x
+\notin B$, then $M'$ exits in an accepting state. Equivalently, $M'$ on input
+exits in an accepting state if and only if $x \in \overline{B}$.
+
+By the definition of a DFA that recognizes $\overline{B}$, $M'$ is a DFA that
+recognizes $\overline{B}$.
+
+\bigskip
+
+Therefore, for any DFA $M$ that recognizes a language $B$, swapping the accept
+and non-accept states of $M$ yields a new DFA that recognizes the complement of
+$B$.
+
+\clearpage
+\subsection*{Problem 3}
+Show by giving an example that, if $M$ is an NFA that recognizes language $C$,
+swapping the accept and non-accept states in $M$ does not necessarily yield a
+new NFA that recognizes the complement of $C$. Is the class of languages
+recognized by NFAs closed under complement? Why or why not?
+
+\bigskip
+\noindent\hrule
+\bigskip
+
+Consider the language $C$ defined as $\{1\}$.
+
+\bigskip
+
+For the following machines, let $\Sigma = \{1\}$.
+
+\medskip
+
+Consider the non-deterministic finite automata $M_1$ and $M_2$ defined as
+follows:
+
+\begin{figure}[!h]
+\centering
+\begin{subfigure}[b]{0.48\linewidth}
+    \centering
+    \begin{tikzpicture}[shorten >=1pt,node distance=2cm,on grid,auto]
+            \node[state,initial]            (q_0)                       {$q_0$};
+            \node[state,accepting]          (q_1)   [right=of q_0]      {$q_1$};
+            \node[state]                    (q_2)   [above=of q_0]      {$q_2$};
+
+            \path[->]
+            (q_0)   edge                     node {1}   (q_1)
+                    edge                     node {1}   (q_2)
+            ; % end path
+    \end{tikzpicture}
+    \caption{$M_1$}
+\end{subfigure}
+\begin{subfigure}[b]{0.48\linewidth}
+    \centering
+    \begin{tikzpicture}[shorten >=1pt,node distance=2cm,on grid,auto]
+            \node[state,initial,accepting]  (q_0)                       {$q_0$};
+            \node[state]                    (q_1)   [right=of q_0]      {$q_1$};
+            \node[state,accepting]          (q_2)   [above=of q_0]      {$q_2$};
+
+            \path[->]
+            (q_0)   edge                     node {1}   (q_1)
+                    edge                     node {1}   (q_2)
+            ; % end path
+    \end{tikzpicture}
+    \caption{$M_2$}
+\end{subfigure}
+\end{figure}
+
+\medskip
+
+\textbf{Definition:} A NFA recognizer $M$ for $A$ is an NFA where some branch of
+$M$ accepts on $x$ if and only if $x \in A$.
+
+\textbf{Observation:} $M_2$ is identical to $M_1$, except that the accept and
+non-accept states are swapped.
+
+\bigskip
+
+\textbf{Lemma: $\boldsymbol{M_1}$ recognizes $\boldsymbol{C}$.}
+$M_1$ on no input exits in state $q_0$, which is a non-accepting state. On input
+1, one branch of $M_1$ transitions from $q_0$ to $q_1$, and $M_1$ exits in state
+$q_1$ which is an accepting state. On a longer input, upon reading the first 1,
+one branch transitions from $q_0$ to $q_1$ and the other transitions from $q_0$
+to $q_2$. Upon reading additional input, no transitions are defined, so both
+branches reject. Thus, $M_1$ only accepts on input 1 and therefore recognizes
+$C$.
+
+\medskip
+
+\textbf{Lemma: $\boldsymbol{M_2}$ does not recognize
+$\boldsymbol{\overline{C}}$.} On input 1, one branch of $M_2$ transitions from
+$q_0$ to $q_2$, and $M_2$ exits in state $q_2$ which is an accepting state.
+Therefore, $M_2$ accepted on an input which is in $C$ and thus not in
+$\overline{C}$, so $M_2$ does not recognize $\overline{C}$.
+
+\bigskip
+
+As this example shows, if $M$ is a NFA that recognizes language $C$, then
+swapping the accept and non-accept state of $M$ does not necessarily produce an
+NFA that recognizes $\overline{C}$.
+
+\bigskip
+
+A language can be recognized by a DFA if and only if a language can be
+recognized by an NFA.\ Equivalently, the set of languages that are recognizable
+by a DFA is equivalent to the set of languages that are recognizable by an
+NFA.\_ Therefore, because the set of languages that are DFA-recognizable is
+closed under complement, the set of languages that are NFA-recognizable is
+closed under complement.
+
+\clearpage
+
+\subsection*{Problem 4}
+Prove that the following language is not regular:
+
+$A = \{www \mid  w\in {\{0,1\}}^{*}\}$
+
+\bigskip
+\noindent\hrule
+\bigskip
+
+By the negation of the pumping lemma, to show that $A$ is not regular, we can
+show the for all $p$, there exists in $s \in A$ such that:
+\begin{itemize}
+    \item $s$ can be decomposed into parts $x$, $y$, and $z$ so that $s = x
+          \circ y \circ z$
+    \item $\card{y} > 0$
+    \item $\card{x \circ y} \leq p$
+    \item $\exists \ i$ such that $x \circ {y}^{i} \circ z \notin A$
+\end{itemize}
+
+\bigskip
+
+\textbf{Claim:} $A$ is not regular.
+
+\begin{proof}
+
+Define $s$ as $ {0}^{p} 1 {0}^{p} 1 {0}^{p} 1 $.
+
+$s \in A$ because it is of the form $www$. In this case, $w = {0}^{p} 1$. We
+make no assumptions about $p$ so that our conclusion is valid for all $p$.
+
+$s$ can be written as $x \circ y \circ z$ where $\card{x \circ y} \leq p$,
+Therefore, $x = {0}^{a}$ for some $a$ and $y = {0}^{b}$ for some $a$ and some
+$b > 0$. Therefore, $\card{y} = b > 0$.
+
+$s$ can thus be written $ {0}^{a} {0}^{b} {0}^{(p-a-b)} 1 {0}^{p} 1 {0}^{p} 1 $.
+
+Suppose we pump $y$: $s_2 = {0}^{a} {0}^{b} {0}^{b} {0}^{(p-a-b)} 1 {0}^{p} 1
+{0}^{p} 1 = {0}^{p+b} 1 {0}^{p} 1 {0}^{p} 1$. Because $b > 0$, this is clearly
+not of the form $www$, and $s_2 \notin A$.
+
+\bigskip
+
+For all $p$ there exists an $s \in A$ ($s = {0}^{p} 1 {0}^{p} 1 {0}^{p} 1$) such
+that:
+\begin{itemize}
+    \item $s$ can be decomposed into parts $x$, $y$, and $z$ so that $s = x
+          \circ y \circ z$
+    \item $\card{y} > 0$
+    \item $\card{x \circ y} \leq p$
+    \item $\exists \ i$ (shown to be 2) such that $x \circ {y}^{i} \circ z$ (in
+          this case, $s_2$) that is not in $A$
+\end{itemize}
+
+Therefore, by the pumping lemma, $A$ is not regular.
+\end{proof}
+
+\clearpage
+\subsection*{Problem 5}
+
+Prove that the following language is not regular:
+
+$A = \{0^i1^j0^i  \mid  i, j$ are integers $\ge 0\}$
+
+\bigskip
+\noindent\hrule
+\bigskip
+
+By the negation of the pumping lemma, to show that $A$ is not regular, we can
+show the for all $p$, there exists in $s \in A$ such that:
+\begin{itemize}
+    \item $s$ can be decomposed into parts $x$, $y$, and $z$ so that $s = x
+          \circ y \circ z$
+    \item $\card{y} > 0$
+    \item $\card{x \circ y} \leq p$
+    \item $\exists \ i$ such that $x \circ {y}^{i} \circ z \notin A$
+\end{itemize}
+
+\bigskip
+
+\textbf{Claim:} $A$ is not regular.
+
+\begin{proof}
+
+Define $s$ as $ 0^p 1 0^p $.
+
+We make no assumptions about $p$ so that our conclusion is valid for all $p$.
+$p$ is non-negative because it is nonsensical to discuss lengths of strings that
+are negative.
+
+$s$ can be written as $x \circ y \circ z$ where $\card{x \circ y} \leq p$,
+Therefore, $x = {0}^{a}$ for some $a$ and $y = {0}^{b}$ for some $a$ and some
+$b > 0$. Therefore, $\card{y} = b > 0$.
+
+$s$ can thus be written $ {0}^{a} {0}^{b} {0}^{(p-a-b)} 1 {0}^{p}$.
+
+Suppose we pump $y$: $s_2 = {0}^{a} {0}^{b} {0}^{b} {0}^{(p-a-b)} 1 {0}^{p} =
+{0}^{p+b} 1 {0}^{p}$. Because $b > 0$, $(p + b) \neq p$, and this is not of the
+form $ 0^i 1^j 0^i$, so $s_2 \notin A$.
+
+\bigskip
+
+For all $p$ there exists an $s \in A$ ($s = {0}^{p} 1 {0}^{p}$) such that:
+\begin{itemize}
+    \item $s$ can be decomposed into parts $x$, $y$, and $z$ so that $s = x
+          \circ y \circ z$
+    \item $\card{y} > 0$
+    \item $\card{x \circ y} \leq p$
+    \item $\exists \ i$ (shown to be 2) such that $x \circ {y}^{i} \circ z$ (in
+          this case, $s_2$) that is not in $A$
+\end{itemize}
+
+Therefore, by the pumping lemma, $A$ is not regular.
+\end{proof}
+
+\end{document}

@@ -1,0 +1,642 @@
+\documentclass[11pt]{article}
+\usepackage{tikz}
+\usetikzlibrary{automata,positioning}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{fullpage}
+\usepackage{{mathtools}}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+
+\setlength{\parindent}{0cm}
+\renewcommand{\theenumi}{\roman{enumi}}
+
+\newcommand{\C}[1]{\ensuremath{\mathord{\rm #1}}}
+\newcommand{\pair}[1]{\ensuremath{\mathopen{\langle}#1\mathclose{\rangle}}}
+\newcommand{\card}[1]{\ensuremath{\mathopen{|\!|}#1\mathclose{|\!|}}}
+\newcommand{\manyone}{\ensuremath{\leq_m}}
+\newcommand{\pmanyone}{\ensuremath{\leq_m^p}}
+\newenvironment{proof}{\vspace*{1em}\noindent{\bf Proof.}}{\hfill$\Box$}
+\newenvironment{proof_by_contr}{\vspace*{1em}\noindent{\bf Proof by
+                                contradiction.}}{\hfill$\Box$}
+\newenvironment{proof_by_induc}{\vspace*{1em}\noindent{\bf Proof by
+                                induction.}}{\hfill$\Box$}
+
+% margins
+\usepackage[top=3cm, bottom=4cm, left=2cm, right=2cm,headsep=16pt]{geometry}
+
+
+%%% header and footer %%%
+
+\setlength{\headheight}{15.2pt}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0.4pt}  % line in header,
+\renewcommand{\footrulewidth}{0pt}       % no line in footer
+
+% Text in header
+\fancyhead[L]{\textsc{Tufts University Comp 170}}
+\fancyhead[C]{\textsc{Homework 9}}
+\fancyhead[R]{\textsc{Zach Kirsch}}
+
+\begin{document}
+
+\subsection*{Problem 1}
+
+\vspace{3mm}
+
+In a graph, $G = (V, E)$, two nodes are allowed to marry if they are not
+connected by an edge, this marriage joins the two nodes into one new node with
+edges from both nodes.
+
+ \vspace{2mm}
+
+Specifically, given $u,v \in V$ and $(u,v) \notin E$, marry$(G, u, v)$ creates a
+new graph $G' = (V', E')$, where $V' = V \setminus \{u, v\} \cup \{w\}$ and $E'
+= E \setminus \{(u, x_i) \mid \forall x_i \in V\} \setminus \{(v, x_i) \mid
+\forall x_i \in V\} \cup \{(w, z_i) \mid \forall z_i \in \{ \C{neighborhood}(u)
+\cup \C{neighborhood}(v)\}$.
+
+ \vspace{2mm}
+
+$\C{Graph Marriage Equality}$  =
+
+$\{\pair{G, H} \mid  \exists \textrm{ a series of marriages which transform }$
+$G  \textrm{ into } G', \textrm{ where } G'  \textrm{ is isomorphic to } H \}$
+
+\vspace{3mm}
+
+Prove that $\C{Graph Marriage Equality}$ is NP-complete.
+
+\vfill
+
+Consider the function $f$ on input $\pair{G}$
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+        \item Decode $\pair{G}$ as a graph $G$ with vertices $V$ and edges $E$
+        \item Let each vertex be uncolored
+        \item While there exists an uncolored vertex $v$:
+        \begin{enumerate}
+                \item Let $S := \{v\}$
+                \item Let $c := \C{Green}$
+                \item Let $T := \emptyset$
+                \item For each vertex $u \in S$
+                \begin{enumerate}
+                        \item If $u$ is uncolored, assign $u$ the color $c$
+                        \item For each neighbor $w$ of $u$, add $w$ to $T$
+                \end{enumerate}
+                \item Let $S := T$
+                \item If $c$ is Green: $c := \C{Blue}$
+                \item Else: $c := \C{Green}$
+                \item If $S \neq \emptyset$: go to (c)
+                \item Else: Go to 3
+        \end{enumerate}
+        \item For each edge $(u,v) \in E$
+        \begin{enumerate}
+                \item Let $H$ be a 3-clique
+                \item If $u$ and $v$ are assigned the same color, return
+                      $\pair{G,H}$
+        \end{enumerate}
+        \item Return $\pair{G,G}$
+\end{enumerate}
+
+\clearpage
+
+\textbf{Claim:} $f$ is a reduction from $\C{3-COLOR}$ to $\C{Graph Marriage
+Equality}$
+
+\begin{proof} For a graph $G$, there are two cases: $G \in \C{3-COLOR}$ and $G
+\notin \C{3-COLOR}$.
+
+\textbf{Case 1: $\boldsymbol{G \in \C{3-COLOR}}$:} There are two sub-cases: $G
+\in \C{2-COLOR}$ and $G \notin \c{2-COLOR}$.
+
+\textbf{Case 1a: $\boldsymbol{G \in \C{2-COLOR}}$:} $f$ performs a breadth-first
+traversal of $G$, coloring each layer of nodes an alternating color. Because $G
+\in \C{2-COLOR}$, this coloring is valid, and no edge of $G$ connects two
+vertices of the same color. Then, $f$ returns $\pair{G,G}$. A graph is
+isomorphic to itself, so $\pair{G,G} = f(\pair{G}) \in \C{Graph Marriage
+Equality}$.
+
+\textbf{Case 1b: $\boldsymbol{G \notin \C{2-COLOR}}$:} $f$ performs a
+breadth-first traversal of $G$, coloring each layer of nodes an alternating
+color. Because $G \notin \C{2-COLOR}$, this coloring is invalid, and some edge
+of $G$ connects two vertices of the same color. Then, $f$ returns $\pair{G,H}$,
+where $H$ is a 3-clique.
+
+Because $G \in \C{3-COLOR}$, there is a valid coloring where each node is
+assigned one of three colors and no edge connects two vertices of the same
+color. If $u$ and $v$ are two nodes in $G$ that are assigned the same color,
+they are not connected by an edge, and can thus be married. This process can be
+repeated for each pair of vertices of the same color, and for each color, until
+there are only three nodes remaining. Equivalently, because all the nodes of
+each color are not connected, they can all be married into a single node.
+
+Additionally, $G \notin \C{2-COLOR}$, which means that there must be a 3-clique
+within $G$ and each node must be assigned a different color. Therefore, when the
+nodes of each color are married, the edges accumulate, and there is an edge from
+each set of colored nodes to the other two. Therefore, the three nodes remaining
+in $G$ must therefore be connected. This graph is a 3-clique, and is isomorphic
+to $H$, which is a 3-clique. Therefore, $\pair{G,H} = f(\pair{G}) \in \C{Graph
+Marriage Equality}$.
+
+\textbf{Case 2: $\boldsymbol{G \notin \C{3-COLOR}}$:} $f$ performs a
+breadth-first traversal of $G$, coloring each layer of nodes an alternating
+color. Because $G \notin \C{2-COLOR}$, this coloring is invalid, and some edge
+of $G$ connects two vertices of the same color. Then, $f$ returns $\pair{G,H}$,
+where $H$ is a 3-clique.
+
+Because $G \notin \C{3-COLOR}$, any grouping of nodes into three groups has some
+pair $(u,v)$ that is connected. Therefore, for any grouping of nodes into three
+groups, each group cannot be married into a single node. Therefore, $G$ cannot
+be transformed into a graph with only three vertices via marriages, and thus no
+sequences of marriages on $G$ will make it isomorphic to a 3-clique. Therefore,
+$\pair{G,H} = f(\pair{G}) \notin \C{Graph Marriage Equality}$.
+
+\bigskip
+
+$f(\pair{G}) \in \C{Graph Marriage Equality} \iff G \in \C{3-COLOR}$. Therefore,
+$f$ is a reduction and $\C{3-COLOR}$ is reducible to $\C{Graph Marriage
+Equality}$.
+\end{proof}
+
+\clearpage
+
+\textbf{Claim:} $\C{Graph Marriage Equality} \in \C{NP}$.
+
+\begin{proof}
+The following algorithm accepts members of $\C{Graph Marriage Equality}$ in
+polynomial time:
+
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+        \item Non-deterministically choose a series of marriages in $G$, where
+              each marriage is between two vertices that is not connected by an
+              edge. This is $O(n)$ time because a graph with $n$ vertices can
+              have at most $n-1$ marriages.
+        \item Let G' be $G$ with these marriages applied: $O(n)$
+        \item Non-deterministically choose an ordering of the vertices in $G'$:
+              $O(n)$
+        \item If the adjacency matrix of $G$ is equal to the adjacency matrix of
+              $G'$, ACCEPT:\ $O(n^2)$
+        \item Else: REJECT:\ $O(1)$
+\end{enumerate}
+
+If $\pair{G, G'} \in \C{Graph Marriage Equality}$, then there is some series of
+marriages such that when applied to $G$, $G'$ is created. Additionally, there is
+some ordering of the vertices in $G'$ so that the adjacency matrices for both
+graphs are identical, and the recognizer accepts. If $\pair{G, G'} \notin
+\C{Graph Marriage Equality}$, then no series of marriages makes $G$ isomorphic
+to $G'$, so all branches of the recognizer reject.
+\end{proof}
+
+\bigskip
+
+\textbf{Claim:} $f$ operates in polynomial time.
+
+\begin{proof}
+Step 1 of $f$ decodes $\pair{G}$, which is $O(n)$ time. Step 2 operates
+in $O(1)$ time. Step 3 searches for an uncolored vertices, which operates in
+$O(n)$ time. Steps (a), (b) and (c) operate in $O(1)$ time. Step (d) iterates
+through each vertex and each neighbor, which operates in $O(n^2)$ time. Step (e)
+operates in $O(n)$ time. Steps (f), (g), (h) and (i) operate in $O(1)$ time.
+Step 4 iterates through each edge, which operates in $O(n^2)$ time. Step 6
+operates in $O(n)$ time.
+
+Because each step and sub-step of $f$ operates in polynomial time, $f$ operates
+in polynomial time.
+\end{proof}
+
+\bigskip
+
+\textbf{Claim:} $\C{Graph Marriage Equality}$ is NP-Complete!
+
+\begin{proof}
+$\C{Graph Marriage Equality} \in \C{NP}$. $\C{3-COLOR}$ is NP-Complete and
+$\C{3-COLOR}$ is reducible in polynomial time to $\C{Graph Marriage Equality}$.
+
+$\therefore \C{Graph Marriage Equality}$ is NP-Complete.
+\end{proof}
+
+\clearpage
+
+\subsection*{Problem 2}
+
+The bin packing problem is given a set of $n$ items, each with a weight, $w_i$,
+and set of bins, $B$, each bin, has a fixed capacity, $c$, find the minimum
+number of bins needed to pack all items.
+
+Formally rephrase this as a decision problem, and specify it as a set. Prove
+that this problem is NP-complete. Do a reduction from  $\C{SUBSET-SUM}$.
+
+\noindent\hrulefill{}
+
+\bigskip
+
+\textbf{Definition: } A multiset is a set that can contain repeated elements.
+
+$\C{BIN-PACK} = \{\pair{W,c,k} \mid$ $W$ is a multiset of non-negative integers,
+$c$ is a non-negative integer, and $k$ is a non-negative integer. The elements
+of $W$ can be split into $k$ or less groups such that the sum of each group is
+at most $c$\}
+
+\bigskip
+
+Consider the function $f$ on input $\pair{S,t}$
+
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+        \item Decode $S$ as a set of non-negative integers
+        \item Decode $t$ as a non-negative integer
+        \item Define $W$ as a multiset that contains the exact same elements as
+              $S$
+        \item Define $\Sigma_S$ as the sum of all the elements in $S$
+        \item If $t > \Sigma_S$:
+        \begin{enumerate}
+                \item Return $\{\{1\},1,0\}$
+        \end{enumerate}
+        \item Else:
+        \begin{enumerate}
+                \item Define $c$ as $2 \times \Sigma_S + 1$
+                \item Add the element $(c - t)$ to $W$
+                \item Add the element $(c - \Sigma_S + t)$ to $W$
+                \item Return $\{W, c, 2\}$
+        \end{enumerate}
+\end{enumerate}
+
+\vfill
+
+\textbf{Claim:} $f$ operates in polynomial time.
+
+\begin{proof}
+Steps 1 and 2 --- decoding $S$ and $t$ --- operates in $O(n)$ time, where $n$ is
+the length of the input. Step 3 copies $S$ to $W$ and operates in linear time,
+where $n$ is $\card{S}$.  Step 4 sums the elements of $S$, which operates in
+$O(n)$ time, where $n$ is $\card{S}$. Steps 5 performs an arithmetic comparison
+and operate in $O(n)$ time, where $n$ is the size of $t$ and the elements of
+$S$. Step 6a operates in $O(n)$ time, where $n$ is the size of the elements in
+$S$.  Steps 6b and 6c operate in $O(1)$ time. Step 6d operates in $O(n)$ time,
+where $n$ is the size of $S$.
+
+Because each step of $f$ operates in polynomial time, $f$ operates in polynomial
+time.
+\end{proof}
+
+\clearpage
+
+\textbf{Claim:} $\C{BIN-PACK} \in \C{NP}$.
+
+\begin{proof}
+The following algorithm accepts members of $\C{BIN-PACK}$ in polynomial time:
+
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+        \item Check that the input is of the form $\pair{W,c,k}$, where $W$ is
+              multiset of non-negative integers, $c$ is a non-negative integer,
+              and $k$ is a non-negative integer: $O(n)$
+        \item Non-deterministically split $W$ into $k$ or less groups: $O(n)$
+        \item Check if if the sum of each group is at most $c$: $O(n)$
+\end{enumerate}
+\end{proof}
+
+\vfill
+
+\textbf{Claim:} $f$ is a reduction from $\C{SUBSET-SUM}$ to $\C{BIN-PACK}$.
+
+\begin{proof}
+For a set of non-negative integers $S$ and a non-negative integer $t$, there are
+two cases: \\
+$\pair{S,t} \in \C{SUBSET-SUM}$ and $\pair{S,t} \notin \C{SUBSET-SUM}$.
+
+\textbf{Case 1: $\boldsymbol{\pair{S,t} \in \C{SUBSET-SUM}}$:}
+There is a subset $I$ of $S$ that sums to $t$ (and therefore, $t$ must be less
+than or equal to $\Sigma_S$, where $\Sigma_S$ is the sum of all the elements in
+$S$).
+
+$f(\pair{S,t}) = \{W,c,2\}$, where $W$ is a multiset containing the elements of
+$S$, the element $(c - t)$, and the element $(c - \Sigma_S + t)$.
+
+Because $t \leq \Sigma_S$ and $c = 2 \times \Sigma_S + 1$, $(c - t)$ and $(c -
+\Sigma_S + t)$ are non-negative. Additionally, because integers are closed under
+addition, subtraction and multiplication, these numbers are integers. Therefore,
+because $W$ is a set of non-negative numbers and $W$ is the multiset containing
+the elements of $S$ and these two elements, $W$ is a set of non-negative
+integers.
+
+Because $S$ is a set of non-negative integers, $\Sigma_S$ is a non-negative
+integer, and $c = 2 \times \Sigma_S + 1$ is a non-negative integer.
+
+$W$ can be split into 2 groups such that the sum of each group is $c$. The first
+group is the combination of $I$ and the added element $(c - t)$. The sum of the
+elements in $I$ is $t$, so the sum of the first group is $t + (c - t) = c$. The
+second group is the set difference $S \setminus I$ and the added element $(c -
+\Sigma_S + t)$. The sum of the elements in $S \setminus I$ is $\Sigma_S - t$,
+because the sum of the elements in $S$ is $\Sigma_S$ and the sum of the elements
+in $I$ is $t$.  Therefore, the sum of the elements in the second group is
+$(\Sigma_S - t) + (c - \Sigma_S + t) = c$.
+
+$f$ returns $\{W,c,2\}$, where $W$ is a set of non-negative integers, $c$ is a
+non-negative integer, and the elements of $W$ can be split into 2 groups such
+that the sum of each group is $c$. Therefore, $\{W,c,2\} \in \C{BIN-PACK}$.
+
+\clearpage
+\textbf{Case 2: $\boldsymbol{\pair{S,t} \notin \C{SUBSET-SUM}}$:}
+There is no subset of $S$ such that the elements in the subset sum to $t$.
+
+$f(\pair{S,t}) = \{W,c,2\}$, where $W$ is a multiset containing the elements of
+$S$, the element $(c - t)$, and the element $(c - \Sigma_S + t)$.
+
+If $t$ is greater than $\Sigma_S$, the sum of the elements in $S$, then $f$
+returns $\{ \{1\}, 1, 0\}$ which is not in $\C{BIN-PACK}$ because $\{1\}$ cannot
+be split into zero groups.
+
+Otherwise, $t$ is at most $\Sigma_S$. Because $c = 2 \times \Sigma_S + 1$, $(c -
+t) \geq (c - \Sigma_S) = (\Sigma_S + 1) > \frac{c}{2}$.
+
+Because $t$ non-negative, $(c - \Sigma_S + t) \geq (c - \Sigma_S) = (\Sigma_S +
+1) > \frac{c}{2}$.
+
+Therefore, each of the two elements added to $W$ is greater than $\frac{c}{2}$.
+
+Because $t \leq \Sigma_S$ and $c = 2 \times \Sigma_S + 1$, $(c - t)$ and $(c -
+\Sigma_S + t)$ are non-negative. Additionally, because integers are closed under
+addition, subtraction and multiplication, these numbers are integers. Therefore,
+because $W$ is a set of non-negative numbers and $W$ is the multiset containing
+the elements of $S$ and these two elements, $W$ is a set of non-negative
+integers.
+
+Suppose, for the sake of contradiction, that $\{W,c,2\} \in \C{BIN-PACK}$.
+
+$W$ can be split into two groups such that each group sums to be at most $c$.
+Because all the members of $W$ are non-negative, and the two elements added to
+$W$ are greater than $\frac{c}{2}$, these two elements cannot be in the same
+group. If they were, then the group would sum to be more than $c$.
+
+Therefore, one group must contain the added element $(c-t)$ and the other
+contains the other added element $(c - \Sigma_S + t)$. The remaining total
+``space'' in the groups is $2 \times c - (c-t) - (c - \Sigma_S + t) = \Sigma_S$,
+which is the sum $S$, or equivalently, the sum of of the rest of the elements in
+$W$. Therefore, after each remaining element from $W$ is assigned to one of the
+two groups, each group will sum to $c$. The remaining space is one group is $c -
+(c-t) = t$, so there is some subset of the remaining elements of $W$ that sum to
+$t$.
+
+However, this is a contradiction, as the remaining elements of $W$ is the set
+$S$, and there is no subset of $S$ that sums to $t$.
+
+Therefore, our initial assumption was incorrect, and $\{W,c,2\} \notin
+\C{BIN-PACK}$.
+
+\bigskip
+
+$f(\pair{S,t}) \in \C{BIN-PACK} \iff \pair{S,t} \in \C{SUBSET-SUM}$. Therefore,
+$f$ is a reduction and $\C{SUBSET-SUM}$ is reducible to $\C{BIN-PACK}$.
+\end{proof}
+
+\vfill
+
+\textbf{Claim:} $\C{BIN-PACK}$ is NP-Complete.
+
+\begin{proof}
+$\C{BIN-PACK} \in \C{NP}$. $\C{SUBSET-SUM}$ is NP-Complete and is reducible in
+polynomial time to $\C{BIN-PACK}$.
+
+$\therefore \C{BIN-PACK}$ is NP-Complete.
+\end{proof}
+
+\clearpage
+\subsection*{Problem 3}
+
+One strategy for solving the bin packing problem is to do a first fit heuristic.
+Here you pack the items one at a time into the first bin that the item will fit
+into. If it doesn't fit into any of the current bins, you start a new bin.
+
+Formally state this as an algorithm and show that it never uses more than 2
+times the number of bins in the optimal solution.
+
+\noindent\hrulefill{}
+
+\textbf{Definition: } A multiset is a set that can contain repeated elements.
+
+In the following algorithm, $W$ represents a list of weights, $c$ represents the
+bin capacity, and $B$ represents the multiset of multisets, where each multiset
+in $B$ is a bin. The algorithm returns $\emptyset$ if there is no solution
+(i.e.\ there is an item with a weight that is larger than $c$).
+
+Consider the function $f$ on input $\pair{W,c}$:
+
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\begin{enumerate}
+        \item Create a multiset $B$ of size $n$ where each element in $B$ is
+              $\emptyset$.
+        \item For each element $w$ in $W$:
+        \begin{enumerate}
+                \item For each element $b$ in $B$:
+                \begin{enumerate}
+                        \item If the sum of the elements in $b$ is less than or
+                              equal to $(c-w)$: add $w$ to $b$ and go to 2
+                        \item Else: continue
+                \end{enumerate}
+                \item Return $\emptyset$
+        \end{enumerate}
+        \item Return $B$
+\end{enumerate}
+
+\clearpage
+
+\textbf{Lemma:} With this strategy, at least $n-1$ bins are more than half full,
+where $n$ is the total number of bins used.
+
+\begin{proof_by_contr}
+There is some ordering of bins that determines the order that they are examined
+for room for an item. For two bins, let the first bin be the bin that appears
+before the other in this ordering, and let the second bin be the bin that
+appears after the other in this ordering.
+
+Suppose that with this strategy, there are two bins that are not more than half
+full. Therefore, there is an item $i$ in the second bin whose weight is less
+than or equal to $\frac{c}{2}$, where $c$ is the capacity of each bin.
+Additionally, because all weights are non-negative, the first bin was never more
+than half full.
+
+Upon performing this strategy, $i$ is selected to be placed in a bin. The first
+bin is examined before the second bin. Because the first bin is not more than
+half full, there is at least $\frac{c}{2}$ room available in the first bin.
+Additionally, the weight of $i$ is less than or equal to $\frac{c}{2}$. Because
+the capacity of the bin is $c$, $i$ fits into the first bin, and it is placed in
+the first bin. However, this is a contradiction, because $i$ was placed in the
+second bin.
+
+Therefore, our initial assumption is incorrect. With this strategy, there are
+not two bins that are not more than half full. Equivalently, with this strategy,
+at least $n-1$ bins are more than half full, where $n$ is the total number of
+bins used.
+\end{proof_by_contr}
+
+\bigskip
+\bigskip
+
+\textbf{Claim:} This strategy never uses more than $2k$, where $k$ is the number
+of bins in the optimal solution.
+
+\begin{proof_by_contr}
+Suppose that this strategy uses at least $2k+1$ bins. By the lemma above, there
+are at least $2k$ bins that are more than half full. Therefore, the sum of the
+weights is more than $2k \times \frac{c}{2} = ck$, where $c$ is the capacity of
+each bin. Therefore, $\Sigma w > ck$.
+
+The optimal solution uses $k$ bins. If every bin is filled to maximum capacity,
+the sum of the weights is $k \times c$, though it is possible that the bins
+could be not all full. Therefore, the sum of the weights is less than or equal
+to $ck$: $\Sigma w \leq ck$.
+
+We have reach a contradiction. Therefore, our initial assumption is incorrect.
+This strategy uses less than $2k+1$ bins. Because the number of bins must be an
+integer, this strategy uses at most $2k$ bins, where $k$ is the number of bins
+in the optimal solution.
+\end{proof_by_contr}
+
+\clearpage
+\subsection*{Problem 4}
+
+In certain programming languages, comments appear between delimiters such as
+$/\#$ and $\#/$. Let $L$ be the language of all valid delimited comment strings.
+A member of $L$ must begin with $/\#$ and end with $\#/$ but have no intervening
+$\#/$. For simplicity, we'll say that the alphabet is $\{a, b, /, \#\}$. Give a
+DFA that recognizes $L$.
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[shorten >=1pt,node distance=3cm,on grid,auto]
+   \node[state,initial] (q_0)   {$q_0$};
+   \node[state] (q_2) [below=of q_0] {$q_2$};
+   \node[state] (q_1) [right=of q_0] {$q_1$};
+   \node[state] (q_3) [above=of q_0] {$q_3$};
+   \node[state,accepting] (q_5) [left=of q_2] {$q_5$};
+   \node[state] (q_4) [left=of q_3] {$q_4$};
+    \path[->]
+    (q_0) edge  node {/} (q_1)
+          edge  node {[\^{}/]} (q_2)
+    (q_1) edge  node {\#} (q_3)
+          edge  node {[\^{}\#]} (q_2)
+    (q_2) edge  [loop below] node {*} ()
+    (q_3) edge  [loop right] node {[\^{}\#]} ()
+          edge  [bend left=20] node {\#} (q_4)
+    (q_4) edge  [bend left=20] node {[\^{}/]} (q_3)
+          edge  node {/} (q_5)
+    (q_5) edge  node {*} (q_2);
+\end{tikzpicture}
+\end{figure}
+
+\clearpage
+\subsection*{Problem 5}
+
+Prove that for every $k > 1$, a language $A_k \subseteq{\{0,1\}}^*$ exists that
+can be recognized by a DFA with $k$ states, but not by one with $(k-1)$ states.
+
+Define $A_k = \{ w \mid w \in {\{0,1\}}^{*}$ and $w$ contains $k-1$ 1's\}.
+
+\begin{proof_by_induc}
+
+\textbf{Base case:} $A_2$ must accept in some cases (when the input contains a
+1) and must reject in the other cases. Therefore, $A_2$ requires at
+least two states. Additionally, $A_2$ can be recognized by the following DFA,
+which has two states but not by one with one state.
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[shorten >=1pt,node distance=3cm,on grid,auto]
+   \node[state,initial] (q_0)   {$q_0$};
+   \node[state,accepting] (q_1) [right=of q_0] {$q_1$};
+    \path[->]
+    (q_0) edge  [loop above] node {0} ()
+          edge  node {1} (q_1)
+    (q_1) edge  [loop above] node {[01]} ();
+\end{tikzpicture}
+\end{figure}
+
+If the input ever contains a 1, then the automaton enters the accepting state
+and never exits the accepting state. Therefore, this automaton recognized $A_2$,
+and $A_2$ can be recognized by a DFA with 2 states.
+
+\textbf{Induction step:}
+
+We apply the induction hypothesis: a DFA that recognizes $A_k$ requires $k$
+states and cannot be constructed with $k-1$ states.
+
+Now, we examine $A_{k+1}$.
+
+For the sake of contradiction, assume a DFA that recognizes $A_{k+1}$ can be
+constructed with $k$ states. There must be an accepting state $q_k$ that
+represents when $k$ 1's have been read on the input. Additionally, there must be
+another state $q_j$ that represents when $k-1$ 1's have been read, and upon
+reading a 1 while in state $q_j$, the machine progresses to state $q_k$. If the
+machine is in state $q_j$ and no 1 is read, then the machine does not progress
+to the accepting state $q_k$.
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[shorten >=1pt,node distance=2cm,on grid,auto]
+        \node[state,initial]            (q_0)                       {$q_0$};
+        \node[state]                    (q_1)   [right=of q_0]      {$q_1$};
+        \node[state]                    (q_2)   [right=of q_1]      {$q_{j}$};
+        \node[state,accepting]          (q_3)   [right=of q_2]      {$q_k$};
+
+        \path[->]
+        (q_0)   edge                    node {1}            (q_1)
+                edge    [loop above]    node {0}            ()
+        (q_1)   edge                    node {$\cdots$}     (q_2)
+                edge    [loop above]    node {0}            ()
+        (q_2)   edge                    node {1}            (q_3)
+                edge    [loop above]    node {0}            ()
+        (q_3)   edge    [loop right]    node {[01]}         (q_3)
+        ; % end path
+\end{tikzpicture}
+\end{figure}
+
+If the machine in is state $q_j$ and there have been less than $k-1$ 1's read,
+then the machine will progress to the accepting state $q_k$ incorrectly (this is
+incorrect because there have not been $k$ 1's read in). Similarly, if there are
+more than $k-1$ 1's read and the machine is in state $q_j$, the machine could
+end in a non-accepting state ($q_j$), which would be incorrect because the
+machine should accept after $k$ 1's have been read. Therefore, the machine is in
+state $q_j$ only if exactly $k-1$ 1's have been read. Additionally, by
+definition, the machine is in state $q_j$ after $k-1$ 1's have been read.
+Therefore, the machine is in state $q_j$ if and only if exactly $k-1$ 1's have
+been read.
+
+We can modify our machine so that $q_j$ is an accepting state and a final state:
+
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}[shorten >=1pt,node distance=2cm,on grid,auto]
+        \node[state,initial]            (q_0)                       {$q_0$};
+        \node[state]                    (q_1)   [right=of q_0]      {$q_1$};
+        \node[state,accepting]          (q_2)   [right=of q_1]      {$q_{j}$};
+
+        \path[->]
+        (q_0)   edge                    node {1}            (q_1)
+                edge    [loop above]    node {0}            ()
+        (q_1)   edge                    node {$\cdots$}     (q_2)
+                edge    [loop above]    node {0}            ()
+        (q_2)   edge    [loop above]    node {[01]}         ()
+        ; % end path
+\end{tikzpicture}
+\end{figure}
+
+We have only altered the behavior of our machine after $q_j$ was reached, and
+the only state removed --- $q_k$ --- was transitioned to after $q_j$. Therefore,
+it is still true that the machine is in state $q_j$ if and only if exactly $k-1$
+1's have been read. Therefore, because $q_j$ is the only accepting state, this
+new machine is a recognizer for $A_k$.
+
+Because this new machine uses one less state than $A_{k+1}$, this machine uses
+$k-1$ states. Therefore, we built a recognizer for $A_k$ that uses $k-1$ states.
+However, this is a contradiction, as the induction hypothesis states that a DFA
+that recognizes $A_k$ requires $k$ states and cannot be constructed with $k-1$
+states.
+
+Therefore, our original assumption is incorrect, and $A_{k+1}$ requires $k+1$
+states.
+\end{proof_by_induc}
+\end{document}

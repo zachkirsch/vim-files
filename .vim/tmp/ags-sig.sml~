@@ -1,0 +1,13 @@
+signature AGS = sig
+  structure Game : GAME
+                          (* Given a configuration, returns the
+                           * most beneficial move for the player
+                           * to move *)
+  val bestmove : Game.config -> Game.Move.move option
+
+                          (* Given a configuration, returns the
+                           * best possible outcome for the player
+                           * whose turn it is, assuming opponent
+                           * plays optimally *)
+  val forecast : Game.config -> Player.outcome
+end

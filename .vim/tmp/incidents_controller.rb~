@@ -1,0 +1,137 @@
+class IncidentsController < ApplicationController
+  before_action :set_incident, only: [:show, :edit]
+  before_action :set_s3_direct_post, only: [:new, :edit, :create, :update]
+
+  swagger_controller :incident, 'Incidents'
+
+  swagger_api :index do
+    summary 'Returns all Incidents'
+    notes 'Returns a list of all incidents reported. Priority is either a 0, 1, or 2 (Low, Medium, or High). Progress is either a 0, 1, 2, or 3 (Reported, Processing, In Progress, or Resolved)'
+  end
+
+  swagger_api :show do
+    summary 'Returns a specific incident'
+    param :path, :id, :integer, :required, ""
+  end
+  # GET /incidents
+  # GET /incidents.json
+  def index
+    @incidents = Incident.all
+  end
+
+  # GET /incidents/1
+  # GET /incidents/1.json
+  def show
+  end
+
+  swagger_api :create do
+    summary 'Create a new incident'
+    notes 'Creates a new incident with given parameters. Select the Model Schema on the right to test the endpoint.'
+    param :body, :tag, :incidentExample, :required, "Subject of Incident"
+  end
+
+  swagger_api :update do
+    summary 'Update an existing incident'
+    notes 'Updates an existing incident with given parameters. You MUST choose an integer for an existing incident (you can find the incident ID from the GET request above.)'
+    param :body, :tag, :incidentExample, :required, "Modifications to the Incident"
+    param :path, :id, :integer, :required, ""
+  end
+
+  swagger_api :destroy do
+    summary 'Deletes a incident'
+    notes 'Delete a incident with given parameters. You MUST choose an integer for an existing incident (you can find the incident ID from the GET request above.)'
+    param :path, :id, :integer, :required, ""
+  end
+
+  swagger_model :incidentExample do
+    description "An incident example"
+    property :subject, :string, :required, "Incident subject", defaultValue:
+             "Fire"
+    property :location_of_incident, :string, :required,
+             "Location",defaultValue: "Building 1, Room 207"
+    property :priority, :integer, :required, "Priority", defaultValue: 2
+    property :time_of_incident, :string, :required, "Date and Time",
+             defaultValue: "2016-02-23T23:25:00.000Z"
+    property :progress, :integer, :required, "Progress", defaultValue: 0
+    property :dept_id, :integer, :optional
+    property :user_id, :integer, :optional
+    property :additional_details, :string, :optional
+    property :public, :boolean, :optional
+    property :picture_url, :string, :optional
+    property :video_url, :string, :optional
+    property :incident_category_id, :integer, :optional
+  end
+
+  # GET /incidents/new
+  def new
+    @incident = Incident.new
+  end
+
+  # GET /incidents/1/edit
+  def edit
+  end
+
+  # POST /incidents
+  # POST /incidents.json
+  def create
+    @incident = Incident.new(incident_params)
+    respond_to do |format|
+      if @incident.save
+        format.html { redirect_to incident_path(@incident, :locale => I18n.locale), notice: 'Incident was successfully created.' }
+        format.json { render :show, status: :created, location: @incident }
+      else
+        format.html { render :new }
+        format.json { render json: @incident.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # PATCH/PUT /incidents/1
+  # PATCH/PUT /incidents/1.json
+  def update
+    incident = Incident.find_by_id(params[:id])
+    respond_to do |format|
+      if incident != nil
+        if incident.update(incident_params)
+          @incident = incident
+          format.html { redirect_to incident_url(incident, :locale => I18n.locale), notice: 'Incident was successfully updated.' }
+          format.json { render :show, status: :ok, location: incident }
+        else
+          format.html { render :edit }
+          format.json { render json: incident.errors, status: :unprocessable_entity }
+        end
+      else
+        format.html { render :index, status: :bad_request }
+        format.json { head :no_content, status: :bad_request }
+      end
+    end
+  end
+
+  # DELETE /incidents/1
+  # DELETE /incidents/1.json
+  def destroy
+    incident = Incident.find_by_id(params[:id])
+    if incident != nil
+      @incident = incident
+      incident.destroy
+    end
+    respond_to do |format|
+      format.html { redirect_to incidents_url(:locale => I18n.locale), notice: 'Incident was destroyed.' }
+      format.json { head :no_content, status: :bad_request }
+    end
+  end
+
+  private
+    def set_s3_direct_post
+      @s3_direct_post = S3_BUCKET.presigned_post(key: "uploads/#{SecureRandom.uuid}/${filename}", success_action_status: '201', acl: 'public-read')
+    end
+    # Use callbacks to share common setup or constraints between actions.
+    def set_incident
+      @incident = Incident.find(params[:id])
+    end
+
+    # Never trust parameters from the scary internet, only allow the white list through.
+    def incident_params
+      params.require(:incident).permit(:priority, :dept_id, :user_id, :subject, :location_of_incident, :time_of_incident, :additional_details, :progress, :public, :picture_url, :video_url, :incident_category_id)
+    end
+end

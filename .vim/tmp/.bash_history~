@@ -1,0 +1,500 @@
+cp .vimrc .xvimrc
+vim .xvimrc 
+vim .xvimrc .vimrc
+vim .bin/backup
+man rm
+pip install ims
+pip install --upgrade pip
+del /tmp/torrent-stream/f5d61bf3d57082ba2ee1305da5df8dcd10d34539/
+ims
+man ims
+type ims
+ims movie the dark knight
+ims movie oj made in america
+ims movie O.J. made in america
+ims movie iron man
+del /tmp/torrent-stream/b550a0a32b0749abfadb8eb0736f03d271e876e0/
+ims movie iron man 1
+cd .bin
+vim vim_install.txt 
+vim a
+python hi.py 
+vim hi.py
+del hi.py 
+cd
+cat ~/.ssh/id_rsa.pub
+more /dev/random
+less /dev/random
+cat /dev/random
+most
+slackware
+slack
+ps
+ps a
+ps u
+ps ups x
+ps aux
+ps ax
+ps x
+ps ux
+man ps
+cd /Users/Zach/Dropbox/Backups/Zach/Product\ Keys.txt 
+vim /Users/Zach/Dropbox/Backups/Zach/Product\ Keys.txt 
+cat /Users/Zach/Dropbox/Backups/Zach/Product\ Keys.txt 
+dle /Users/Zach/Dropbox/Backups/Zach/Product\ Keys.txt 
+del
+del /Users/Zach/Dropbox/Backups/Zach/Product\ Keys.txt 
+ims tv mr robot s02e02 ettv
+del /tmp/torrent-stream/
+echo base64_decode('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');
+ssh azureuser@dcosmasterpzfunclw6oos2.westus.cloudapp.azure.com -p 2200 -L 8000:localhost:80
+peerflix
+vim /usr/bin/ims
+pip install -U scikit-learn
+binary_tree_sum.py
+chmod u+x binary_tree_sum.py 
+type python
+./binary_tree_sum.py 
+vim binary_tree_sum.py
+mv binary_tree_sum.py Documents/Developer/
+python
+man trap
+vim .vimrc
+open .
+cd ~/.vim/bundle && git clone git@github.com:lervag/vimtex.git
+dirpop
+pushd
+man pushd
+pushd .
+cd ~/.bin
+mkdir vim-tex-sync
+cd vim-tex-sync/
+vim backwards-search.sh
+readlink -f backwards-search.sh 
+readlink backwards-search.sh 
+chmod a+x backwards-search.sh 
+popd
+ls "/Users/Zach/Documents/School/Tufts/Spring 2016/COMP 170/comp170/hw9/comp170s16hw9.tex" 
+vim ~/.vim/spell/en.utf-8.add
+./backwards-search.sh "/Users/Zach/Documents/School/Tufts/Spring 2016/COMP 170/comp170/hw9/comp170s16hw9.tex" 5
+vim -o backwards-search.sh "/Users/Zach/Documents/School/Tufts/Spring 2016/COMP 170/comp170/hw9/comp170s16hw9.tex"
+pwd
+vim backwards-search.sh 
+vim hi.txt 
+cd ~/.vim/bundle
+rm -rf vimtex
+del vimtex
+cd /Users/Zach/Dropbox/Downloads/vim-latex-1.8.23-20141116.812-gitd0f31c9 
+make
+gs
+mv . ~/.vim
+cd ..
+mv vim-latex-1.8.23-20141116.812-gitd0f31c9 ~/.vim
+vim ~/.vimrc
+vim comp170s16hw9.tex 
+cd ~/.vim
+mv vim-latex-1.8.23-20141116.812-gitd0f31c9/ plugin/
+cd plugin
+ls
+mv vim-latex-1.8.23-20141116.812-gitd0f31c9/ ../bundle/vim-latex
+cd -
+cd-
+c d-
+comp 170
+cd hw9
+vim comp170s16hw9.tex
+ims tv svu s07e06
+del /tmp/torrent-stream/
+youtube-dl
+youtube-dl --help
+youtube-dl --help | grep site
+ims tv scrubs s03e14
+cd /
+du -sh *
+du -sh * 2> /dev/null
+du -sh Applications 2> /dev/null
+cd /Users/Zach/Dropbox/Documents/Miscellaneous
+cd Codec\ Supports/
+ls .
+showHiddenFiles
+showFiles
+hideFiles
+ims tv the office s05e10
+cd Documents
+cd Developer/
+git clone https://github.com/tofergregg/RosterQuiz.git
+cd RosterQuiz/
+brew install pod
+brew install cocoapods
+pod install
+vim input.txt
+vim hi.cpp
+make hi
+./hi < input.txt
+vim hi.p
+python < hi.py
+brew install scala
+vim hi.*
+mv hi.sml hi.scm
+vim hi.py hi.sml
+vim -O hi.py hi.scm
+python
+rm hi*
+del hi*
+del hi.py
+mv hi hi.py
+python hi.py
+vim hi.py
+rm hi.py
+python bye.py
+vim bye.py
+del bye.py hi.py
+python hi.py
+vim hi.py
+mv hi.py ~/mapSetstoComments.py
+vim mapSetstoComments.py
+rm mapSetstoComments.py
+del mapSetstoComments.py
+cat /Users/Zach/Dropbox/Downloads/mapSetstoComments.pyc
+ims tv mr robot s02e01
+vim ~/.bash_history 
+ims tv mr robot s02e01
+vim ~/.bash_history 
+cd /tmp/torrent-stream/
+c d
+cd 75c0be7515d85227c386538a6afd292213b8e6b9/
+cd Mr.Robot.S02E02.HDTV.x264-KILLERS\[ettv\]/
+open Mr.Robot.S02E02.HDTV.x264-KILLERS\[ettv\].mkv 
+del
+vim comp170s16hw9.tex
+cd ~/.vim
+cd bundle
+macvim
+mvim
+ls *tex*
+del vim-latex
+vim ~/.vim/ftplugin/tex.vim
+open .
+vim ~/.vim/ftplugin/tex.vim ~/.vimrc
+mvim comp170s16hw9.tex
+cd ~/.vim/bundle
+git clone git://github.com/tpope/vim-dispatch.git
+cd 
+chmod a+x hi.sh 
+vim a
+vim .bin/vim-tex-sync/
+chmod a+x .bin/vim-tex-sync/auto-reload.sh 
+vim .bin/vim-tex-sync/auto-reload.sh
+vim hi.sh
+vim hi
+comp 170
+cd hw9
+vim comp170s16hw9.te
+cd ~/.vim/bundle/ && git clone git@github.com:lervag/vimtex.git && cd -
+del vimtex/
+cd ~/.bin/vim-tex-sync/
+rm backwards-search.sh hi.txt 
+del backwards-search.sh hi.txt 
+del ~/hi*
+vim auto-reload.sh 
+cd -
+vim comp170s16hw9.tex 
+vim ~/.bin/vim-tex-sync/auto-reload.sh 
+vim ~/.vimrc
+cd
+ls -al
+ls
+cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa.pub | pbcopy
+ssh azureuser@13.91.98.29
+ssh azureuser@13.91.98.29:2200
+ssh -p 2200  azureuser@13.91.98.29
+cd /Users/Zach/Dropbox/Documents/Miscellaneous/Codec\ Supports/
+open .
+showFiles
+hideFiles
+files
+man file
+cd
+vim ~/.bash_profile
+cd .bin
+vim setHidden
+/usr/bin/env bash
+echo $?
+$(/usr/bin/env bash)
+vim set
+vim comp170s16hw9.tex 
+vim ~/.bin/vim-tex-sync/auto-reload.sh 
+vim ~/.vimrc
+cd
+ls -al
+ls
+cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa.pub | pbcopy
+ssh azureuser@13.91.98.29
+ssh azureuser@13.91.98.29:2200
+ssh -p 2200  azureuser@13.91.98.29
+set u+x setHidden 
+man set
+chmod u+x setHidden
+./setHidden 
+./setHidden true
+./setHidden fa;se
+./setHidden false
+vim setHidden 
+ssh azureuser@13.91.98.29:2200
+ssh -p 2200  azureuser@13.91.98.29
+cd /Users/Zach/Dropbox/Documents/Miscellaneous/Codec\ Supports/
+open .
+showFiles
+hideFiles
+files
+man file
+vim ~/.bash_profile
+vim setHidden
+/usr/bin/env bash
+echo $?
+$(/usr/bin/env bash)
+vim set
+ls .bin
+mv .bin/setHidden .bin/showHidden
+vim .bin/show
+ defaults read com.apple.finder AppleShowAllFiles
+vim .bin/showHidden defaults read com.apple.finder AppleShowAllFiles
+showHidden fal
+showHidden faalse
+vim .bin/showHidden 
+showHidden true
+showHidden false
+vim .bin/comp.sh 
+comp.sh 15
+comp 15
+cd
+cd .bin
+vim test.py 
+rm test.py 
+del test.py 
+vim setup_no_password_tufts.sh 
+cat /dev/zero
+head -10 /dev/zero
+$HOME/"Documents/School/Tuft
+cat /dev/random | strings --bytes 1 | tr -d '\n\t '
+ t
+vim a
+brew link sl
+sl
+brew unlink sl
+brew link sl
+sl
+brew unlink sl
+ims tv mr. robot s02e03 ettv
+ims tv mr. robot s02e03 
+ims tv mr robot s02e03 
+peerflix magnet:?xt=urn:btih:38daf21d10b0093c4e69bf6ecfd90955e217bed5&dn=Mr.Robot.S02E03.HDTV.x264-KILLERS%5Bettv%5D&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Fzer0day.ch%3A1337&tr=udp%3A%2F%2Fopen.demonii.com%3A1337&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fexodus.desync.com%3A6969 -a --vlc
+peerflix -a --vlc magnet:?xt=urn:btih:38daf21d10b0093c4e69bf6ecfd90955e217bed5&dn=Mr.Robot.S02E03.HDTV.x264-KILLERS%5Bettv%5D&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Fzer0day.ch%3A1337&tr=udp%3A%2F%2Fopen.demonii.com%3A1337&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fexodus.desync.com%3A6969
+python
+pip install mitmproxy
+mitmproxy
+mitmproxy -T --host
+sudo mitmproxy
+sudo mitmproxy -T --host
+sudo mitmproxy -T
+pip uninstall mitmproxy
+curl https://sis.uit.tufts.edu/psp/paprd/EMPLOYEE/EMPL/h/?tab=TFP_CLASS_SEARCH#search_results/term/2168/career/ALL/subject/COMP/course/attr/keyword/instructor
+del /tmp/torrent-stream/
+curl https://siscs.uit.tufts.edu/psc/csprd/EMPLOYEE/HRMS/s/WEBLIB_CLS_SRCH.ISCRIPT1.FieldFormula.IScript_getSearchresultsAll3?callback=jQuery1820888377300865312_1469163587009&term=2168&career=ALL&subject=&crs_number=&attribute=&keyword=&instructor=&searchby=crs_number&_=1469163591707
+curl "https://siscs.uit.tufts.edu/psc/csprd/EMPLOYEE/HRMS/s/WEBLIB_CLS_SRCH.ISCRIPT1.FieldFormula.IScript_getSearchresultsAll3?callback=jQuery1820888377300865312_1469163587009&term=2168&career=ALL&subject=&crs_number=&attribute=&keyword=&instructor=&searchby=crs_number&_=1469163591707"
+fg
+pbpaste
+pbaste > hi
+pbpaste > hi
+vim hi
+brew link sl
+sl
+brew unlink sl
+curl 'https://siscs.uit.tufts.edu/psc/csprd/EMPLOYEE/HRMS/s/WEBLIB_CLS_SRCH.ISCRIPT1.FieldFormula.IScript_getSearchresultsAll3?callback=jQuery1820888377300865312_1469163587009&term=2168&career=ALL&subject=&crs_number=&attribute=&keyword=&instructor=&searchby=crs_number&_=1469163591707' -H 'Accept-Encoding: gzip, deflate, sdch, br' -H 'Accept-Language: en-US,en;q=0.8' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36' -H 'Accept: */*' -H 'Referer: https://sis.uit.tufts.edu/psp/paprd/EMPLOYEE/EMPL/h/?tab=TFP_CLASS_SEARCH' -H 'Cookie: F5-SISPA-PROD=QQcQ-Fv-A003KInaGTJT7hCnJe4SxYp8!-925308975; ExpirePage=https://sis.uit.tufts.edu/psp/paprd/; PS_TOKEN=pwAAAAQDAgEBAAAAvAIAAAAAAAAsAAAABABTaGRyAk4Acwg4AC4AMQAwABSymuboTr5NUyoSmFfgbzQyTaz2TWcAAAAFAFNkYXRhW3icHYm5DYAwEASHR4QE9IFlzB8S2GTIEhBTBO1RHAsXzO7s3UCepUmifFL+qw4CkYuVE8/OQeHZpGWUBfml/0LnsDQM1MpRdLKPFkPPJHbajZZZrf3JC+EGDIw=; F5-SISCS-PROD=ytIQ-GltYbayDMWfp1P6puhLIbE8D5J0!-173687458; PS_LOGINLIST=https://siscs.uit.tufts.edu/csprd https://sis.uit.tufts.edu/paprd; SignOnDefault=; F5-SISCS-PRD-COOKIE=831584778.4391.0000; https%3a%2f%2fsis.uit.tufts.edu%2fpsp%2fpaprd%2femployee%2fempl%2frefresh=list:%20%3ftab%3dpapp_guest%7c%3frp%3dpapp_guest%7c%3ftab%3dtfp_affiliate_registration%7c%3frp%3dtfp_affiliate_registration%7c%3ftab%3dtfp_ap_forgot_password%7c%3frp%3dtfp_ap_forgot_password%7c%3ftab%3dtfp_ap_password_reset%7c%3frp%3dtfp_ap_password_reset%7c%3ftab%3dremoteunifieddashboard%7c%3frp%3dremoteunifieddashboard|||; psback=""url":"https%3A%2F%2Fsis.uit.tufts.edu%2Fpsp%2Fpaprd%2FEMPLOYEE%2FEMPL%2Fh%2F%3Ftab%3DTFP_CLASS_SEARCH%23search_results%2Fterm%2F2168%2Fcareer%2FALL%2Fsubject%2Fcourse%2Fattr%2Fkeyword%2Finstructor" "label":"LabelNotFound" "origin":"PIA""; PS_TOKENEXPIRE=22_Jul_2016_04:59:51_GMT' -H 'Connection: keep-alive' --compressed
+del hi
+cd .bin
+mkdir ratemycourse
+cd ratemycourse/
+vim curl.sh
+chmod u+x curl.sh 
+./curl.sh > a
+less a
+vim curl.sh 
+ls
+rm a
+del a
+./curl.sh > all.json
+vim all.json 
+less all
+less all.json 
+fg
+cat all.json | tail -c 5
+cat all.json | head -c 5
+cpan
+man cpan
+cat all.json | python -m json.tool  >> /dev/null && exit 0 || echo "NOT valid JSON"; exit 1
+rm backwards-search.sh hi.txt 
+del backwards-search.sh hi.txt 
+del ~/hi*
+vim auto-reload.sh 
+cd -
+vim comp170s16hw9.tex 
+vim ~/.bin/vim-tex-sync/auto-reload.sh 
+cd
+ls -al
+ls
+cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa.pub | pbcopy
+ssh azureuser@13.91.98.29
+ssh azureuser@13.91.98.29:2200
+ssh -p 2200  azureuser@13.91.98.29
+cd /Users/Zach/Dropbox/Documents/Miscellaneous/Codec\ Supports/
+open .
+showFiles
+hideFiles
+files
+man file
+cd
+vim ~/.bash_profile
+cd .bin
+vim setHidden
+/usr/bin/env bash
+echo $?
+$(/usr/bin/env bash)
+vim set
+vim comp170s16hw9.tex 
+vim ~/.bin/vim-tex-sync/auto-reload.sh 
+cd
+ls -al
+ls
+cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa.pub | pbcopy
+ssh azureuser@13.91.98.29
+ssh azureuser@13.91.98.29:2200
+ssh -p 2200  azureuser@13.91.98.29
+set u+x setHidden 
+man set
+chmod u+x setHidden
+./setHidden 
+./setHidden true
+./setHidden fa;se
+./setHidden false
+vim setHidden 
+ssh azureuser@13.91.98.29:2200
+ssh -p 2200  azureuser@13.91.98.29
+cd /Users/Zach/Dropbox/Documents/Miscellaneous/Codec\ Supports/
+open .
+showFiles
+hideFiles
+files
+man file
+vim ~/.bash_profile
+vim setHidden
+/usr/bin/env bash
+echo $?
+$(/usr/bin/env bash)
+vim set
+ls .bin
+mv .bin/setHidden .bin/showHidden
+vim .bin/show
+ defaults read com.apple.finder AppleShowAllFiles
+vim .bin/showHidden defaults read com.apple.finder AppleShowAllFiles
+showHidden fal
+showHidden faalse
+vim .bin/showHidden 
+showHidden true
+showHidden false
+vim .bin/comp.sh 
+comp.sh 15
+comp 15
+cd
+cd .bin
+vim test.py 
+rm test.py 
+del test.py 
+vim setup_no_password_tufts.sh 
+cat /dev/zero
+head -10 /dev/zero
+$HOME/"Documents/School/Tuft
+cat /dev/random | strings --bytes 1 | tr -d '\n\t '
+vim a
+brew link sl
+sl
+brew unlink sl
+brew link sl
+sl
+brew unlink sl
+ims tv mr. robot s02e03 ettv
+ims tv mr. robot s02e03 
+ims tv mr robot s02e03 
+peerflix magnet:?xt=urn:btih:38daf21d10b0093c4e69bf6ecfd90955e217bed5&dn=Mr.Robot.S02E03.HDTV.x264-KILLERS%5Bettv%5D&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Fzer0day.ch%3A1337&tr=udp%3A%2F%2Fopen.demonii.com%3A1337&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fexodus.desync.com%3A6969 -a --vlc
+peerflix -a --vlc magnet:?xt=urn:btih:38daf21d10b0093c4e69bf6ecfd90955e217bed5&dn=Mr.Robot.S02E03.HDTV.x264-KILLERS%5Bettv%5D&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Fzer0day.ch%3A1337&tr=udp%3A%2F%2Fopen.demonii.com%3A1337&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Fexodus.desync.com%3A6969
+pip install mitmproxy
+mitmproxy
+mitmproxy -T --host
+sudo mitmproxy
+sudo mitmproxy -T --host
+sudo mitmproxy -T
+pip uninstall mitmproxy
+curl https://sis.uit.tufts.edu/psp/paprd/EMPLOYEE/EMPL/h/?tab=TFP_CLASS_SEARCH#search_results/term/2168/career/ALL/subject/COMP/course/attr/keyword/instructor
+del /tmp/torrent-stream/
+curl https://siscs.uit.tufts.edu/psc/csprd/EMPLOYEE/HRMS/s/WEBLIB_CLS_SRCH.ISCRIPT1.FieldFormula.IScript_getSearchresultsAll3?callback=jQuery1820888377300865312_1469163587009&term=2168&career=ALL&subject=&crs_number=&attribute=&keyword=&instructor=&searchby=crs_number&_=1469163591707
+curl "https://siscs.uit.tufts.edu/psc/csprd/EMPLOYEE/HRMS/s/WEBLIB_CLS_SRCH.ISCRIPT1.FieldFormula.IScript_getSearchresultsAll3?callback=jQuery1820888377300865312_1469163587009&term=2168&career=ALL&subject=&crs_number=&attribute=&keyword=&instructor=&searchby=crs_number&_=1469163591707"
+fg
+pbpaste
+pbaste > hi
+pbpaste > hi
+vim hi
+brew link sl
+sl
+brew unlink sl
+curl 'https://siscs.uit.tufts.edu/psc/csprd/EMPLOYEE/HRMS/s/WEBLIB_CLS_SRCH.ISCRIPT1.FieldFormula.IScript_getSearchresultsAll3?callback=jQuery1820888377300865312_1469163587009&term=2168&career=ALL&subject=&crs_number=&attribute=&keyword=&instructor=&searchby=crs_number&_=1469163591707' -H 'Accept-Encoding: gzip, deflate, sdch, br' -H 'Accept-Language: en-US,en;q=0.8' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36' -H 'Accept: */*' -H 'Referer: https://sis.uit.tufts.edu/psp/paprd/EMPLOYEE/EMPL/h/?tab=TFP_CLASS_SEARCH' -H 'Cookie: F5-SISPA-PROD=QQcQ-Fv-A003KInaGTJT7hCnJe4SxYp8!-925308975; ExpirePage=https://sis.uit.tufts.edu/psp/paprd/; PS_TOKEN=pwAAAAQDAgEBAAAAvAIAAAAAAAAsAAAABABTaGRyAk4Acwg4AC4AMQAwABSymuboTr5NUyoSmFfgbzQyTaz2TWcAAAAFAFNkYXRhW3icHYm5DYAwEASHR4QE9IFlzB8S2GTIEhBTBO1RHAsXzO7s3UCepUmifFL+qw4CkYuVE8/OQeHZpGWUBfml/0LnsDQM1MpRdLKPFkPPJHbajZZZrf3JC+EGDIw=; F5-SISCS-PROD=ytIQ-GltYbayDMWfp1P6puhLIbE8D5J0!-173687458; PS_LOGINLIST=https://siscs.uit.tufts.edu/csprd https://sis.uit.tufts.edu/paprd; SignOnDefault=; F5-SISCS-PRD-COOKIE=831584778.4391.0000; https%3a%2f%2fsis.uit.tufts.edu%2fpsp%2fpaprd%2femployee%2fempl%2frefresh=list:%20%3ftab%3dpapp_guest%7c%3frp%3dpapp_guest%7c%3ftab%3dtfp_affiliate_registration%7c%3frp%3dtfp_affiliate_registration%7c%3ftab%3dtfp_ap_forgot_password%7c%3frp%3dtfp_ap_forgot_password%7c%3ftab%3dtfp_ap_password_reset%7c%3frp%3dtfp_ap_password_reset%7c%3ftab%3dremoteunifieddashboard%7c%3frp%3dremoteunifieddashboard|||; psback=""url":"https%3A%2F%2Fsis.uit.tufts.edu%2Fpsp%2Fpaprd%2FEMPLOYEE%2FEMPL%2Fh%2F%3Ftab%3DTFP_CLASS_SEARCH%23search_results%2Fterm%2F2168%2Fcareer%2FALL%2Fsubject%2Fcourse%2Fattr%2Fkeyword%2Finstructor" "label":"LabelNotFound" "origin":"PIA""; PS_TOKENEXPIRE=22_Jul_2016_04:59:51_GMT' -H 'Connection: keep-alive' --compressed
+del hi
+cd .bin
+mkdir ratemycourse
+cd ratemycourse/
+vim curl.sh
+chmod u+x curl.sh 
+./curl.sh > a
+less a
+vim curl.sh 
+ls
+rm a
+del a
+./curl.sh > all.json
+vim all.json 
+less all
+less all.json 
+fg
+cat all.json | tail -c 5
+cat all.json | head -c 5
+cpan
+man cpan
+cat all.json | python -m json.tool  >> /dev/null && exit 0 || echo "NOT valid JSON"; exit 1
+cd .bin/ratemycourse/
+vim *py
+cp ingest.py course.py
+vim course.py 
+vim hi.sh
+vim ingest.py 
+vim hi.c
+ls /usr/local/bin/mvim
+vim ~/.vimrc
+t
+vim /Users/Zach/NSDA/Round\ 1\ Schematics.csv
+vim /Users/Zach/NSDA/Round\ 2\ Schematics.csv
+vim /Users/Zach/NSDA/Round\ 3\ Schematics.csv
+cd ..
+mv ratemycourse/ ~/Documents/Developer/
+dev
+mkdir sparse-spreadsheet
+cd sparse-spreadsheet/
+chmod u+x sparse.py 
+hash((1,2))
+hash(0)
+ t
+./sparse.py 
+python
+vim sparse.py

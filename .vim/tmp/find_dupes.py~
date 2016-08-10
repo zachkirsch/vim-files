@@ -1,0 +1,300 @@
+import sqlite3
+import re
+from difflib import SequenceMatcher # string similarity
+
+# TODO: Show partner in dupes
+
+# string similarity
+def similar(a, b):
+        return SequenceMatcher(None, a, b).ratio()
+
+def get_max_id(cursor):
+    cursor.execute("""SELECT MAX(id) from "debaters" """)
+    return cursor.fetchone()[0]
+
+def get_min_id(cursor):
+    cursor.execute("""SELECT MIN(id) from "debaters" """)
+    return cursor.fetchone()[0]
+
+def strings_match(f1, f2):
+    if not f1 or not f2:
+        return False
+
+    # keep only letters
+    f1 = re.sub("[^A-Za-z]", "", f1).lower()
+    f2 = re.sub("[^A-Za-z]", "", f2).lower()
+
+    return f1 == f2
+
+def could_match(f1, f2):
+    if not f1 or not f2:
+        return True
+
+    # keep only letters
+    f1 = re.sub("[^A-Za-z]", "", f1).lower()
+    f2 = re.sub("[^A-Za-z]", "", f2).lower()
+
+    if f1 in f2 or f2 in f1:
+        return True
+
+    BENCHMARK = .75 # benchmark for two strings being similar
+    if similar(f1, f2) > BENCHMARK:
+        return True
+
+    return False
+
+def start_the_same(f1, f2):
+    if not f1 or not f2:
+        return True
+    return f1[0].lower() == f2[0].lower()
+
+
+def get_prob_dupe(cursor, t1, id2):
+    cursor.execute("""SELECT * FROM "debaters" WHERE "id" = ? """, (id2,))
+    t2 = cursor.fetchone()
+
+    if not t2:
+        return (0, None)
+
+    if t1["event"] != t2["event"]:
+        return (0, None)
+
+    # we're looking for pure originals
+    if t2["redundancy_id"]:
+        return (0, None)
+
+    # same person can't compete twice from the same tournament
+    if t2["imported_from"] == t1["imported_from"]:
+        return (0, None)
+
+    # make sure id2 hasn't been listed as an orig from anybody in t1's tourney
+    # (two people at the same tournament can't be dupes of the same original)
+    cursor.execute(""" SELECT COUNT(*) FROM "debaters" WHERE "redundancy_id" =
+                   ? AND "imported_from" = ? """, (id2, t1["imported_from"]))
+    if cursor.fetchone()[0] > 0:
+        return (0, None)
+
+    t1_f = t1["first_name"]
+    t1_l = t1["last_name"]
+    t1_s = t1["school"]
+
+    t2_f = t2["first_name"]
+    t2_l = t2["last_name"]
+    t2_s = t2["school"]
+
+    firsts_match        = strings_match  (t1_f, t2_f)
+    firsts_could_match  = could_match    (t1_f, t2_f)
+    firsts_start_same   = start_the_same (t1_f, t2_f)
+
+    lasts_match         = strings_match  (t1_l, t2_l)
+    lasts_could_match   = could_match    (t1_l, t2_l)
+    lasts_start_same    = start_the_same (t1_l, t2_l)
+
+    schools_match       = strings_match  (t1_s, t2_s)
+    schools_could_match = could_match    (t1_s, t2_s)
+    schools_start_same  = start_the_same (t1_s, t2_s)
+
+    def_dupe = False
+    if firsts_match and lasts_match and schools_match:
+        return (1.0, t2)
+    if firsts_match and lasts_match and schools_could_match:
+        return (1.0, t2)
+    if firsts_could_match and lasts_match and schools_match:
+        if t1_f and t2_f:
+            return (1.0, t2)
+    if lasts_match and schools_match:
+        if not t1_f and not t2_f:
+            return (.95, t2)
+        elif not t1_f or not t2_f:
+            return (0.9, t2)
+
+    in_dupes_csv = False
+    poss_dupe = False
+    if firsts_match and lasts_start_same and schools_match:
+        poss_dupe = True
+    elif firsts_start_same and lasts_could_match and schools_could_match:
+        poss_dupe = True
+
+    if poss_dupe:
+        if t1["dupe_old_team_id"] and t1["dupe_old_team_id"] == t2["old_team_id"]:
+            return (0.9, t2)
+        else:
+            return (0.7, t2)
+
+    return (0, t2)
+
+def get_debater_code(debater, debug):
+    code = ""
+    if debater["first_name"] and debater["first_name"].strip():
+        code += debater["first_name"].encode("utf-8").strip() + " "
+    code += debater["last_name"].encode("utf-8").strip()
+    if debug:
+        code += " [" + str(debater["id"]).strip() + "] "
+
+    code += " (" + debater["school"].encode("utf-8").strip() + ")"
+    return code
+
+def set_dupe(cursor, dupe, orig):
+    print "Setting Duplicate:"
+    print get_debater_code(dupe, True)
+    print get_debater_code(orig, True)
+    print
+    cursor.execute("""UPDATE "debaters" SET "redundancy_id" = ? WHERE "id" = ?
+                   """, (orig["id"], dupe["id"]))
+
+# sets 'dupe' as duplicate of 'orig'
+def ask_dupes(cursor, dupe, poss_origs):
+    poss_origs = sorted(poss_origs[:5], reverse=True)
+
+    if len(poss_origs) == 1 and poss_origs[0][0] >= 0.9:
+        set_dupe(cursor, dupe, poss_origs[0][1])
+        return
+
+    print "*** {}".format(get_debater_code(dupe, True))
+
+    for poss_orig in poss_origs:
+        cursor.execute("""INSERT INTO "poss_dupes" (dupe_id, poss_orig_id,
+                       prob) VALUES (?,?, ?)""",
+                       (dupe["id"], poss_orig[1]["id"], poss_orig[0]))
+
+
+
+
+def find_dupes(connection, tourney_id):
+    c = connection.cursor()
+    min_id = get_min_id(c)
+
+    c.execute("""SELECT * FROM "debaters" WHERE "imported_from" = ? AND
+              "redundancy_id" IS NULL """,
+              (tourney_id,))
+
+    debaters = c.fetchall()
+    total = float(len(debaters))
+
+    last_prog = 0
+    print str(last_prog) + "% Complete"
+
+    index = 1.0
+    for debater in debaters:
+
+        if debater["redundancy_id"]: # already is a dupe
+            continue
+
+        this_prog = index / total * 100
+        if this_prog >= last_prog + 10:
+            print str(last_prog + 10) + "% Complete"
+            last_prog += 10
+
+        poss_dupes = list()
+        ask_for_dupes = True
+        for id in xrange(min_id, debater["id"]):
+            c.execute("""SELECT * FROM "non_dupes" WHERE ("id_1" = "{0}" OR
+                      "id_2" = "{0}") """.format(debater["id"]))
+            non_dupe = False
+            for non_dupe in c.fetchall():
+                if id in non_dupe:
+                    non_dupe = True
+                    ask_for_dupes = False
+                    break
+            if not non_dupe:
+                prob_dupe = get_prob_dupe(c, debater, id)
+                if prob_dupe[0] == 1:
+                    set_dupe(c, debater, prob_dupe[1])
+                    connection.commit()
+                    ask_for_dupes = False
+                    break
+                elif prob_dupe[0] > 0:
+                    poss_dupes.append(prob_dupe)
+
+        if ask_for_dupes:
+            if len(poss_dupes) > 0:
+                ask_dupes(c, debater, poss_dupes)
+                connection.commit()
+        index += 1
+
+def ask_dupes_from_table(connection):
+    c = connection.cursor()
+
+    while True:
+        # get one dupe id from poss_dupes table
+        c.execute("""SELECT "dupe_id" FROM "poss_dupes" LIMIT 1""")
+
+        dupe_id = c.fetchone()
+        if not dupe_id or not dupe_id[0]:
+            break
+        dupe_id = dupe_id[0]
+
+        c.execute("""SELECT * FROM "debaters" WHERE "id" = ? """, (dupe_id,))
+        dupe = c.fetchone()
+        tourney_id = dupe["imported_from"]
+
+        # get associated poss_orig's with that id
+        c.execute("""SELECT * FROM "poss_dupes" WHERE "dupe_id" = ? """,
+                  (dupe_id,))
+
+        poss_orig_ids = c.fetchall()
+        poss_origs = list()
+
+        # for each poss_orig, remove it from the list if another person
+        # at this tournament has an orig with our poss_orig
+        for poss_orig in poss_orig_ids:
+            c.execute("""SELECT * FROM "debaters" WHERE "redundancy_id" = ?
+                         AND "imported_from" = ? """,
+                         (poss_orig["poss_orig_id"], tourney_id))
+            if c.fetchone(): # someone is already this poss_orig's dupe
+                poss_orig_ids.remove(poss_orig)
+            else:
+                c.execute("""SELECT * FROM "debaters" WHERE "id" = ? """,
+                             (poss_orig["poss_orig_id"],))
+                poss_orig_row = c.fetchone()
+                prob = poss_orig["prob"]
+                poss_origs.append((prob, poss_orig_row))
+
+        if len(poss_origs) == 0:
+            # remove all rows from poss_dupes table with this dupe id
+            c.execute("""DELETE FROM "poss_dupes" WHERE "dupe_id" = ? """,
+                      (dupe_id,))
+            continue
+
+        # sort
+        poss_origs = sorted(poss_origs, reverse=True)
+
+        # ask the user which one it is
+        index = 1
+        print "\n*** {}".format(get_debater_code(dupe, True))
+        for poss_orig in poss_origs:
+            print "{:2>s}: {}".format(str(index), get_debater_code(poss_orig[1], True))
+            index += 1
+
+        while (True):
+            index = raw_input("Dupe ID (Enter for 1st, n for none)    ")
+            if not index: # enter key:
+                index = 0
+                print
+                break
+            elif index.lower() == "n":
+                index = -1
+                print
+                break
+            else:
+                try:
+                    index = int(index) - 1
+                    print
+                    break
+                except ValueError:
+                    continue
+
+        # set the dupe in debaters table
+        if index >= 0 and index < len(poss_origs):
+            set_dupe(c, dupe, poss_origs[index][1])
+            for i in xrange(0,len(poss_origs)):
+                if i != index:
+                    c.execute("""INSERT INTO "non_dupes" (id_1, id_2) VALUES
+                              (?, ?) """, (dupe_id, poss_origs[i][1]["id"]))
+
+        # remove all rows from poss_dupes table with this dupe id
+        c.execute("""DELETE FROM "poss_dupes" WHERE "dupe_id" = ? """,
+                  (dupe_id,))
+
+
+        connection.commit()

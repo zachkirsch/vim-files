@@ -1,0 +1,3 @@
+val _ = constraintTest (TYVAR "a" ~ TYVAR "b")
+val _ = constraintTest ((CONAPP (TYCON "list", [TYVAR "a"]) ~ (TYVAR "x") /\ TRIVIAL) /\ (TRIVIAL /\ (TYVAR ("y") ~ (CONAPP (TYCON "list", [TYVAR "a"]))) /\ (TYVAR "y" ~ TYVAR "x")))
+val _ = constraintTest (TYCON "bool" ~ TYCON "int")

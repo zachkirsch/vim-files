@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+OVER30="$HOME/.bin/over30/over30"
+OVER80="$HOME/.bin/len/len -ncpra -m 81"
+
+FILES="$@"
+RECURSE=false
+C_CPP=false
+
+while getopts ":rch" opt; do
+  case $opt in
+    r)
+        RECURSE=true
+        ;;
+    c)
+        C_CPP=true
+        ;;
+    h)
+        echo "Checks for lines over 80 columns and functions over 30 lines"
+        echo "Options:"
+        echo "  -r : recursive"
+        echo "  -c : include only .c .cpp .h files"
+        echo "  -h : show this help text and exit"
+        exit 1
+        ;;
+    \?)
+        echo "Invalid option: -$OPTARG" >&2
+        exit 1
+        ;;
+  esac
+done
+shift $(expr $OPTIND - 1 ) # shift arguments out
+
+FILES="$(find -maxdepth 0 "$@")"
+if [[ "$RECURSE" = true ]]; then
+    FILES="$(find "$@")"
+fi
+#
+#if [[ "$C_CPP" = true ]]; then
+#    FILES="$(find $FILES -maxdepth 0 -name \*.cpp -o -name \*.c -o -name \*.h)"
+#fi
+
+ls $FILES
+
+#$OVER30 $FILES
+#$OVER80 $FILES

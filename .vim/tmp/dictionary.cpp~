@@ -1,0 +1,101 @@
+/*******************************************************************************
+ * Dictionary class implementation for storing words in a dynamic array        *
+ *                                                                             *
+ * Zach Kirsch | 22 Feb 2016                                                   *
+ * COMP 11 Final Project 2016 Spring                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+#include <iostream>
+#include <fstream>      /* file reading */
+#include <stdlib.h>     /* exit()       */
+using namespace std;
+
+#include "dictionary.h"
+
+string s_to_lower(string s);
+
+const int INIT_CAP = 1000;
+
+Dictionary::Dictionary()
+{
+        dict = new string[INIT_CAP];
+        cap = INIT_CAP;
+        len = 0;
+}
+
+Dictionary::Dictionary(string filename)
+{
+        dict = new string[INIT_CAP];
+        cap = INIT_CAP;
+        len = 0;
+
+        read(filename);
+}
+
+void Dictionary::read(string filename)
+{
+        ifstream stream;
+        string s;
+        stream.open(filename.c_str());
+        if (stream.is_open()) {
+                while (!stream.eof()) {
+                        stream >> s;
+                        insert(s);
+                }
+                stream.close();
+        } else {
+                cerr << "Could not open " << filename << endl;
+                exit(1);
+        }
+}
+
+void Dictionary::insert(string s)
+{
+        if (len == cap)
+                expand();
+        dict[len++] = s_to_lower(s);
+}
+
+bool Dictionary::is_word(string s)
+{
+        for (int i = 0; i < len; i++) {
+                if (dict[i].compare(s_to_lower(s)) == 0)
+                        return true;
+        }
+        return false;
+}
+
+void Dictionary::expand()
+{
+        cap *= 2;
+        string *new_dict = new string[cap];
+
+        for (int i = 0; i < len; i++)
+                new_dict[i] = dict[i];
+
+        delete [] dict;
+        dict = new_dict;
+}
+
+
+// to lower
+string s_to_lower(string s)
+{
+        for (int i = 0; i < (int) s.length(); i++)
+                s[i] = tolower(s[i]);
+        return s;
+}
+
+
+string Dictionary::get_word(int index)
+{
+        if (index < 0 || index >= len)
+                return "";
+        else return dict[index];
+}
+
+int Dictionary::length()
+{
+        return len;
+}

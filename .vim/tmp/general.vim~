@@ -1,0 +1,56 @@
+""""""""""""""""""""""""""""""""""""""""""""
+"***           General Setup            ***"
+""""""""""""""""""""""""""""""""""""""""""""
+
+set encoding=utf-8  " UTF-8 Encoding
+filetype plugin on " for plugins determining filetypes
+syntax on " Syntax highlighting (this is improved by plugins)
+
+set updatetime=2000
+
+set backup
+set backupdir=~/.vim/tmp,.
+set directory=~/.vim/tmp,.
+
+" line numbers
+set number
+highlight LineNr ctermfg=grey
+
+" Ignore uppercase for saving/exiting
+cnoremap <expr> X (getcmdtype() is# ':' && empty(getcmdline())) ? 'x' : 'X'
+cnoremap <expr> W (getcmdtype() is# ':' && empty(getcmdline())) ? 'w' : 'W'
+cnoremap <expr> Q (getcmdtype() is# ':' && empty(getcmdline())) ? 'q' : 'Q'
+
+" reopening a file - go to previous loc
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
+    \| exe "normal! g'\"" | endif
+endif
+
+"maximum number of lines saved for each register --> 500 (enough)
+set viminfo='500,<500,s10,h
+
+" 5 lines above/below cursor when possible
+set scrolloff=5
+
+" jj for normal mode
+inoremap jj <Esc>
+
+
+" Look vim, if we don't have the filetype set it's more likely I'm just writing
+" plain text rather than C.
+function! PlainText()
+  if (&filetype == '' || &filetype == 'text')
+    " We don't have a notion of comments in plain text. Also this un-fucks the
+    " use of '*' in formatlistpat.
+    set comments=
+    " Use comment string for quoting
+    set commentstring=>\ %s
+    set spell
+  endif
+endfunction
+
+autocmd BufEnter * call PlainText()
+
+" colorscheme vydark
+colorscheme atom-dark-256

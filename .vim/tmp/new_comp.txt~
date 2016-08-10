@@ -1,0 +1,6 @@
+- defaults write -app Skim SKAutoReloadFileUpdate -boolean true
+        for autoreloading skim without prompt (for side by side latex in vim)
+- sym link daemon plists in .bin (com.zachkirsch...) to ~/LaunchAgents/
+- ssh keys for github
+- ssh keys for tufts server
+        setup_no_password_tufts.sh

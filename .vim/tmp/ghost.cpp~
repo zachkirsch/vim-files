@@ -1,0 +1,60 @@
+/*******************************************************************************
+ * Ghost Class Implementation                                                  *
+ * For Pacman Game (COMP 11 Project 1 | 2016 Spring)                           *
+ ******************************************************************************/
+
+#include <iostream>
+#include <cmath> /* abs() */
+using namespace std;
+
+#include "ghost.h"
+#include "termfuncs.h"
+
+Ghost::Ghost()
+{
+        /* row and col initialized in GameItem constructor */
+
+        target_r = 0;
+        target_c = 0;
+}
+
+
+void Ghost::set_target(int r, int c)
+{
+        target_r = r;
+        target_c = c;
+}
+
+/* moves the ghost in the direction of the given pacman.
+   returns true if the ghost ate pacman, false otherwise */
+bool Ghost::move(const char board[ROWS][COLS])
+{
+        int col_diff = abs(target_c - col);
+        int row_diff = abs(target_r - row);
+
+        int new_row = row, new_col = col;
+
+        if (col_diff > row_diff) {
+                if (target_c > col) new_col++;
+                else                new_col--;
+        } else {
+                if (target_r > row) new_row++;
+                else                new_row--;
+        }
+
+        new_row = (new_row + ROWS) % ROWS;
+        new_col = (new_col + COLS) % COLS;
+
+        if (board[new_row][new_col] != GHOST) {
+                row = new_row;
+                col = new_col;
+        }
+
+        /* return true if the ghost killed Pacman */
+        return row == target_r and col == target_c;
+}
+
+void Ghost::place_on_board(char board[ROWS][COLS])
+{
+        board[row][col] = GHOST;
+}

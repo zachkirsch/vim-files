@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# CONVERTS TABS TO SPACES
+
+USAGE="Usage: tabsToSpaces <spaces per tab> {files...}"
+
+if [ "$#" -lt 2 ]; then
+	echo $USAGE
+	exit
+fi
+
+spaces=$1
+shift
+
+# check if it's an integer
+re='^[0-9]+$'
+if ! [[ $spaces =~ $re ]] ; then
+	echo $USAGE
+	exit
+fi
+
+
+echo "This will replace all tabs in the following files with $spaces spaces:"
+for var in "$@"
+do
+	echo $var
+done
+echo
+echo "Press any key to continue, Control+C to quit"
+read conf
+
+for var in "$@"
+do
+	tab2space -unix -t$spaces $var $var
+done

@@ -1,0 +1,115 @@
+## PACMAN
+
+
+lets do survey at end of 2016s pacman
+
+- hjkl for movements
+- Board class
+- Discrepancy b/t what gets initialized in constructor vs. set_location() and
+  set_random_location()
+- Include "constants.h" in every cpp
+- shorter instructions (this isn't 40...)
+- No makefile?
+- Maybe not called BORD_TOP because it's on bottom too. BORD_HORIZ?
+- Put rules in manual? (e.g. dots, level?)
+- take "ghosts cannot move through walls" out of the ghost.h - in case of above
+  and beyond"
+- just have them provide *.cpp *.h on every phase, which cpp's they have to
+  provide depend on how much they have implemented (e.g. on phase 0, if they've
+  started on ghosts, and they don't provide ghost.cpp but there is ghost stuff
+  in game.cpp, their could won't compile without ghost.cpp even though no ghosts
+  in phase 0)
+- they keep passsing around the board in their game functions - teach them to
+  not do this
+- they implemenet their game like snake (e.g. just continually update the board
+  and replace pacman's previous location with a space every time he moves) and
+  don't notice any issues because that works for the first few phases. make them
+  not do that / change the game so that doesn't work.
+  Possibly can solve by adding const to board function:
+    bool Pacman::move(const char board[ROWS][COLS], char command)
+- clarify in instructions that pacman has to be able to move / turn / move thru
+  walls / not move thru boulders.
+- instructions are too long that they don't read it / miss important things.
+- show level in pacman11 at bottom of game?
+- say in spec you can ignore compiler warnings that are for future parts
+- clarify that num_moves increments every time move() is called, not just when
+  pacman actually changes its row/col (e.g. for trying to go into a boulder or
+  when using getacharnow)
+- todo: make a version of 'finished' for each phase of the game
+- typo in mini-phase 0: wrong font for 'r' in run()
+- feedback: phase 1 was v hard, phase 2 was easy
+- start at level 0 not level 1 - we are cs students after all
+- constant for stopmotion
+- change boulder.cpp to break after it reaches border (when printing)...
+  otherwise dead squirrels cause very long delays
+- cosntants for middle and corners (based on ROWS and COLS)
+- for ghosts in corners:
+    for (int i = 0; i < NUM_GHOSTS/2; i++)
+        for (int j = 0; j < NUM_GHOST/2; j++)
+            ghosts[i + j].set_location( (ROWS - 1) *i, (COLS - 1) * j);
+    ^ actually this is worse / less clear / only works for four ghosts anyways
+- give them less code. remember how much it sucked to edit ramsey's interpreter
+
+## CLASSES
+
+they're not getting classes in pacman. maybe a project after snake where they
+use a snake class where we give them the header file. just so they get the idea
+of everything encapsulated within the snake, how the class has functions, and
+how they can't access private stuff from outside the snake.
+
+human is good example of class
+    attributes - name, age, address, favorite, color
+    behavior   - jump, smile,
+                 introduce. each person says "Hi I'm [name]", but what they
+                 actually say depends on their name attribute
+
+family is good example of classes within classes
+    e.g. Family has an array of humans
+
+
+constructors - put cout statements in the constructor to see when they run
+
+they are having trouble with understanding classes in pacman. we need to
+transition better:
+    functions in snake struct? (don't like this)
+    have a homework / project where they USE a class (just by seeing the header
+    file) so they see how it works / how things are encapsulated
+
+teach inheritance - would be good for pacman. class Pacman : Sprite {
+
+
+## CIPHER
+
+- return *keywithresult so we can result null at the end
+- better spec
+- plaintext not ciphertext member in kwr - actually maybe just 'result' instead
+- make sure cipher constructor arguments in .h match up with .cpp
+- maybe for part b have them make their own cipher with the same public interface
+  where they are not allowed to change their main(). obviously would be an
+  easier cipher - e.g. substitution
+- explain next() as giving the item at the top of the pile, or NULL if there is
+  nothing left in the pile.
+        reset() puts everything back in the pile (in the original order)
+
+## GENERAL
+
+- dpn't teach gdb
+- lab quizzes - short / small / on syntax (maybe on prelab too)
+- name folders to be what it is in the folder rather than proj2 or lab2
+- if we give them less code, there should be some way they see our code to be as
+  a model
+- more mark stuff
+- lower function line limit than 30
+- unclear that new is getting from the heap. confusing to say "new is asking the
+  computer for memory" because that's what all variables do...
+- give them less code. remember how much it sucked to edit ramsey's interpreter
+- hescott's no office hours past 5 on project due dates
+- they did not do well on recursion on the final.
+        in lab: how do you write a recursive function?
+                1. make sure it works for the base case e.g. f(0)
+                2. assume it works for f(n). i.e. you can call f(n) and it will
+                   return the correct result. Now make it work for f(n+1).
+                        e.g. assume it works for f(17), you can call f(17) and
+                        it works. but it doesn't work for f(18). make it work
+                        for f(18) by calling f(17)
+- more in depth rubric. copy and paste snippets so everyone can share

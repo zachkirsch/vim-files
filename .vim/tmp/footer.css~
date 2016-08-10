@@ -1,0 +1,80 @@
+.footer-distributed{
+  background-color: #292c2f;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+  width: 100%;
+  text-align: left;
+  font: normal 16px sans-serif;
+
+  margin-top: 80px;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1rem;
+}
+
+.footer-distributed .footer-left p{
+  color:  #8f9296;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Footer links */
+
+.footer-distributed p.footer-links{
+  font-size:14px;
+  font-weight: bold;
+  color:  #ffffff;
+  margin: 0 0 10px;
+}
+
+.footer-distributed p.footer-links:visited {
+  color: #ffffff;
+}
+
+.footer-distributed a {
+  display:inline-block;
+  line-height: 1.8;
+  text-decoration: none;
+  color:  inherit;
+  border-radius: 2px;
+  padding: 0 7px;
+  margin: 0 7px;
+}
+
+.footer-distributed a:hover{
+  background-color:  #33383b;
+  text-decoration: none;
+}
+
+.footer-distributed .footer-right{
+  float: right;
+  /* margin-top: 6px; */
+  max-width: 180px;
+}
+
+.footer-distributed .footer-left {
+  float:left;
+  max-width: 180px;
+}
+
+
+/* If you don't want the footer to be responsive, remove these media queries */
+
+@media (max-width: 600px) {
+
+  .footer-distributed .footer-left,
+  .footer-distributed .footer-right{
+    text-align: center;
+  }
+
+  .footer-distributed .footer-right{
+    float: none;
+    margin: 0 auto 20px;
+  }
+
+  .footer-distributed .footer-left p.footer-links{
+    line-height: 1.8;
+  }
+}
